@@ -13,6 +13,9 @@ export default function NavBar() {
   const programsRef = useRef<HTMLDivElement | null>(null);
   const communityRef = useRef<HTMLDivElement | null>(null);
   const profileRef = useRef<HTMLDivElement | null>(null);
+  const aihmRef = useRef<HTMLDivElement | null>(null);
+  const mobileMenuRef = useRef<HTMLDivElement | null>(null);
+  const mobileMenuButtonRef = useRef<HTMLButtonElement | null>(null);
   const programsBtnRef = useRef<HTMLButtonElement | null>(null);
   const communityBtnRef = useRef<HTMLButtonElement | null>(null);
   const profileBtnRef = useRef<HTMLButtonElement | null>(null);
@@ -69,6 +72,18 @@ export default function NavBar() {
   const notificationsActive = isActivePath('/notifications');
   const profileActive = notRoot && ['/profile', '/help', '/signout'].some(p => pathname.startsWith(p));
 
+  // treat AIHM as "aware" of the same top-level routes (used for sizing/alignment only)
+  // Make AIHM active when any of the main nav items are active so visuals match exactly
+  const aiHmActive = notRoot && (startActive || isProgramsActive || communityActive || notificationsActive || profileActive);
+
+  // base style for all top-level nav items so active state doesn't change height
+  const navItemBase: React.CSSProperties = {
+    whiteSpace: 'nowrap',
+    transition: 'color 150ms ease, transform 120ms ease, box-shadow 180ms ease',
+    padding: '6px 10px',
+    display: 'inline-flex',
+    alignItems: 'center',
+  };
   function PortalMenu({ anchorRef, isOpen, alignRight, children }: { anchorRef: React.RefObject<HTMLElement | null>; isOpen: boolean; alignRight?: boolean; children: React.ReactNode; }) {
     const [pos, setPos] = useState<{ top: number; left: number; width: number } | null>(null);
 
@@ -118,19 +133,34 @@ export default function NavBar() {
 
   useEffect(() => {
     function onDoc(e: MouseEvent) {
-      if (programsRef.current && !programsRef.current.contains(e.target as Node)) {
+      const target = e.target as Node;
+
+      if (programsRef.current && !programsRef.current.contains(target)) {
         setProgramsOpen(false);
       }
-      if (communityRef.current && !communityRef.current.contains(e.target as Node)) {
+      if (communityRef.current && !communityRef.current.contains(target)) {
         setCommunityOpen(false);
       }
-      if (profileRef.current && !profileRef.current.contains(e.target as Node)) {
+      if (profileRef.current && !profileRef.current.contains(target)) {
         setProfileOpen(false);
+      }
+      if (
+        mobileMenuOpen &&
+        mobileMenuRef.current &&
+        !mobileMenuRef.current.contains(target) &&
+        mobileMenuButtonRef.current &&
+        !mobileMenuButtonRef.current.contains(target)
+      ) {
+        setMobileMenuOpen(false);
+        setProgramsMobileOpen(false);
+        setCommunityMobileOpen(false);
+        setProfileMobileOpen(false);
+        setActiveFor(null);
       }
     }
     document.addEventListener("click", onDoc);
     return () => document.removeEventListener("click", onDoc);
-  }, []);
+  }, [mobileMenuOpen]);
 
   // Responsive detection for mobile menu
   useEffect(() => {
@@ -154,14 +184,23 @@ export default function NavBar() {
   }, []);
 
   return (
-    <header style={{ borderBottom: '1px solid #eee', position: 'relative' }}>
-      <div style={{ display: 'flex', alignItems: 'center', padding: '12px 48px', whiteSpace: 'nowrap' }}>
+    <header style={{ borderBottom: '1px solid rgba(255,255,255,0.08)', position: 'relative', backgroundColor: '#000' }}>
+      <div style={{ display: 'flex', alignItems: 'center', padding: '0 60px', whiteSpace: 'nowrap', height: 80, color: 'white' }}>
         {/* Left: logo (hidden on mobile, moved to center) */}
         <div style={{ flex: '0 0 auto' }}>
           {!isMobile && (
             <Link
               href="/"
-              style={{ fontWeight: 700, fontSize: 18, whiteSpace: 'nowrap', transition: 'transform 120ms ease' }}
+              style={{
+                ...navItemBase,
+                fontWeight: 700,
+                fontSize: 18,
+                textDecoration: 'none',
+                color: aiHmActive ? 'white' : undefined,
+                boxShadow: aiHmActive ? '0 18px 60px rgba(0,0,0,0.30)' : undefined,
+                backgroundColor: aiHmActive ? 'rgba(255, 255, 255, 0)' : undefined,
+                borderRadius: aiHmActive ? 10 : undefined,
+              }}
               onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.transform = 'translateY(-2px)'; }}
               onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.transform = ''; }}
             >
@@ -177,12 +216,10 @@ export default function NavBar() {
               <Link
                 href="/workouts"
                 style={{
-                  whiteSpace: 'nowrap',
-                  transition: 'color 150ms ease, transform 120ms ease, box-shadow 180ms ease',
+                  ...navItemBase,
                   boxShadow: startActive ? '0 18px 60px rgba(0,0,0,0.30)' : undefined,
-                  background: startActive ? 'rgba(255,255,255,0.05)' : undefined,
+                  backgroundColor: startActive ? 'rgba(255,255,255,0.05)' : undefined,
                   borderRadius: startActive ? 10 : undefined,
-                  padding: startActive ? '6px 10px' : undefined,
                   color: startActive ? 'white' : undefined,
                 }}
                 onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.transform = 'translateY(-2px)'; }}
@@ -196,13 +233,11 @@ export default function NavBar() {
                   ref={programsBtnRef}
                   onClick={() => setProgramsOpen(v => !v)}
                   style={{
-                    whiteSpace: 'nowrap',
-                    transition: 'color 150ms ease, transform 120ms ease, box-shadow 180ms ease',
-                    boxShadow: isProgramsActive ? '0 18px 60px rgba(0,0,0,0.30)' : undefined,
-                    background: isProgramsActive ? 'rgba(255,255,255,0.05)' : undefined,
-                    borderRadius: isProgramsActive ? 10 : undefined,
-                    padding: isProgramsActive ? '6px 10px' : undefined,
-                  }}
+                      ...navItemBase,
+                      boxShadow: isProgramsActive ? '0 18px 60px rgba(0,0,0,0.30)' : undefined,
+                      backgroundColor: isProgramsActive ? 'rgba(255,255,255,0.05)' : undefined,
+                      borderRadius: isProgramsActive ? 10 : undefined,
+                    }}
                   onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.transform = 'translateY(-2px)'; }}
                   onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.transform = ''; }}
                 >
@@ -222,13 +257,11 @@ export default function NavBar() {
                   ref={communityBtnRef}
                   onClick={() => setCommunityOpen(v => !v)}
                   style={{
-                    whiteSpace: 'nowrap',
-                    transition: 'color 150ms ease, transform 120ms ease, box-shadow 180ms ease',
-                    boxShadow: communityActive ? '0 18px 60px rgba(0,0,0,0.30)' : undefined,
-                    background: communityActive ? 'rgba(255,255,255,0.05)' : undefined,
-                    borderRadius: communityActive ? 10 : undefined,
-                    padding: communityActive ? '6px 10px' : undefined,
-                  }}
+                      ...navItemBase,
+                      boxShadow: communityActive ? '0 18px 60px rgba(0,0,0,0.30)' : undefined,
+                      backgroundColor: communityActive ? 'rgba(255,255,255,0.05)' : undefined,
+                      borderRadius: communityActive ? 10 : undefined,
+                    }}
                   onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.transform = 'translateY(-2px)'; }}
                   onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.transform = ''; }}
                 >
@@ -244,12 +277,10 @@ export default function NavBar() {
               <Link
                 href="/notifications"
                 style={{
-                  whiteSpace: 'nowrap',
-                  transition: 'color 150ms ease, transform 120ms ease, box-shadow 180ms ease',
+                  ...navItemBase,
                   boxShadow: notificationsActive ? '0 18px 60px rgba(0,0,0,0.30)' : undefined,
-                  background: notificationsActive ? 'rgba(255,255,255,0.05)' : undefined,
+                  backgroundColor: notificationsActive ? 'rgba(255,255,255,0.05)' : undefined,
                   borderRadius: notificationsActive ? 10 : undefined,
-                  padding: notificationsActive ? '6px 10px' : undefined,
                 }}
                 onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.transform = 'translateY(-2px)'; }}
                 onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.transform = ''; }}
@@ -259,7 +290,21 @@ export default function NavBar() {
             </nav>
           ) : (
             <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-              <Link href="/" style={{ fontWeight: 700, fontSize: 18, color: 'white', textDecoration: 'none' }}>AIHM</Link>
+              <Link
+                href="/"
+                style={{
+                  ...navItemBase,
+                  fontWeight: 700,
+                  fontSize: 18,
+                  color: aiHmActive ? 'white' : undefined,
+                  textDecoration: 'none',
+                  boxShadow: aiHmActive ? '0 18px 60px rgba(0,0,0,0.30)' : undefined,
+                  backgroundColor: aiHmActive ? 'rgba(255, 255, 255, 0)' : undefined,
+                  borderRadius: aiHmActive ? 10 : undefined,
+                }}
+              >
+                AIHM
+              </Link>
             </div>
           )}
         </div>
@@ -267,7 +312,7 @@ export default function NavBar() {
         {/* Right: notifications + profile (and hamburger on mobile) */}
         <div style={{ flex: '0 0 auto', display: 'flex', gap: 20, alignItems: 'center' }}>
           {isMobile && (
-            <button aria-label="Open menu" onClick={() => setMobileMenuOpen(v => !v)} style={{ whiteSpace: 'nowrap' }}>
+            <button ref={mobileMenuButtonRef} aria-label="Open menu" onClick={() => setMobileMenuOpen(v => !v)} style={{ whiteSpace: 'nowrap' }}>
               ☰
             </button>
           )}
@@ -278,13 +323,12 @@ export default function NavBar() {
                 ref={profileBtnRef}
                 onClick={() => setProfileOpen(v => !v)}
                 style={{
-                  whiteSpace: 'nowrap',
+                  ...navItemBase,
                   transition: 'transform 120ms ease, box-shadow 180ms ease',
                   transform: '',
                   boxShadow: profileActive ? '0 18px 60px rgba(0,0,0,0.30)' : undefined,
-                  background: profileActive ? 'rgba(255,255,255,0.05)' : undefined,
+                  backgroundColor: profileActive ? 'rgba(255,255,255,0.05)' : undefined,
                   borderRadius: profileActive ? 10 : undefined,
-                  padding: profileActive ? '6px 10px' : undefined,
                 }}
                 onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.transform = 'translateY(-2px)'; }}
                 onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.transform = ''; }}
@@ -293,9 +337,9 @@ export default function NavBar() {
               </button>
               <PortalMenu anchorRef={profileBtnRef} isOpen={profileOpen} alignRight>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-                  <Link href="/profile" style={{ whiteSpace: 'nowrap', color: 'inherit' }}>Profile Settings</Link>
-                  <Link href="/help" style={{ whiteSpace: 'nowrap', color: 'inherit' }}>Help / Docs</Link>
-                  <Link href="/signout" style={{ whiteSpace: 'nowrap', color: 'inherit' }}>Sign out</Link>
+                  <Link href="/profile" onClick={() => setProfileOpen(false)} style={{ whiteSpace: 'nowrap', color: 'inherit' }}>Profile Settings</Link>
+                  <Link href="/help" onClick={() => setProfileOpen(false)} style={{ whiteSpace: 'nowrap', color: 'inherit' }}>Help / Docs</Link>
+                  <Link href="/signout" onClick={() => setProfileOpen(false)} style={{ whiteSpace: 'nowrap', color: 'inherit' }}>Sign out</Link>
                 </div>
               </PortalMenu>
             </div>
@@ -305,7 +349,7 @@ export default function NavBar() {
 
       {/* Mobile menu panel (simple vertical menu) */}
       {isMobile && mobileMenuOpen && (
-        <div style={{ position: 'absolute', top: '100%', left: 0, right: 0, background: 'rgba(0,0,0,0.85)', color: 'white', padding: 12, boxShadow: '0 6px 18px rgba(0,0,0,0.08)', zIndex: 9999 }}>
+        <div ref={mobileMenuRef} style={{ position: 'absolute', top: '100%', left: 0, right: 0, background: 'rgba(0, 0, 0, 0.95)', color: 'white', padding: 12, boxShadow: '0 6px 18px rgba(0,0,0,0.12)', zIndex: 9999 }}>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
             <Link
               href="/workouts"
