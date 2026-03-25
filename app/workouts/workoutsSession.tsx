@@ -19,7 +19,7 @@ export default function WorkoutsSession() {
       <Script
         src="/@mediapipe/pose/pose.js"
         onLoad={() => {
-          console.log("✅ MediaPipe Script Loaded");
+          console.log(" MediaPipe Script Loaded");
           setScriptLoaded(true);
         }}
       />

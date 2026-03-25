@@ -63,11 +63,11 @@ export default function NavBar() {
   const pathname = usePathname() || '/';
   const notRoot = pathname !== '/';
   const isActivePath = (p: string) => notRoot && pathname.startsWith(p);
-  const isProgramsActive = notRoot && (pathname.startsWith('/programs') || pathname.startsWith('/browsePrograms') || pathname.includes('/progress'));
+  const isProgramsActive = notRoot && ['/programs', '/browsePrograms', '/progress'].some(p => pathname.startsWith(p));
   const startActive = isActivePath('/workouts');
-  const communityActive = isActivePath('/community');
+  const communityActive = notRoot && ['/community', '/friends'].some(p => pathname.startsWith(p));
   const notificationsActive = isActivePath('/notifications');
-  const profileActive = isActivePath('/profile');
+  const profileActive = notRoot && ['/profile', '/help', '/signout'].some(p => pathname.startsWith(p));
 
   function PortalMenu({ anchorRef, isOpen, alignRight, children }: { anchorRef: React.RefObject<HTMLElement | null>; isOpen: boolean; alignRight?: boolean; children: React.ReactNode; }) {
     const [pos, setPos] = useState<{ top: number; left: number; width: number } | null>(null);
