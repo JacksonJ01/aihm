@@ -312,7 +312,23 @@ export default function NavBar() {
         {/* Right: notifications + profile (and hamburger on mobile) */}
         <div style={{ flex: '0 0 auto', display: 'flex', gap: 20, alignItems: 'center' }}>
           {isMobile && (
-            <button ref={mobileMenuButtonRef} aria-label="Open menu" onClick={() => setMobileMenuOpen(v => !v)} style={{ whiteSpace: 'nowrap' }}>
+            <button
+              ref={mobileMenuButtonRef}
+              aria-label="Open menu"
+              onClick={() => setMobileMenuOpen(v => !v)}
+              style={{
+                whiteSpace: 'nowrap',
+                backgroundColor: '#000',
+                color: 'white',
+                border: 'none',
+                appearance: 'none',
+                WebkitAppearance: 'none',
+                colorScheme: 'dark',
+                fontSize: 24,
+                lineHeight: 1,
+                padding: 0,
+              }}
+            >
               ☰
             </button>
           )}
@@ -349,7 +365,7 @@ export default function NavBar() {
 
       {/* Mobile menu panel (simple vertical menu) */}
       {isMobile && mobileMenuOpen && (
-        <div ref={mobileMenuRef} style={{ position: 'absolute', top: '100%', left: 0, right: 0, background: 'rgba(0, 0, 0, 0.95)', color: 'white', padding: 12, boxShadow: '0 6px 18px rgba(0,0,0,0.12)', zIndex: 9999 }}>
+        <div ref={mobileMenuRef} style={{ position: 'absolute', top: '100%', left: 0, right: 0, backgroundColor: '#000', color: 'white', padding: 12, boxShadow: '0 6px 18px rgba(0,0,0,0.12)', zIndex: 9999, colorScheme: 'dark' }}>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
             <Link
               href="/workouts"
@@ -362,7 +378,7 @@ export default function NavBar() {
             <div>
               <button
                 onClick={() => { toggleProgramsMobile(); setActiveFor(programsMobileOpen ? null : 'programs'); }}
-                style={{ width: '100%', textAlign: 'left', color: activeMobileTop === 'programs' ? 'white' : 'rgba(255,255,255,0.6)', background: 'transparent', border: 'none', transition: 'color 180ms ease' }}
+                style={{ width: '100%', textAlign: 'left', color: activeMobileTop === 'programs' ? 'white' : 'rgba(255,255,255,0.6)', backgroundColor: 'transparent', border: 'none', transition: 'color 180ms ease', colorScheme: 'dark' }}
               >
                 Programs ▾
               </button>
@@ -379,7 +395,7 @@ export default function NavBar() {
             <div>
               <button
                 onClick={() => { toggleCommunityMobile(); setActiveFor(communityMobileOpen ? null : 'community'); }}
-                style={{ width: '100%', textAlign: 'left', color: activeMobileTop === 'community' ? 'white' : 'rgba(255,255,255,0.6)', background: 'transparent', border: 'none', transition: 'color 180ms ease' }}
+                style={{ width: '100%', textAlign: 'left', color: activeMobileTop === 'community' ? 'white' : 'rgba(255,255,255,0.6)', backgroundColor: 'transparent', border: 'none', transition: 'color 180ms ease', colorScheme: 'dark' }}
               >
                 Community ▾
               </button>
@@ -402,7 +418,7 @@ export default function NavBar() {
             <div style={{ borderTop: '1px solid rgba(255,255,255,0.06)', paddingTop: 10 }}>
               <button
                 onClick={() => { toggleProfileMobile(); setActiveFor(profileMobileOpen ? null : 'profile'); }}
-                style={{ width: '100%', textAlign: 'left', color: activeMobileTop === 'profile' ? 'white' : 'rgba(255,255,255,0.6)', background: 'transparent', border: 'none', transition: 'color 180ms ease' }}
+                style={{ width: '100%', textAlign: 'left', color: activeMobileTop === 'profile' ? 'white' : 'rgba(255,255,255,0.6)', backgroundColor: 'transparent', border: 'none', transition: 'color 180ms ease', colorScheme: 'dark' }}
               >
                 Profile ▾
               </button>

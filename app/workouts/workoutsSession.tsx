@@ -29,7 +29,7 @@ export default function WorkoutsSession() {
       </div>
 
       <div style={{ marginTop: 20, position: "relative" }}>
-        <Camera videoRef={videoRef} canvasRef={canvasRef} />
+        <Camera videoRef={videoRef} canvasRef={canvasRef} isVisible={isCameraOn} />
       </div>
     </section>
   );

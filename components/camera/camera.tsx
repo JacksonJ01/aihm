@@ -5,11 +5,18 @@ import React from "react";
 type Props = {
   videoRef: React.RefObject<HTMLVideoElement | null>;
   canvasRef: React.RefObject<HTMLCanvasElement | null>;
+  isVisible: boolean;
 };
 
-export default function Camera({ videoRef, canvasRef }: Props) {
+export default function Camera({ videoRef, canvasRef, isVisible }: Props) {
   return (
-    <div style={{ position: "relative", width: 500 }}>
+    <div
+      style={{
+        position: "relative",
+        width: 500,
+        display: isVisible ? "block" : "none",
+      }}
+    >
       <video
         ref={videoRef}
         style={{ width: 500 }}

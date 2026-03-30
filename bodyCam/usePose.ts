@@ -29,14 +29,15 @@ export function usePose(
   scriptLoaded: boolean
 ) {
   useEffect(() => {
-    // ✅ CRITICAL GUARD
     if (!isCameraOn || !scriptLoaded || !videoRef.current || !canvasRef.current) return;
     if (!(window as any).Pose) return;
-    
-    console.log("Pose started");
+    let cancelled = false;
+    let animationFrameId = 0;
+    let isSending = false;
+    let hasProcessedFrame = false;
 
     const pose = new (window as any).Pose({
-        locateFile: (file: string) => `/@mediapipe/pose/${file}`,
+      locateFile: (file: string) => `/@mediapipe/pose/${file}`,
     });
 
     // Detect mobile devices (use userAgentData when available)
@@ -59,14 +60,40 @@ export function usePose(
 
     pose.setOptions(poseOptions);
 
-    pose.onResults((results: PoseResults) => {
+    const clearCanvas = () => {
       const canvas = canvasRef.current;
-      // if (!canvas) return;
       const ctx = canvas?.getContext("2d");
-      if (!ctx || !results.poseLandmarks || !canvas) return;
+
+      if (ctx && canvas) {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+      }
+    };
+
+    const setCanvasVisibility = (isVisible: boolean) => {
+      if (canvasRef.current) {
+        canvasRef.current.style.opacity = isVisible ? "1" : "0";
+      }
+    };
+
+    clearCanvas();
+    setCanvasVisibility(false);
+
+    pose.onResults((results: PoseResults) => {
+      if (cancelled) return;
+
+      const canvas = canvasRef.current;
+      const ctx = canvas?.getContext("2d");
+      if (!ctx || !canvas) return;
 
       // Clearing Previous Frame
       ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+      if (!results.poseLandmarks) {
+        setCanvasVisibility(false);
+        return;
+      }
+
+      setCanvasVisibility(true);
 
       // Drawing Landmark Points
       results.poseLandmarks.forEach((point: PoseLandmark, index: number) => {
@@ -102,40 +129,55 @@ export function usePose(
             // ctx.font = "10px Arial;";
             // ctx.fillText(index.toString(), point.x * canvas.width + 10, point.y * canvas.height);
            
-            console.log(results.poseLandmarks);
         }
       });
     });
 
-    let animationFrameId: number;
-
     const run = async () => {
-      if (videoRef.current && isCameraOn) {
-        if (videoRef.current.readyState >= 2) { // 0 = HAVE_NOTHING, 1 = HAVE_METADATA, 2 = HAVE_CURRENT_DATA, 3 = HAVE_FUTURE_DATA, 4 = HAVE_ENOUGH_DATA
-            await pose.send({ image: videoRef.current });
+      if (cancelled) return;
+
+      if (
+        !isSending &&
+        videoRef.current &&
+        isCameraOn &&
+        videoRef.current.readyState >= 2
+      ) {
+        isSending = true;
+
+        try {
+          await pose.send({ image: videoRef.current });
+          hasProcessedFrame = true;
+        } catch (error) {
+          if (!cancelled) {
+            console.error("Pose send error:", error);
+          }
+        } finally {
+          isSending = false;
         }
       }
 
-      animationFrameId = requestAnimationFrame(run);
+      if (!cancelled) {
+        animationFrameId = requestAnimationFrame(run);
+      }
     };
 
-    run();
+    animationFrameId = requestAnimationFrame(run);
 
     return () => {
+      cancelled = true;
       cancelAnimationFrame(animationFrameId);
-      // Free Up GPU Mem
-      if (pose) pose.close();
 
-      // Clear Canvas On Stop
-      const canvas = canvasRef.current;
-      if (canvas) {
-          const ctx = canvas.getContext("2d")
-          
-          if (ctx) {
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
-          } 
-        
+      // Avoid closing during an in-flight initialization/send, which can abort the wasm module.
+      if (hasProcessedFrame && !isSending && typeof pose.close === "function") {
+        try {
+          pose.close();
+        } catch (error) {
+          console.error("Pose cleanup error:", error);
+        }
       }
+
+      clearCanvas();
+      setCanvasVisibility(false);
     };
   }, [isCameraOn, scriptLoaded, videoRef, canvasRef]);
 }
