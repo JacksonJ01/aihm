@@ -11,15 +11,12 @@ type Props = {
 export default function Camera({ videoRef, canvasRef, isVisible }: Props) {
   return (
     <div
-      style={{
-        position: "relative",
-        width: 500,
-        display: isVisible ? "block" : "none",
-      }}
+      className="relative mx-auto w-full max-w-[720px] overflow-hidden rounded-[28px] border border-black/10 bg-slate-950 shadow-[0_24px_60px_rgba(15,23,42,0.24)]"
+      style={{ display: isVisible ? "block" : "none" }}
     >
       <video
         ref={videoRef}
-        style={{ width: 500 }}
+        className="block aspect-[4/3] w-full object-cover"
         playsInline
         muted
       />
@@ -32,6 +29,8 @@ export default function Camera({ videoRef, canvasRef, isVisible }: Props) {
           position: "absolute",
           top: 0,
           left: 0,
+          width: "100%",
+          height: "100%",
         }}
       />
     </div>

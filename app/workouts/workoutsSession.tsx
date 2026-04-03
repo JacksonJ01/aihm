@@ -15,7 +15,7 @@ export default function WorkoutsSession() {
   usePose(videoRef, canvasRef, isCameraOn, scriptLoaded);
 
   return (
-    <section>
+    <section className="space-y-6">
       <Script
         src="/@mediapipe/pose/pose.js"
         onLoad={() => {
@@ -24,12 +24,30 @@ export default function WorkoutsSession() {
         }}
       />
 
-      <div style={{ marginTop: 12 }}>
+      <div className="rounded-[26px] border border-black/10 bg-white/70 px-5 py-5 shadow-[0_18px_40px_rgba(29,35,43,0.08)]">
         <Controls isCameraOn={isCameraOn} startCamera={startCamera} stopCamera={stopCamera} />
       </div>
 
-      <div style={{ marginTop: 20, position: "relative" }}>
+      <div className="rounded-[30px] border border-black/10 bg-white/65 p-3 sm:p-4 md:p-6">
+        <div className="mb-4 flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
+          <div className="min-w-0">
+            <div className="text-sm font-semibold uppercase tracking-[0.2em] text-muted-foreground">
+              Live tracking canvas
+            </div>
+            <p className="mt-1 text-sm leading-6 text-muted-foreground">
+              When the camera is active, pose landmarks render directly on top of the session feed.
+            </p>
+          </div>
+          <div className="w-fit self-start rounded-full border border-black/10 bg-white px-4 py-2 text-sm font-medium text-foreground md:self-auto">
+            {scriptLoaded ? (isCameraOn ? "Tracking active" : "Ready to start") : "Loading tracker"}
+          </div>
+        </div>
         <Camera videoRef={videoRef} canvasRef={canvasRef} isVisible={isCameraOn} />
+        {!isCameraOn ? (
+          <div className="mt-4 rounded-2xl border border-dashed border-black/10 bg-background/60 px-4 py-4 text-sm leading-6 text-muted-foreground">
+            The preview area remains inactive until camera access is enabled for the session.
+          </div>
+        ) : null}
       </div>
     </section>
   );

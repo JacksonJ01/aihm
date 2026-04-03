@@ -2,6 +2,40 @@
 
 import { useEffect } from "react";
 
+type UserAgentData = {
+  mobile?: boolean;
+};
+
+type NavigatorWithUserAgentData = Navigator & {
+  userAgentData?: UserAgentData;
+};
+
+type PoseConstructorOptions = {
+  locateFile: (file: string) => string;
+};
+
+type PoseOptions = {
+  modelComplexity: number;
+  smoothLandmarks: boolean;
+  minDetectionConfidence: number;
+  minTrackingConfidence: number;
+};
+
+type PoseInstance = {
+  setOptions: (options: PoseOptions) => void;
+  onResults: (callback: (results: PoseResults) => void) => void;
+  send: (input: { image: HTMLVideoElement }) => Promise<void>;
+  close?: () => void;
+};
+
+type PoseConstructor = new (options: PoseConstructorOptions) => PoseInstance;
+
+declare global {
+  interface Window {
+    Pose?: PoseConstructor;
+  }
+}
+
 interface PoseLandmark {
   x: number;
   y: number;
@@ -26,23 +60,24 @@ export function usePose(
   videoRef: React.RefObject<HTMLVideoElement | null>,
   canvasRef: React.RefObject<HTMLCanvasElement | null>,
   isCameraOn: boolean,
-  scriptLoaded: boolean
+  scriptLoaded: boolean,
 ) {
   useEffect(() => {
     if (!isCameraOn || !scriptLoaded || !videoRef.current || !canvasRef.current) return;
-    if (!(window as any).Pose) return;
+    if (!window.Pose) return;
     let cancelled = false;
     let animationFrameId = 0;
     let isSending = false;
     let hasProcessedFrame = false;
 
-    const pose = new (window as any).Pose({
+    const pose = new window.Pose({
       locateFile: (file: string) => `/@mediapipe/pose/${file}`,
     });
 
     // Detect mobile devices (use userAgentData when available)
+    const navigatorWithUserAgentData = navigator as NavigatorWithUserAgentData;
     const isMobileDevice = typeof navigator !== "undefined" &&
-      ((navigator as any).userAgentData?.mobile ?? /Mobi|Android|iPhone|iPad|iPod|Windows Phone/.test(navigator.userAgent));
+      (navigatorWithUserAgentData.userAgentData?.mobile ?? /Mobi|Android|iPhone|iPad|iPod|Windows Phone/.test(navigator.userAgent));
 
     const poseOptions = isMobileDevice
       ? {
@@ -98,37 +133,30 @@ export function usePose(
       // Drawing Landmark Points
       results.poseLandmarks.forEach((point: PoseLandmark, index: number) => {
         const isTargetJoint = EXERCISE_LANDMARKS.includes(index);
-        const isVisible = (point.visibility ?? 0) > 0.6
-        
+        const isVisible = (point.visibility ?? 0) > 0.6;
+
         if (isTargetJoint && isVisible) {
+          ctx.beginPath();
+          ctx.arc(
+            point.x * canvas.width,
+            point.y * canvas.height,
+            10,
+            0,
+            2 * Math.PI,
+          );
+          ctx.fillStyle = "rgba(255, 47, 0, 0.5)";
+          ctx.fill();
 
-            ctx.beginPath();
-            ctx.arc(
-                point.x * canvas.width,
-                point.y * canvas.height,
-                10,
-                0,
-                2 * Math.PI
-            );
-            ctx.fillStyle = "rgba(255, 47, 0, 0.5)"; // Semi-transparent red
-            ctx.fill();
-
-            ctx.beginPath();
-            ctx.arc(
-                point.x * canvas.width,
-                point.y * canvas.height,
-                5,
-                0,
-                2 * Math.PI
-            );
-            ctx.fillStyle = "rgba(255, 47, 0, 0.5)"; // Semi-transparent red
-            ctx.fill();
-
-            // Label
-            // ctx.fillStyle = "rgba(255, 47, 0, 0.8)";
-            // ctx.font = "10px Arial;";
-            // ctx.fillText(index.toString(), point.x * canvas.width + 10, point.y * canvas.height);
-           
+          ctx.beginPath();
+          ctx.arc(
+            point.x * canvas.width,
+            point.y * canvas.height,
+            5,
+            0,
+            2 * Math.PI,
+          );
+          ctx.fillStyle = "rgba(255, 47, 0, 0.5)";
+          ctx.fill();
         }
       });
     });

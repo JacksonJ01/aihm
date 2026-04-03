@@ -1,13 +1,13 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 
 export function useCamera() {
   const videoRef = useRef<HTMLVideoElement>(null);
   const streamRef = useRef<MediaStream | null>(null);
   const [isCameraOn, setIsCameraOn] = useState(false);
 
-  const resetVideoElement = () => {
+  const resetVideoElement = useCallback(() => {
     if (!videoRef.current) {
       return;
     }
@@ -16,9 +16,9 @@ export function useCamera() {
     videoRef.current.srcObject = null;
     videoRef.current.removeAttribute("src");
     videoRef.current.load();
-  };
+  }, []);
 
-  const stopCamera = () => {
+  const stopCamera = useCallback(() => {
     if (streamRef.current) {
       streamRef.current.getTracks().forEach((track) => track.stop());
       streamRef.current = null;
@@ -26,10 +26,10 @@ export function useCamera() {
 
     resetVideoElement();
     setIsCameraOn(false);
-  };
+  }, [resetVideoElement]);
 
   // 🎥 Start camera
-  const startCamera = async () => {
+  const startCamera = useCallback(async () => {
     try {
       stopCamera();
 
@@ -49,7 +49,7 @@ export function useCamera() {
       console.error("Camera error:", error);
       stopCamera();
     }
-  };
+  }, [stopCamera]);
 
   useEffect(() => {
     const handleVisibilityChange = () => {
@@ -66,7 +66,7 @@ export function useCamera() {
       window.removeEventListener("pagehide", stopCamera);
       stopCamera();
     };
-  }, []);
+  }, [stopCamera]);
 
   return {
     videoRef,
