@@ -1,32 +1,31 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Suspense } from "react";
 
+const ERROR_MESSAGES: Record<string, string> = {
+  "invalid-link": "This confirmation link is invalid or has expired. Request a new link and try again.",
+  "invalid-request": "This request could not be completed. Please retry from the previous step.",
+  default: "An unspecified error occurred.",
+};
+
 async function ErrorContent({
   searchParams,
 }: {
-  searchParams: Promise<{ error: string }>;
+  searchParams: Promise<{ code?: string }>;
 }) {
   const params = await searchParams;
+  const message = ERROR_MESSAGES[params?.code ?? ""] ?? ERROR_MESSAGES.default;
 
   return (
-    <>
-      {params?.error ? (
-        <p className="text-sm text-muted-foreground">
-          Code error: {params.error}
-        </p>
-      ) : (
-        <p className="text-sm text-muted-foreground">
-          An unspecified error occurred.
-        </p>
-      )}
-    </>
+    <p className="text-sm text-muted-foreground">
+      {message}
+    </p>
   );
 }
 
 export default function Page({
   searchParams,
 }: {
-  searchParams: Promise<{ error: string }>;
+  searchParams: Promise<{ code?: string }>;
 }) {
   return (
     <div className="flex min-h-svh w-full items-center justify-center p-6 md:p-10">

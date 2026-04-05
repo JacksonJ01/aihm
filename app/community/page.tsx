@@ -19,18 +19,23 @@ export default async function CommunityPage() {
       <PageHero
         eyebrow="Community hub"
         title="Bring challenges, discussion, and accountability into the same training loop."
-        description="The community area should help users keep momentum, not bury them in a generic feed. This layout keeps current challenges and high-signal conversations easy to scan."
+        description="Challenges, discussion, and check-ins stay organized here so the community side of training is easy to follow."
         actions={[
           { href: "/friends", label: "View friends", secondary: true },
           { href: "/workouts", label: "Start a session" },
         ]}
         aside={
           <>
-            <DataSourceNotice source={community.source} tables={["community_posts", "community_challenges"]} />
+            <DataSourceNotice
+              source={community.source}
+              viewerState={community.viewerState}
+              viewerEmail={community.viewerEmail}
+            />
             <div className="rounded-[26px] border border-black/10 bg-white/75 px-5 py-5">
-              <div className="text-sm font-semibold uppercase tracking-[0.2em] text-muted-foreground">Community signal</div>
+              {/* Internal note: keep this panel descriptive, not editorial. */}
+              <div className="text-sm font-semibold uppercase tracking-[0.2em] text-muted-foreground">Community activity</div>
               <p className="mt-3 text-sm leading-6 text-muted-foreground">
-                When challenges and discussion sit beside your program flow, the app feels more alive and less isolated.
+                Active challenges and recent conversations help keep the training community visible throughout the week.
               </p>
             </div>
           </>

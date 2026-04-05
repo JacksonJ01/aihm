@@ -34,8 +34,8 @@ const faqs = [
     answer: "Programs define the weekly structure. Workouts are the execution layer. Keeping them separate makes planning and training both easier to navigate.",
   },
   {
-    question: "Why might some pages show sample content?",
-    answer: "The UI is ready for Supabase-backed data, but some sections fall back to structured sample content until the required tables exist and have user data.",
+    question: "Why is a section empty?",
+    answer: "Some areas stay intentionally clear until you have activity, saved preferences, or account details relevant to that section.",
   },
 ];
 
@@ -45,32 +45,32 @@ export default function HelpPage() {
       <PageHero
         eyebrow="Help and docs"
         title="Keep support close to the workflow instead of hiding it behind generic documentation."
-        description="This page gives users a fast way to understand how the product is meant to be used, what to do when something feels off, and where to go next."
+        description="Find quick answers, setup notes, and direct links into the parts of the app you need most."
         actions={[
           { href: "/profile", label: "Open profile", secondary: true },
           { href: "/workouts", label: "Go to workouts" },
         ]}
         aside={
           <div className="rounded-[26px] border border-black/10 bg-slate-950 px-5 py-5 text-white shadow-[0_24px_60px_rgba(15,23,42,0.24)]">
-            <div className="text-sm font-semibold uppercase tracking-[0.2em] text-white/55">Support posture</div>
+            <div className="text-sm font-semibold uppercase tracking-[0.2em] text-white/55">Support summary</div>
             <p className="mt-3 text-sm leading-6 text-white/70">
-              Good help content shortens time-to-action. It should explain the product clearly enough that users can get back to training fast.
+              Help topics, troubleshooting notes, and account links are grouped here for quick access.
             </p>
           </div>
         }
       />
 
       <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-        <StatCard label="Guides" value="03" detail="Direct entry points into the sections users most often need help with." icon={BookOpenText} />
-        <StatCard label="Troubleshooting" value="Ready" detail="Camera setup, flow clarity, and account guidance are covered." icon={Wrench} />
-        <StatCard label="Account safety" value="Protected" detail="Authenticated routes remain behind the Supabase session middleware." icon={ShieldCheck} />
-        <StatCard label="Support intent" value="Actionable" detail="This page is designed to hand users back into the app, not strand them in docs." icon={LifeBuoy} />
+        <StatCard label="Guides" value="03" detail="Direct links into the core areas people open most often from help." icon={BookOpenText} />
+        <StatCard label="Troubleshooting" value="Ready" detail="Camera setup, flow clarity, and account notes are available here." icon={Wrench} />
+        <StatCard label="Account safety" value="Protected" detail="Sensitive account areas stay limited to signed-in access." icon={ShieldCheck} />
+        <StatCard label="Support intent" value="Actionable" detail="Relevant links stay close to the answers they belong to." icon={LifeBuoy} />
       </section>
 
       <SectionCard
         eyebrow="Quick access"
         title="Start from the help topic that matches the job"
-        description="The most useful support links are the ones that route users back into the correct page immediately."
+        description="Open the topic that matches what you need, then jump directly into the right part of the app."
       >
         <div className="grid gap-4 lg:grid-cols-3">
           {quickLinks.map((item) => (

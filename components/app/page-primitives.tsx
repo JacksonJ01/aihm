@@ -1,7 +1,8 @@
 import Link from "next/link";
 import type { ReactNode } from "react";
-import { ArrowRight, Database, type LucideIcon } from "lucide-react";
+import { ArrowRight, BadgeCheck, type LucideIcon } from "lucide-react";
 
+import type { DataSource, ViewerState } from "@/lib/site-data";
 import { cn } from "@/lib/utils";
 
 type HeroAction = {
@@ -34,8 +35,9 @@ type StatCardProps = {
 };
 
 type DataSourceNoticeProps = {
-  source: "live" | "sample";
-  tables: string[];
+  source: DataSource;
+  viewerState: ViewerState;
+  viewerEmail?: string;
 };
 
 export function AppPage({ children }: { children: ReactNode }) {
@@ -113,27 +115,34 @@ export function StatCard({ label, value, detail, icon: Icon }: StatCardProps) {
   );
 }
 
-export function DataSourceNotice({ source, tables }: DataSourceNoticeProps) {
+export function DataSourceNotice({ source, viewerState, viewerEmail }: DataSourceNoticeProps) {
+  const message =
+    viewerState === "authenticated"
+      ? source === "live"
+        ? "Your latest information is available in this section."
+        : source === "empty"
+          ? "This section is ready for your activity and will fill in as you use the app."
+          : "Your account is connected and this section will update as new activity comes in."
+      : source === "live"
+        ? "This section is currently showing shared activity. Sign in for a personalized view where available."
+        : source === "empty"
+          ? "Sign in to personalize this section."
+          : "Sign in to unlock a more personalized view in this section.";
+
   return (
     <div className="rounded-[24px] border border-black/10 bg-black px-5 py-5 text-white shadow-[0_18px_50px_rgba(15,23,42,0.24)]">
       <div className="flex items-start gap-3">
         <div className="rounded-full bg-white/10 p-2">
-          <Database className="h-4 w-4" />
+          <BadgeCheck className="h-4 w-4" />
         </div>
         <div className="space-y-2">
-          <div className="text-sm font-semibold uppercase tracking-[0.18em] text-white/65">Data status</div>
+          <div className="text-sm font-semibold uppercase tracking-[0.18em] text-white/65">Status</div>
+          {viewerState === "authenticated" && viewerEmail ? (
+            <div className="text-xs font-medium text-white/60">Signed in as {viewerEmail}</div>
+          ) : null}
           <p className="text-sm leading-6 text-white/85">
-            {source === "live"
-              ? "This page is reading from Supabase tables configured for the signed-in user."
-              : "This page is ready for Supabase, but it is currently showing structured sample content until the tables are set up or populated."}
+            {message}
           </p>
-          <div className="flex flex-wrap gap-2 pt-1">
-            {tables.map((table) => (
-              <span key={table} className="rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs font-medium text-white/80">
-                {table}
-              </span>
-            ))}
-          </div>
         </div>
       </div>
     </div>

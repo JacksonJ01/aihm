@@ -36,7 +36,11 @@ export default async function Page() {
         ]}
         aside={
           <>
-            <DataSourceNotice source={sessions.source} tables={["workout_sessions"]} />
+            <DataSourceNotice
+              source={sessions.source}
+              viewerState={sessions.viewerState}
+              viewerEmail={sessions.viewerEmail}
+            />
             <div className="rounded-[26px] border border-black/10 bg-slate-950 px-5 py-5 text-white shadow-[0_24px_60px_rgba(15,23,42,0.24)]">
               <div className="text-sm font-semibold uppercase tracking-[0.2em] text-white/55">Latest session</div>
               {latestSession ? (

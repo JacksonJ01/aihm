@@ -12,7 +12,7 @@ export function ProfileSettingsForm({ profile, preferences }: ProfileSettingsFor
       <div>
         <div className="text-sm font-semibold uppercase tracking-[0.18em] text-muted-foreground">Edit settings</div>
         <p className="mt-2 text-sm leading-6 text-muted-foreground">
-          These fields write back to Supabase when the relevant tables are set up. They are safe to use with the seed file and RLS policies already in place.
+          Update the details that shape how your training profile, preferences, and recommendations are presented.
         </p>
       </div>
 
@@ -71,7 +71,7 @@ export function ProfileSettingsForm({ profile, preferences }: ProfileSettingsFor
           Save settings
         </button>
         <p className="text-sm leading-6 text-muted-foreground">
-          If Supabase is not configured yet, the page continues to fall back to sample data until the tables are live.
+          Changes made here help keep your workouts, programs, and profile aligned with how you like to train.
         </p>
       </div>
     </form>

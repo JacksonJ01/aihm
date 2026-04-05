@@ -1,8 +1,10 @@
 "use client";
 
+import { updatePasswordAction } from "@/app/auth/actions";
+import { AuthSubmitButton } from "@/components/auth/auth-submit-button";
+import { TurnstileField } from "@/components/auth/turnstile-field";
 import { cn } from "@/lib/utils";
-import { createClient } from "@/lib/supabase/client";
-import { Button } from "@/components/ui/button";
+import { initialAuthActionState } from "@/lib/auth-form";
 import {
   Card,
   CardContent,
@@ -12,35 +14,17 @@ import {
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useActionState, useMemo } from "react";
 
 export function UpdatePasswordForm({
   className,
   ...props
 }: React.ComponentPropsWithoutRef<"div">) {
-  const [password, setPassword] = useState("");
-  const [error, setError] = useState<string | null>(null);
-  const [isLoading, setIsLoading] = useState(false);
-  const router = useRouter();
-
-  const handleForgotPassword = async (e: React.FormEvent) => {
-    e.preventDefault();
-    const supabase = createClient();
-    setIsLoading(true);
-    setError(null);
-
-    try {
-      const { error } = await supabase.auth.updateUser({ password });
-      if (error) throw error;
-      // Update this route to redirect to an authenticated route. The user already has an active session.
-      router.push("/protected");
-    } catch (error: unknown) {
-      setError(error instanceof Error ? error.message : "An error occurred");
-    } finally {
-      setIsLoading(false);
-    }
-  };
+  const [state, formAction] = useActionState(updatePasswordAction, initialAuthActionState);
+  const turnstileResetSignal = useMemo(
+    () => `${state.status}:${state.message ?? ""}`,
+    [state.message, state.status],
+  );
 
   return (
     <div className={cn("flex flex-col gap-6", className)} {...props}>
@@ -48,27 +32,41 @@ export function UpdatePasswordForm({
         <CardHeader>
           <CardTitle className="text-2xl">Reset Your Password</CardTitle>
           <CardDescription>
-            Please enter your new password below.
+            Enter a strong new password to finish securing your account.
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <form onSubmit={handleForgotPassword}>
+          <form action={formAction}>
             <div className="flex flex-col gap-6">
               <div className="grid gap-2">
                 <Label htmlFor="password">New password</Label>
                 <Input
                   id="password"
+                  name="password"
                   type="password"
                   placeholder="New password"
                   required
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
+                  autoComplete="new-password"
+                  minLength={10}
                 />
               </div>
-              {error && <p className="text-sm text-red-500">{error}</p>}
-              <Button type="submit" className="w-full" disabled={isLoading}>
-                {isLoading ? "Saving..." : "Save new password"}
-              </Button>
+              <div className="grid gap-2">
+                <Label htmlFor="repeat-password">Confirm new password</Label>
+                <Input
+                  id="repeat-password"
+                  name="repeat_password"
+                  type="password"
+                  placeholder="Confirm new password"
+                  required
+                  autoComplete="new-password"
+                  minLength={10}
+                />
+              </div>
+              <TurnstileField resetSignal={turnstileResetSignal} />
+              {state.status === "error" ? (
+                <p className="text-sm text-red-500">{state.message}</p>
+              ) : null}
+              <AuthSubmitButton idleText="Save new password" pendingText="Saving..." />
             </div>
           </form>
         </CardContent>

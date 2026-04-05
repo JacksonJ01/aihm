@@ -34,16 +34,21 @@ export default async function BrowseProgramsPage() {
       <PageHero
         eyebrow="Program library"
         title="Browse structured plans that give your training week a real shape."
-        description="Programs should feel like decision support. This page frames each plan clearly, surfaces training demands up front, and keeps the jump into your current plan one click away."
+        description="Browse plans by focus, training load, and duration to find a program that fits the week ahead."
         actions={[
           { href: "/programs", label: "Current programs", secondary: true },
           { href: "/workouts", label: "Start a workout" },
         ]}
         aside={
           <>
-            <DataSourceNotice source={programs.source} tables={["program_catalog"]} />
+            <DataSourceNotice
+              source={programs.source}
+              viewerState={programs.viewerState}
+              viewerEmail={programs.viewerEmail}
+            />
             <div className="rounded-[26px] border border-black/10 bg-white/75 px-5 py-5">
-              <div className="text-sm font-semibold uppercase tracking-[0.2em] text-muted-foreground">Selection filter</div>
+              {/* Internal note: this card should explain the library at a glance, not instruct the operator. */}
+              <div className="text-sm font-semibold uppercase tracking-[0.2em] text-muted-foreground">Program overview</div>
               <div className="mt-4 space-y-3 text-sm leading-6 text-muted-foreground">
                 <div className="rounded-2xl border border-black/10 bg-background/60 px-4 py-3">Focus areas: Strength, Mobility, Conditioning</div>
                 <div className="rounded-2xl border border-black/10 bg-background/60 px-4 py-3">Difficulty bands: Beginner to Advanced</div>
@@ -71,7 +76,7 @@ export default async function BrowseProgramsPage() {
       <SectionCard
         eyebrow="How to choose"
         title="A good program is one you can keep repeating."
-        description="This guidance makes the page easier to navigate for users who are still learning how to select a plan."
+        description="A few quick reference points make it easier to compare plans and choose one that fits your week."
       >
         <div className="grid gap-4 lg:grid-cols-3">
           {selectionGuide.map((item) => (

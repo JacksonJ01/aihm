@@ -3,6 +3,7 @@ import Link from "next/link";
 import { markAllNotificationsReadAction, markNotificationReadAction } from "@/app/notifications/actions";
 import type { NotificationItem } from "@/lib/site-data";
 import { formatLongDate } from "@/lib/site-data";
+import { getSafeAppPath } from "@/lib/utils";
 
 type NotificationsInboxProps = {
   notifications: NotificationItem[];
@@ -28,7 +29,10 @@ export function NotificationsInbox({ notifications }: NotificationsInboxProps) {
       </div>
 
       {notifications.length ? (
-        notifications.map((notification) => (
+        notifications.map((notification) => {
+          const safeHref = getSafeAppPath(notification.cta_href);
+
+          return (
           <article key={notification.id} className="rounded-[26px] border border-black/10 bg-white/72 px-5 py-5">
             <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
               <div className="max-w-2xl">
@@ -49,8 +53,8 @@ export function NotificationsInbox({ notifications }: NotificationsInboxProps) {
                   {formatLongDate(notification.created_at)}
                 </div>
                 <div className="flex flex-wrap gap-2 lg:justify-end">
-                  {notification.cta_href && notification.cta_label ? (
-                    <Link href={notification.cta_href} className="button-secondary">
+                  {safeHref && notification.cta_label ? (
+                    <Link href={safeHref} className="button-secondary">
                       {notification.cta_label}
                     </Link>
                   ) : null}
@@ -66,7 +70,8 @@ export function NotificationsInbox({ notifications }: NotificationsInboxProps) {
               </div>
             </div>
           </article>
-        ))
+        );
+        })
       ) : (
         <div className="rounded-[24px] border border-dashed border-black/10 bg-background/60 px-5 py-5 text-sm leading-6 text-muted-foreground">
           Notifications will populate here as workouts, community events, and friend activity generate updates.

@@ -1,11 +1,16 @@
+import { unstable_noStore as noStore } from "next/cache";
+
 import { hasEnvVars } from "@/lib/utils";
 import { createClient } from "@/lib/supabase/server";
 
-export type DataSource = "live" | "sample";
+export type DataSource = "live" | "sample" | "empty";
+export type ViewerState = "authenticated" | "guest";
 
 type PageResult<T> = {
   data: T;
   source: DataSource;
+  viewerState: ViewerState;
+  viewerEmail?: string;
 };
 
 export type ProgramCatalogItem = {
@@ -107,6 +112,7 @@ type AuthContext = {
   userId?: string;
   email?: string;
   supabase?: Awaited<ReturnType<typeof createClient>>;
+  viewerState: ViewerState;
 };
 
 const fallbackPrograms: ProgramCatalogItem[] = [
@@ -145,75 +151,6 @@ const fallbackPrograms: ProgramCatalogItem[] = [
   },
 ];
 
-const fallbackUserPrograms: UserProgramItem[] = [
-  {
-    id: "user-prog-1",
-    title: "Strength Foundation",
-    focus_area: "Strength",
-    status: "On track",
-    progress_percent: 68,
-    next_session: "2026-04-04T18:00:00.000Z",
-    streak_days: 4,
-    completed_sessions: 11,
-    weekly_target: 4,
-    weekly_completed: 3,
-  },
-  {
-    id: "user-prog-2",
-    title: "Mobility Reset",
-    focus_area: "Mobility",
-    status: "Recovery week",
-    progress_percent: 42,
-    next_session: "2026-04-05T12:00:00.000Z",
-    streak_days: 2,
-    completed_sessions: 6,
-    weekly_target: 5,
-    weekly_completed: 2,
-  },
-];
-
-const fallbackSessions: WorkoutSessionItem[] = [
-  {
-    id: "session-1",
-    title: "Mobility + Core Reset",
-    focus_area: "Mobility",
-    duration_minutes: 28,
-    effort: "Moderate",
-    score: 92,
-    completed_at: "2026-04-02T18:15:00.000Z",
-    notes: "Camera alignment stayed stable after the first three minutes.",
-  },
-  {
-    id: "session-2",
-    title: "Upper Push Strength",
-    focus_area: "Strength",
-    duration_minutes: 44,
-    effort: "High",
-    score: 88,
-    completed_at: "2026-03-31T18:05:00.000Z",
-    notes: "Good cadence, but shoulder position drifted during the last set.",
-  },
-  {
-    id: "session-3",
-    title: "Tempo Conditioning Ladder",
-    focus_area: "Conditioning",
-    duration_minutes: 35,
-    effort: "High",
-    score: 85,
-    completed_at: "2026-03-29T17:40:00.000Z",
-    notes: "Strong finish and consistent breathing on later rounds.",
-  },
-  {
-    id: "session-4",
-    title: "Recovery Mobility Flow",
-    focus_area: "Recovery",
-    duration_minutes: 22,
-    effort: "Low",
-    score: 95,
-    completed_at: "2026-03-27T12:30:00.000Z",
-    notes: "Best posture score this week.",
-  },
-];
 
 const fallbackPosts: CommunityPostItem[] = [
   {
@@ -272,86 +209,28 @@ const fallbackChallenges: CommunityChallengeItem[] = [
   },
 ];
 
-const fallbackFriends: FriendshipItem[] = [
-  {
-    id: "friend-1",
-    friend_name: "Jordan P.",
-    status: "accepted",
-    shared_streak: 5,
-    last_workout_at: "2026-04-02T18:20:00.000Z",
-    focus_area: "Strength",
-  },
-  {
-    id: "friend-2",
-    friend_name: "Camila S.",
-    status: "accepted",
-    shared_streak: 3,
-    last_workout_at: "2026-04-01T12:05:00.000Z",
-    focus_area: "Mobility",
-  },
-  {
-    id: "friend-3",
-    friend_name: "Theo M.",
-    status: "pending",
-    shared_streak: 0,
-    last_workout_at: "2026-03-30T09:10:00.000Z",
-    focus_area: "Conditioning",
-  },
-];
-
-const fallbackNotifications: NotificationItem[] = [
-  {
-    id: "notif-1",
-    title: "Tonight's session is ready",
-    message: "Your next Strength Foundation workout is queued with a shoulder prep warm-up.",
-    category: "Workout",
-    cta_label: "Open workout",
-    cta_href: "/workouts",
-    is_read: false,
-    created_at: "2026-04-03T08:10:00.000Z",
-  },
-  {
-    id: "notif-2",
-    title: "Jordan matched your streak",
-    message: "Your accountability circle is still tied at five days. One session breaks the tie.",
-    category: "Friends",
-    cta_label: "View friends",
-    cta_href: "/friends",
-    is_read: false,
-    created_at: "2026-04-02T20:00:00.000Z",
-  },
-  {
-    id: "notif-3",
-    title: "Challenge reminder",
-    message: "The 7-Day Consistency Sprint closes in four days. You have completed two of seven check-ins.",
-    category: "Community",
-    cta_label: "Open community",
-    cta_href: "/community",
-    is_read: true,
-    created_at: "2026-04-01T11:45:00.000Z",
-  },
-];
-
-const fallbackProfile: UserProfileItem = {
-  display_name: "Alex Carter",
-  training_goal: "Build a stronger weekly routine with better movement quality.",
-  weekly_goal: 4,
-  focus_area: "Strength",
-  level: "Intermediate",
-  city: "Remote",
-  bio: "Working toward a repeatable training cadence that balances lifting, mobility, and recovery.",
+const emptyProfile: UserProfileItem = {
+  display_name: "Your profile",
+  training_goal: "",
+  weekly_goal: 0,
+  focus_area: "General",
+  level: "Not set",
+  city: "",
+  bio: "",
 };
 
-const fallbackPreferences: TrainingPreferenceItem = {
-  camera_enabled: true,
+const emptyPreferences: TrainingPreferenceItem = {
+  camera_enabled: false,
   audio_cues: false,
-  preferred_time: "Evenings",
-  recovery_day: "Sunday",
+  preferred_time: "Not set",
+  recovery_day: "Not set",
 };
 
 async function getAuthContext(): Promise<AuthContext> {
+  noStore();
+
   if (!hasEnvVars) {
-    return {};
+    return { viewerState: "guest" };
   }
 
   const supabase = await createClient();
@@ -361,6 +240,7 @@ async function getAuthContext(): Promise<AuthContext> {
     supabase,
     userId: data?.claims?.sub,
     email: data?.claims?.email,
+    viewerState: data?.claims?.sub ? "authenticated" : "guest",
   };
 }
 
@@ -372,13 +252,68 @@ async function withFallback<T>(
     const context = await getAuthContext();
 
     if (!context.supabase) {
-      return { data: fallback, source: "sample" };
+      return {
+        data: fallback,
+        source: "sample",
+        viewerState: context.viewerState,
+        viewerEmail: context.email,
+      };
     }
 
     const data = await loader(context);
-    return { data, source: "live" };
+    return {
+      data,
+      source: "live",
+      viewerState: context.viewerState,
+      viewerEmail: context.email,
+    };
   } catch {
-    return { data: fallback, source: "sample" };
+    const context = await getAuthContext().catch(() => ({ viewerState: "guest" as const }));
+    return {
+      data: fallback,
+      source: "sample",
+      viewerState: context.viewerState,
+      viewerEmail: "email" in context ? context.email : undefined,
+    };
+  }
+}
+
+async function withPersonalizedData<T>(
+  emptyValue: T,
+  loader: (context: AuthContext & { userId: string; supabase: NonNullable<AuthContext["supabase"]> }) => Promise<T>,
+  isEmpty: (data: T) => boolean,
+): Promise<PageResult<T>> {
+  const context = await getAuthContext();
+
+  if (!context.supabase || !context.userId) {
+    return {
+      data: emptyValue,
+      source: "empty",
+      viewerState: context.viewerState,
+      viewerEmail: context.email,
+    };
+  }
+
+  try {
+    const data = await loader({
+      ...context,
+      userId: context.userId,
+      supabase: context.supabase,
+    });
+
+    return {
+      data,
+      source: isEmpty(data) ? "empty" : "live",
+      viewerState: context.viewerState,
+      viewerEmail: context.email,
+    };
+  } catch {
+    return {
+      data: emptyValue,
+      source: "empty",
+      viewerState: context.viewerState,
+      viewerEmail: context.email,
+    };
   }
 }
 
@@ -415,12 +350,8 @@ export async function getBrowseProgramsData() {
 }
 
 export async function getProgramsData() {
-  return withFallback(fallbackUserPrograms, async ({ supabase, userId }) => {
-    if (!userId) {
-      return fallbackUserPrograms;
-    }
-
-    const { data, error } = await supabase!
+  return withPersonalizedData([], async ({ supabase, userId }) => {
+    const { data, error } = await supabase
       .from("user_programs")
       .select("id, title, focus_area, status, progress_percent, next_session, streak_days, completed_sessions, weekly_target, weekly_completed")
       .eq("user_id", userId)
@@ -430,17 +361,13 @@ export async function getProgramsData() {
       throw error;
     }
 
-    return (data as UserProgramItem[]) ?? fallbackUserPrograms;
-  });
+    return (data as UserProgramItem[]) ?? [];
+  }, (data) => data.length === 0);
 }
 
 export async function getWorkoutSessionsData() {
-  return withFallback(fallbackSessions, async ({ supabase, userId }) => {
-    if (!userId) {
-      return fallbackSessions;
-    }
-
-    const { data, error } = await supabase!
+  return withPersonalizedData([], async ({ supabase, userId }) => {
+    const { data, error } = await supabase
       .from("workout_sessions")
       .select("id, title, focus_area, duration_minutes, effort, score, completed_at, notes")
       .eq("user_id", userId)
@@ -451,8 +378,8 @@ export async function getWorkoutSessionsData() {
       throw error;
     }
 
-    return (data as WorkoutSessionItem[]) ?? fallbackSessions;
-  });
+    return (data as WorkoutSessionItem[]) ?? [];
+  }, (data) => data.length === 0);
 }
 
 export async function getCommunityData() {
@@ -486,12 +413,8 @@ export async function getCommunityData() {
 }
 
 export async function getFriendsData() {
-  return withFallback(fallbackFriends, async ({ supabase, userId }) => {
-    if (!userId) {
-      return fallbackFriends;
-    }
-
-    const { data, error } = await supabase!
+  return withPersonalizedData([], async ({ supabase, userId }) => {
+    const { data, error } = await supabase
       .from("friendships")
       .select("id, friend_name, status, shared_streak, last_workout_at, focus_area")
       .eq("user_id", userId)
@@ -502,17 +425,13 @@ export async function getFriendsData() {
       throw error;
     }
 
-    return (data as FriendshipItem[]) ?? fallbackFriends;
-  });
+    return (data as FriendshipItem[]) ?? [];
+  }, (data) => data.length === 0);
 }
 
 export async function getNotificationsData() {
-  return withFallback(fallbackNotifications, async ({ supabase, userId }) => {
-    if (!userId) {
-      return fallbackNotifications;
-    }
-
-    const { data, error } = await supabase!
+  return withPersonalizedData([], async ({ supabase, userId }) => {
+    const { data, error } = await supabase
       .from("notifications")
       .select("id, title, message, category, cta_label, cta_href, is_read, created_at")
       .eq("user_id", userId)
@@ -523,33 +442,30 @@ export async function getNotificationsData() {
       throw error;
     }
 
-    return (data as NotificationItem[]) ?? fallbackNotifications;
-  });
+    return ((data as NotificationItem[]) ?? []).map((notification) => ({
+      ...notification,
+      cta_href: notification.cta_href?.startsWith("/") && !notification.cta_href.startsWith("//")
+        ? notification.cta_href
+        : null,
+    }));
+  }, (data) => data.length === 0);
 }
 
 export async function getProfileData() {
-  return withFallback(
+  return withPersonalizedData(
     {
-      profile: fallbackProfile,
-      preferences: fallbackPreferences,
-      email: "athlete@aihm.app",
+      profile: emptyProfile,
+      preferences: emptyPreferences,
+      email: "",
     },
     async ({ supabase, userId, email }) => {
-      if (!userId) {
-        return {
-          profile: fallbackProfile,
-          preferences: fallbackPreferences,
-          email: email ?? "athlete@aihm.app",
-        };
-      }
-
       const [{ data: profile, error: profileError }, { data: preferences, error: preferencesError }] = await Promise.all([
-        supabase!
+        supabase
           .from("user_profiles")
           .select("display_name, training_goal, weekly_goal, focus_area, level, city, bio")
           .eq("user_id", userId)
           .maybeSingle(),
-        supabase!
+        supabase
           .from("training_preferences")
           .select("camera_enabled, audio_cues, preferred_time, recovery_day")
           .eq("user_id", userId)
@@ -561,10 +477,11 @@ export async function getProfileData() {
       }
 
       return {
-        profile: (profile as UserProfileItem) ?? fallbackProfile,
-        preferences: (preferences as TrainingPreferenceItem) ?? fallbackPreferences,
-        email: email ?? "athlete@aihm.app",
+        profile: (profile as UserProfileItem) ?? emptyProfile,
+        preferences: (preferences as TrainingPreferenceItem) ?? emptyPreferences,
+        email: email ?? "",
       };
     },
+    (data) => !data.email && !data.profile.training_goal && !data.profile.bio,
   );
 }

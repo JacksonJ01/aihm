@@ -9,13 +9,13 @@ export default function SignOutPage() {
       <PageHero
         eyebrow="Sign out"
         title="Leave the session cleanly when you are done."
-        description="This page gives the profile menu a proper destination instead of a dead link. Signing out here keeps the experience consistent with the rest of the app."
+        description="Sign out from here when you want to close the current session and return to the login flow."
         actions={[
           { href: "/profile", label: "Back to profile", secondary: true },
         ]}
         aside={
           <div className="rounded-[26px] border border-black/10 bg-slate-950 px-5 py-5 text-white">
-            <div className="text-sm font-semibold uppercase tracking-[0.2em] text-white/55">Session note</div>
+            <div className="text-sm font-semibold uppercase tracking-[0.2em] text-white/55">Session status</div>
             <p className="mt-3 text-sm leading-6 text-white/70">
               Signing out returns you to the authentication flow and clears the active client session.
             </p>
@@ -26,7 +26,7 @@ export default function SignOutPage() {
       <SectionCard
         eyebrow="Confirm"
         title="Ready to sign out?"
-        description="Use the action below to close the current session, or jump back into the app if you opened this by mistake."
+        description="Choose sign out to end the current session, or return to profile if you want to stay in the app."
         className="mx-auto max-w-3xl"
       >
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center">

@@ -36,16 +36,20 @@ export default async function ProgressPage() {
       <PageHero
         eyebrow="Progress dashboard"
         title="Turn completed sessions into a view you can actually steer from."
-        description="This page keeps adherence, movement quality, and recent workload readable enough that the next training decision feels grounded."
+        description="Track recent workload, movement quality, and consistency from one clear progress view."
         actions={[
           { href: "/programs", label: "View current programs", secondary: true },
           { href: "/workouts", label: "Start another session" },
         ]}
         aside={
           <>
-            <DataSourceNotice source={sessions.source} tables={["workout_sessions"]} />
+            <DataSourceNotice
+              source={sessions.source}
+              viewerState={sessions.viewerState}
+              viewerEmail={sessions.viewerEmail}
+            />
             <div className="rounded-[26px] border border-black/10 bg-white/75 px-5 py-5">
-              <div className="text-sm font-semibold uppercase tracking-[0.2em] text-muted-foreground">Trend note</div>
+              <div className="text-sm font-semibold uppercase tracking-[0.2em] text-muted-foreground">Recent pattern</div>
               <p className="mt-3 text-sm leading-6 text-muted-foreground">
                 Scores are strongest when shorter recovery and mobility sessions stay in the week instead of being skipped first.
               </p>
@@ -103,7 +107,7 @@ export default async function ProgressPage() {
         <SectionCard
           eyebrow="Milestones"
           title="What the numbers are saying"
-          description="Short summaries translate raw logs into next-step guidance."
+          description="Recent highlights make it easier to see where the strongest sessions are coming from."
         >
           <div className="space-y-3">
             <div className="rounded-[24px] border border-black/10 bg-white/70 px-4 py-4">

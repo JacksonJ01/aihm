@@ -21,28 +21,32 @@ export default async function FriendsPage() {
       <PageHero
         eyebrow="Friends"
         title="Keep your accountability circle visible, current, and easy to act on."
-        description="The friends page should show who is active, who needs a reply, and who is helping keep your streak honest."
+        description="Follow active connections, pending invites, and shared streaks from one place."
         actions={[
           { href: "/community", label: "Open community", secondary: true },
           { href: "/workouts", label: "Train now" },
         ]}
         aside={
           <>
-            <DataSourceNotice source={friendships.source} tables={["friendships"]} />
+            <DataSourceNotice
+              source={friendships.source}
+              viewerState={friendships.viewerState}
+              viewerEmail={friendships.viewerEmail}
+            />
             <div className="rounded-[26px] border border-black/10 bg-slate-950 px-5 py-5 text-white">
               <div className="text-sm font-semibold uppercase tracking-[0.2em] text-white/55">Circle health</div>
               <div className="mt-4 text-4xl font-semibold tracking-[-0.04em]">{accepted.length}</div>
-              <p className="mt-2 text-sm leading-6 text-white/70">Accepted accountability connections currently visible on this page.</p>
+              <p className="mt-2 text-sm leading-6 text-white/70">Current active connections shown in your circle.</p>
             </div>
           </>
         }
       />
 
       <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-        <StatCard label="Accepted" value={String(accepted.length).padStart(2, "0")} detail="Friends already participating in your accountability loop." icon={Users} />
+        <StatCard label="Accepted" value={String(accepted.length).padStart(2, "0")} detail="Connections already active in your training circle." icon={Users} />
         <StatCard label="Pending" value={String(pending.length).padStart(2, "0")} detail="Connections waiting for a response or confirmation." icon={UserPlus2} />
         <StatCard label="Top shared streak" value={`${longestSharedStreak} days`} detail="The strongest current run with someone in your circle." icon={Flame} />
-        <StatCard label="Support mode" value="Active" detail="This page is built around quick scan, social momentum, and next actions." icon={HeartHandshake} />
+        <StatCard label="Support mode" value="Active" detail="Recent activity and follow-ups stay easy to scan here." icon={HeartHandshake} />
       </section>
 
       <section className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_320px]">

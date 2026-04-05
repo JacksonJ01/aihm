@@ -33,7 +33,11 @@ export default async function ProgramsPage() {
         ]}
         aside={
           <>
-            <DataSourceNotice source={programs.source} tables={["user_programs"]} />
+            <DataSourceNotice
+              source={programs.source}
+              viewerState={programs.viewerState}
+              viewerEmail={programs.viewerEmail}
+            />
             <div className="rounded-[26px] border border-black/10 bg-slate-950 px-5 py-5 text-white">
               <div className="text-sm font-semibold uppercase tracking-[0.2em] text-white/55">This week</div>
               <div className="mt-4 text-4xl font-semibold tracking-[-0.04em]">{weeklyCompleted}/{weeklyTarget}</div>
