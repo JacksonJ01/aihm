@@ -3,7 +3,7 @@
 import { loginAction } from "@/app/auth/actions";
 import { AuthSubmitButton } from "@/components/auth/auth-submit-button";
 import { TurnstileField } from "@/components/auth/turnstile-field";
-import { cn } from "@/lib/utils";
+import { cn, getSafeAppPath } from "@/lib/utils";
 import { initialAuthActionState } from "@/lib/auth-form";
 import {
   Card,
@@ -19,13 +19,17 @@ import { useActionState, useMemo } from "react";
 
 export function LoginForm({
   className,
+  nextPath,
   ...props
-}: React.ComponentPropsWithoutRef<"div">) {
+}: React.ComponentPropsWithoutRef<"div"> & {
+  nextPath?: string;
+}) {
   const [state, formAction] = useActionState(loginAction, initialAuthActionState);
   const turnstileResetSignal = useMemo(
     () => `${state.status}:${state.message ?? ""}`,
     [state.message, state.status],
   );
+  const safeNextPath = getSafeAppPath(nextPath) ?? "/";
 
   return (
     <div className={cn("flex flex-col gap-6", className)} {...props}>
@@ -33,21 +37,22 @@ export function LoginForm({
         <CardHeader>
           <CardTitle className="text-2xl">Login</CardTitle>
           <CardDescription>
-            Enter your email below to log in to your account.
+            Enter your email or username below to log in to your account.
           </CardDescription>
         </CardHeader>
         <CardContent>
           <form action={formAction}>
+            <input type="hidden" name="next" value={safeNextPath} />
             <div className="flex flex-col gap-6">
               <div className="grid gap-2">
-                <Label htmlFor="email">Email</Label>
+                <Label htmlFor="email">Email or Username</Label>
                 <Input
                   id="email"
                   name="email"
-                  type="email"
-                  placeholder="m@example.com"
+                  type="text"
+                  placeholder="m@example.com or your_username"
                   required
-                  autoComplete="email"
+                  autoComplete="username"
                 />
               </div>
               <div className="grid gap-2">

@@ -5,11 +5,16 @@ import Link from "next/link";
 import { useState, useRef, useEffect, useLayoutEffect } from "react";
 import { usePathname } from 'next/navigation';
 import { createPortal } from "react-dom";
+import { createClient } from "@/lib/supabase/client";
 
 export default function NavBar() {
+  const [isSignedIn, setIsSignedIn] = useState(false);
   const [programsOpen, setProgramsOpen] = useState(false);
   const [communityOpen, setCommunityOpen] = useState(false);
   const [profileOpen, setProfileOpen] = useState(false);
+  const programsCloseTimerRef = useRef<number | null>(null);
+  const communityCloseTimerRef = useRef<number | null>(null);
+  const profileCloseTimerRef = useRef<number | null>(null);
   const programsRef = useRef<HTMLDivElement | null>(null);
   const communityRef = useRef<HTMLDivElement | null>(null);
   const profileRef = useRef<HTMLDivElement | null>(null);
@@ -82,8 +87,51 @@ export default function NavBar() {
     padding: '6px 10px',
     display: 'inline-flex',
     alignItems: 'center',
+    background: 'transparent',
+    border: 'none',
+    color: 'inherit',
+    cursor: 'pointer',
+    font: 'inherit',
   };
-  function PortalMenu({ anchorRef, isOpen, alignRight, children }: { anchorRef: React.RefObject<HTMLElement | null>; isOpen: boolean; alignRight?: boolean; children: React.ReactNode; }) {
+  const clearCloseTimer = (timerRef: React.MutableRefObject<number | null>) => {
+    if (timerRef.current !== null) {
+      window.clearTimeout(timerRef.current);
+      timerRef.current = null;
+    }
+  };
+
+  const openProgramsMenu = () => {
+    clearCloseTimer(programsCloseTimerRef);
+    setProgramsOpen(true);
+    setCommunityOpen(false);
+    setProfileOpen(false);
+  };
+
+  const openCommunityMenu = () => {
+    clearCloseTimer(communityCloseTimerRef);
+    setCommunityOpen(true);
+    setProgramsOpen(false);
+    setProfileOpen(false);
+  };
+
+  const openProfileMenu = () => {
+    clearCloseTimer(profileCloseTimerRef);
+    setProfileOpen(true);
+    setProgramsOpen(false);
+    setCommunityOpen(false);
+  };
+
+  const scheduleClose = (
+    timerRef: React.MutableRefObject<number | null>,
+    closeMenu: React.Dispatch<React.SetStateAction<boolean>>,
+  ) => {
+    clearCloseTimer(timerRef);
+    timerRef.current = window.setTimeout(() => {
+      closeMenu(false);
+    }, 120);
+  };
+
+  function PortalMenu({ anchorRef, isOpen, alignRight, onMouseEnter, onMouseLeave, children }: { anchorRef: React.RefObject<HTMLElement | null>; isOpen: boolean; alignRight?: boolean; onMouseEnter?: () => void; onMouseLeave?: () => void; children: React.ReactNode; }) {
     const [pos, setPos] = useState<{ top: number; left: number; width: number } | null>(null);
 
     useLayoutEffect(() => {
@@ -127,8 +175,37 @@ export default function NavBar() {
       zIndex: 10000,
     };
 
-    return createPortal(<div style={style}>{children}</div>, document.body);
+    return createPortal(
+      <div style={style} onMouseEnter={onMouseEnter} onMouseLeave={onMouseLeave}>
+        {children}
+      </div>,
+      document.body,
+    );
   }
+
+  useEffect(() => {
+    const supabase = createClient();
+    let mounted = true;
+
+    supabase.auth.getUser().then(({ data }) => {
+      if (mounted) {
+        setIsSignedIn(Boolean(data.user));
+      }
+    });
+
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((_event, session) => {
+      if (mounted) {
+        setIsSignedIn(Boolean(session?.user));
+      }
+    });
+
+    return () => {
+      mounted = false;
+      subscription.unsubscribe();
+    };
+  }, []);
 
   useEffect(() => {
     function onDoc(e: MouseEvent) {
@@ -160,6 +237,14 @@ export default function NavBar() {
     document.addEventListener("click", onDoc);
     return () => document.removeEventListener("click", onDoc);
   }, [mobileMenuOpen]);
+
+  useEffect(() => {
+    return () => {
+      clearCloseTimer(programsCloseTimerRef);
+      clearCloseTimer(communityCloseTimerRef);
+      clearCloseTimer(profileCloseTimerRef);
+    };
+  }, []);
 
   // Responsive detection for mobile menu
   useEffect(() => {
@@ -208,9 +293,9 @@ export default function NavBar() {
           )}
         </div>
 
-        {/* Center: main nav - centered (on mobile: logo + profile centered) */}
-        <div style={{ flex: '1 1 auto', display: isMobile ? 'flex' : 'flex', justifyContent: isMobile ? 'center' : 'center' }}>
-          {!isMobile ? (
+        {/* Center: main nav - centered (on mobile: logo centered) */}
+        <div style={{ flex: '1 1 auto', display: 'flex', justifyContent: 'center' }}>
+          {!isMobile && isSignedIn ? (
             <nav style={{ display: 'flex', gap: 28, alignItems: 'center', flexWrap: 'nowrap' }}>
               <Link
                 href="/workouts"
@@ -227,10 +312,21 @@ export default function NavBar() {
                 Start Workout
               </Link>
 
-              <div ref={programsRef} style={{ position: 'relative' }}>
+              <div
+                ref={programsRef}
+                style={{ position: 'relative' }}
+                onMouseEnter={openProgramsMenu}
+                onMouseLeave={() => scheduleClose(programsCloseTimerRef, setProgramsOpen)}
+              >
                 <button
                   ref={programsBtnRef}
-                  onClick={() => setProgramsOpen(v => !v)}
+                  onClick={() => setProgramsOpen(v => {
+                    const next = !v;
+                    if (next) {
+                      openProgramsMenu();
+                    }
+                    return next;
+                  })}
                   style={{
                       ...navItemBase,
                       boxShadow: isProgramsActive ? '0 18px 60px rgba(0,0,0,0.30)' : undefined,
@@ -242,19 +338,35 @@ export default function NavBar() {
                 >
                   Programs ▾
                 </button>
-                <PortalMenu anchorRef={programsBtnRef} isOpen={programsOpen}>
+                <PortalMenu
+                  anchorRef={programsBtnRef}
+                  isOpen={programsOpen}
+                  onMouseEnter={openProgramsMenu}
+                  onMouseLeave={() => scheduleClose(programsCloseTimerRef, setProgramsOpen)}
+                >
                   <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-                    <Link href="/browsePrograms" style={{ whiteSpace: 'nowrap', color: 'inherit' }}>Browse Programs</Link>
-                    <Link href="/programs" style={{ whiteSpace: 'nowrap', color: 'inherit' }}>Current Programs</Link>
-                    <Link href="/progress" style={{ whiteSpace: 'nowrap', color: 'inherit' }}>Progress</Link>
+                    <Link href="/browsePrograms" onClick={() => setProgramsOpen(false)} style={{ whiteSpace: 'nowrap', color: 'inherit' }}>Browse Programs</Link>
+                    <Link href="/programs" onClick={() => setProgramsOpen(false)} style={{ whiteSpace: 'nowrap', color: 'inherit' }}>Current Programs</Link>
+                    <Link href="/progress" onClick={() => setProgramsOpen(false)} style={{ whiteSpace: 'nowrap', color: 'inherit' }}>Progress</Link>
                   </div>
                 </PortalMenu>
               </div>
 
-              <div ref={communityRef} style={{ position: 'relative' }}>
+              <div
+                ref={communityRef}
+                style={{ position: 'relative' }}
+                onMouseEnter={openCommunityMenu}
+                onMouseLeave={() => scheduleClose(communityCloseTimerRef, setCommunityOpen)}
+              >
                 <button
                   ref={communityBtnRef}
-                  onClick={() => setCommunityOpen(v => !v)}
+                  onClick={() => setCommunityOpen(v => {
+                    const next = !v;
+                    if (next) {
+                      openCommunityMenu();
+                    }
+                    return next;
+                  })}
                   style={{
                       ...navItemBase,
                       boxShadow: communityActive ? '0 18px 60px rgba(0,0,0,0.30)' : undefined,
@@ -266,10 +378,15 @@ export default function NavBar() {
                 >
                   Community ▾
                 </button>
-                <PortalMenu anchorRef={communityBtnRef} isOpen={communityOpen}>
+                <PortalMenu
+                  anchorRef={communityBtnRef}
+                  isOpen={communityOpen}
+                  onMouseEnter={openCommunityMenu}
+                  onMouseLeave={() => scheduleClose(communityCloseTimerRef, setCommunityOpen)}
+                >
                   <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-                    <Link href="/community" style={{ whiteSpace: 'nowrap', color: 'inherit' }}>Forums & Challenges</Link>
-                    <Link href="/friends" style={{ whiteSpace: 'nowrap', color: 'inherit' }}>Friends</Link>
+                    <Link href="/community" onClick={() => setCommunityOpen(false)} style={{ whiteSpace: 'nowrap', color: 'inherit' }}>Forums & Challenges</Link>
+                    <Link href="/friends" onClick={() => setCommunityOpen(false)} style={{ whiteSpace: 'nowrap', color: 'inherit' }}>Friends</Link>
                   </div>
                 </PortalMenu>
               </div>
@@ -287,30 +404,12 @@ export default function NavBar() {
                 Notifications
               </Link>
             </nav>
-          ) : (
-            <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-              <Link
-                href="/"
-                style={{
-                  ...navItemBase,
-                  fontWeight: 700,
-                  fontSize: 18,
-                  color: aiHmActive ? 'white' : undefined,
-                  textDecoration: 'none',
-                  boxShadow: aiHmActive ? '0 18px 60px rgba(0,0,0,0.30)' : undefined,
-                  backgroundColor: aiHmActive ? 'rgba(255, 255, 255, 0)' : undefined,
-                  borderRadius: aiHmActive ? 10 : undefined,
-                }}
-              >
-                AIHM
-              </Link>
-            </div>
-          )}
+          ) : null}
         </div>
 
         {/* Right: notifications + profile (and hamburger on mobile) */}
         <div style={{ flex: '0 0 auto', display: 'flex', gap: 20, alignItems: 'center' }}>
-          {isMobile && (
+          {isMobile && isSignedIn ? (
             <button
               ref={mobileMenuButtonRef}
               aria-label="Open menu"
@@ -330,13 +429,57 @@ export default function NavBar() {
             >
               ☰
             </button>
-          )}
+          ) : null}
 
-          {!isMobile && (
-            <div ref={profileRef} style={{ position: 'relative' }}>
+          {!isSignedIn ? (
+            <div style={{ display: 'flex', gap: 14, alignItems: 'center' }}>
+              <Link
+                href="/auth/login"
+                style={{
+                  ...navItemBase,
+                  textDecoration: 'none',
+                  color: 'white',
+                }}
+                onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.transform = 'translateY(-2px)'; }}
+                onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.transform = ''; }}
+              >
+                Sign in
+              </Link>
+              <Link
+                href="/auth/sign-up"
+                style={{
+                  ...navItemBase,
+                  textDecoration: 'none',
+                  color: 'black',
+                  backgroundColor: 'white',
+                  borderRadius: 999,
+                  padding: '8px 14px',
+                  fontWeight: 600,
+                }}
+                onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.transform = 'translateY(-2px)'; }}
+                onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.transform = ''; }}
+              >
+                Sign up
+              </Link>
+            </div>
+          ) : null}
+
+          {!isMobile && isSignedIn ? (
+            <div
+              ref={profileRef}
+              style={{ position: 'relative' }}
+              onMouseEnter={openProfileMenu}
+              onMouseLeave={() => scheduleClose(profileCloseTimerRef, setProfileOpen)}
+            >
               <button
                 ref={profileBtnRef}
-                onClick={() => setProfileOpen(v => !v)}
+                onClick={() => setProfileOpen(v => {
+                  const next = !v;
+                  if (next) {
+                    openProfileMenu();
+                  }
+                  return next;
+                })}
                 style={{
                   ...navItemBase,
                   transition: 'transform 120ms ease, box-shadow 180ms ease',
@@ -350,69 +493,80 @@ export default function NavBar() {
               >
                 Profile ▾
               </button>
-              <PortalMenu anchorRef={profileBtnRef} isOpen={profileOpen} alignRight>
+              <PortalMenu
+                anchorRef={profileBtnRef}
+                isOpen={profileOpen}
+                alignRight
+                onMouseEnter={openProfileMenu}
+                onMouseLeave={() => scheduleClose(profileCloseTimerRef, setProfileOpen)}
+              >
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-                  <Link href="/profile" onClick={() => setProfileOpen(false)} style={{ whiteSpace: 'nowrap', color: 'inherit' }}>Profile Settings</Link>
+                  <Link href={isSignedIn ? "/profile" : "/auth/login"} onClick={() => setProfileOpen(false)} style={{ whiteSpace: 'nowrap', color: 'inherit' }}>{isSignedIn ? 'Profile Settings' : 'Sign in'}</Link>
                   <Link href="/help" onClick={() => setProfileOpen(false)} style={{ whiteSpace: 'nowrap', color: 'inherit' }}>Help / Docs</Link>
-                  <Link href="/signout" onClick={() => setProfileOpen(false)} style={{ whiteSpace: 'nowrap', color: 'inherit' }}>Sign out</Link>
+                  {isSignedIn ? (
+                    <Link href="/signout" onClick={() => setProfileOpen(false)} style={{ whiteSpace: 'nowrap', color: 'inherit' }}>Sign out</Link>
+                  ) : null}
                 </div>
               </PortalMenu>
             </div>
-          )}
+          ) : null}
         </div>
       </div>
 
       {/* Mobile menu panel (simple vertical menu) */}
-      {isMobile && mobileMenuOpen && (
+      {isMobile && isSignedIn && mobileMenuOpen && (
         <div ref={mobileMenuRef} style={{ position: 'absolute', top: '100%', left: 0, right: 0, backgroundColor: '#000', color: 'white', padding: 12, boxShadow: '0 6px 18px rgba(0,0,0,0.12)', zIndex: 9999, colorScheme: 'dark' }}>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-            <Link
-              href="/workouts"
-              onClick={() => { setMobileMenuOpen(false); setActiveFor('workout'); }}
-              style={{ whiteSpace: 'nowrap', color: activeMobileTop && activeMobileTop !== 'workout' ? 'rgba(255,255,255,0.6)' : 'white', transition: 'color 150ms ease' }}
-            >
-              Start Workout
-            </Link>
+            {isSignedIn ? (
+              <>
+                <Link
+                  href="/workouts"
+                  onClick={() => { setMobileMenuOpen(false); setActiveFor('workout'); }}
+                  style={{ whiteSpace: 'nowrap', color: activeMobileTop && activeMobileTop !== 'workout' ? 'rgba(255,255,255,0.6)' : 'white', transition: 'color 150ms ease' }}
+                >
+                  Start Workout
+                </Link>
 
-            <div>
-              <button
-                onClick={() => { toggleProgramsMobile(); setActiveFor(programsMobileOpen ? null : 'programs'); }}
-                style={{ width: '100%', textAlign: 'left', color: activeMobileTop === 'programs' ? 'white' : 'rgba(255,255,255,0.6)', backgroundColor: 'transparent', border: 'none', transition: 'color 180ms ease', colorScheme: 'dark' }}
-              >
-                Programs ▾
-              </button>
+                <div>
+                  <button
+                    onClick={() => { toggleProgramsMobile(); setActiveFor(programsMobileOpen ? null : 'programs'); }}
+                    style={{ width: '100%', textAlign: 'left', color: activeMobileTop === 'programs' ? 'white' : 'rgba(255,255,255,0.6)', backgroundColor: 'transparent', border: 'none', transition: 'color 180ms ease', colorScheme: 'dark' }}
+                  >
+                    Programs ▾
+                  </button>
 
-              <div style={{ overflow: 'hidden', maxHeight: programsMobileOpen ? 240 : 0, opacity: programsMobileOpen ? 1 : 0, transition: 'max-height 220ms ease, opacity 180ms ease' }}>
-                <div style={{ paddingLeft: 12, display: 'flex', flexDirection: 'column', gap: 8 }}>
-                  <Link href="/browsePrograms" onClick={() => { setMobileMenuOpen(false); setProgramsMobileOpen(false); setActiveFor(null); }} style={{ color: 'white' }}>Browse Programs</Link>
-                  <Link href="/programs" onClick={() => { setMobileMenuOpen(false); setProgramsMobileOpen(false); setActiveFor(null); }} style={{ color: 'white' }}>Current Programs</Link>
-                  <Link href="/progress" onClick={() => { setMobileMenuOpen(false); setProgramsMobileOpen(false); setActiveFor(null); }} style={{ color: 'white' }}>Progress</Link>
+                  <div style={{ overflow: 'hidden', maxHeight: programsMobileOpen ? 240 : 0, opacity: programsMobileOpen ? 1 : 0, transition: 'max-height 220ms ease, opacity 180ms ease' }}>
+                    <div style={{ paddingLeft: 12, display: 'flex', flexDirection: 'column', gap: 8 }}>
+                      <Link href="/browsePrograms" onClick={() => { setMobileMenuOpen(false); setProgramsMobileOpen(false); setActiveFor(null); }} style={{ color: 'white' }}>Browse Programs</Link>
+                      <Link href="/programs" onClick={() => { setMobileMenuOpen(false); setProgramsMobileOpen(false); setActiveFor(null); }} style={{ color: 'white' }}>Current Programs</Link>
+                      <Link href="/progress" onClick={() => { setMobileMenuOpen(false); setProgramsMobileOpen(false); setActiveFor(null); }} style={{ color: 'white' }}>Progress</Link>
+                    </div>
+                  </div>
                 </div>
-              </div>
-            </div>
 
-            <div>
-              <button
-                onClick={() => { toggleCommunityMobile(); setActiveFor(communityMobileOpen ? null : 'community'); }}
-                style={{ width: '100%', textAlign: 'left', color: activeMobileTop === 'community' ? 'white' : 'rgba(255,255,255,0.6)', backgroundColor: 'transparent', border: 'none', transition: 'color 180ms ease', colorScheme: 'dark' }}
-              >
-                Community ▾
-              </button>
-              <div style={{ overflow: 'hidden', maxHeight: communityMobileOpen ? 200 : 0, opacity: communityMobileOpen ? 1 : 0, transition: 'max-height 220ms ease, opacity 180ms ease' }}>
-                <div style={{ paddingLeft: 12, display: 'flex', flexDirection: 'column', gap: 8 }}>
-                  <Link href="/community" onClick={() => { setMobileMenuOpen(false); setCommunityMobileOpen(false); setActiveFor(null); }} style={{ color: 'white' }}>Forums & Challenges</Link>
-                  <Link href="/friends" onClick={() => { setMobileMenuOpen(false); setCommunityMobileOpen(false); setActiveFor(null); }} style={{ color: 'white' }}>Friends</Link>
+                <div>
+                  <button
+                    onClick={() => { toggleCommunityMobile(); setActiveFor(communityMobileOpen ? null : 'community'); }}
+                    style={{ width: '100%', textAlign: 'left', color: activeMobileTop === 'community' ? 'white' : 'rgba(255,255,255,0.6)', backgroundColor: 'transparent', border: 'none', transition: 'color 180ms ease', colorScheme: 'dark' }}
+                  >
+                    Community ▾
+                  </button>
+                  <div style={{ overflow: 'hidden', maxHeight: communityMobileOpen ? 200 : 0, opacity: communityMobileOpen ? 1 : 0, transition: 'max-height 220ms ease, opacity 180ms ease' }}>
+                    <div style={{ paddingLeft: 12, display: 'flex', flexDirection: 'column', gap: 8 }}>
+                      <Link href="/community" onClick={() => { setMobileMenuOpen(false); setCommunityMobileOpen(false); setActiveFor(null); }} style={{ color: 'white' }}>Forums & Challenges</Link>
+                      <Link href="/friends" onClick={() => { setMobileMenuOpen(false); setCommunityMobileOpen(false); setActiveFor(null); }} style={{ color: 'white' }}>Friends</Link>
+                    </div>
+                  </div>
                 </div>
-              </div>
-            </div>
-            {/* Notifications (mobile) — placed after Community, before Profile */}
-            <Link
-              href="/notifications"
-              onClick={() => { setMobileMenuOpen(false); setActiveFor('notifications'); }}
-              style={{ color: activeMobileTop === 'notifications' ? 'white' : 'rgba(255,255,255,0.6)', transition: 'color 180ms ease' }}
-            >
-              Notifications
-            </Link>
+                <Link
+                  href="/notifications"
+                  onClick={() => { setMobileMenuOpen(false); setActiveFor('notifications'); }}
+                  style={{ color: activeMobileTop === 'notifications' ? 'white' : 'rgba(255,255,255,0.6)', transition: 'color 180ms ease' }}
+                >
+                  Notifications
+                </Link>
+              </>
+            ) : null}
             {/* Profile dropdown for mobile (inside hamburger) */}
             <div style={{ borderTop: '1px solid rgba(255,255,255,0.06)', paddingTop: 10 }}>
               <button
@@ -423,9 +577,11 @@ export default function NavBar() {
               </button>
               <div style={{ overflow: 'hidden', maxHeight: profileMobileOpen ? 160 : 0, opacity: profileMobileOpen ? 1 : 0, transition: 'max-height 220ms ease, opacity 180ms ease' }}>
                 <div style={{ paddingLeft: 12, display: 'flex', flexDirection: 'column', gap: 8 }}>
-                  <Link href="/profile" onClick={() => { setMobileMenuOpen(false); setProfileMobileOpen(false); setActiveFor(null); }} style={{ color: 'white' }}>Profile Settings</Link>
+                  <Link href={isSignedIn ? "/profile" : "/auth/login"} onClick={() => { setMobileMenuOpen(false); setProfileMobileOpen(false); setActiveFor(null); }} style={{ color: 'white' }}>{isSignedIn ? 'Profile Settings' : 'Sign in'}</Link>
                   <Link href="/help" onClick={() => { setMobileMenuOpen(false); setProfileMobileOpen(false); setActiveFor(null); }} style={{ color: 'white' }}>Help / Docs</Link>
-                  <Link href="/signout" onClick={() => { setMobileMenuOpen(false); setProfileMobileOpen(false); setActiveFor(null); }} style={{ color: 'white' }}>Sign out</Link>
+                  {isSignedIn ? (
+                    <Link href="/signout" onClick={() => { setMobileMenuOpen(false); setProfileMobileOpen(false); setActiveFor(null); }} style={{ color: 'white' }}>Sign out</Link>
+                  ) : null}
                 </div>
               </div>
             </div>

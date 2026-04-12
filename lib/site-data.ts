@@ -1,4 +1,5 @@
 import { unstable_noStore as noStore } from "next/cache";
+import { connection } from "next/server";
 
 import { hasEnvVars } from "@/lib/utils";
 import { createClient } from "@/lib/supabase/server";
@@ -13,7 +14,7 @@ type PageResult<T> = {
   viewerEmail?: string;
 };
 
-export type ProgramCatalogItem = {
+export type Programs = {
   id: string;
   title: string;
   summary: string;
@@ -25,7 +26,7 @@ export type ProgramCatalogItem = {
   featured: boolean;
 };
 
-export type UserProgramItem = {
+export type UserPrograms = {
   id: string;
   title: string;
   focus_area: string;
@@ -38,7 +39,7 @@ export type UserProgramItem = {
   weekly_completed: number;
 };
 
-export type WorkoutSessionItem = {
+export type WorkoutSessions = {
   id: string;
   title: string;
   focus_area: string;
@@ -49,7 +50,7 @@ export type WorkoutSessionItem = {
   notes: string;
 };
 
-export type CommunityPostItem = {
+export type CommunityPosts = {
   id: string;
   author_name: string;
   category: string;
@@ -61,7 +62,7 @@ export type CommunityPostItem = {
   is_pinned: boolean;
 };
 
-export type CommunityChallengeItem = {
+export type CommunityChallenges = {
   id: string;
   title: string;
   description: string;
@@ -71,7 +72,7 @@ export type CommunityChallengeItem = {
   ends_on: string;
 };
 
-export type FriendshipItem = {
+export type UserFriends = {
   id: string;
   friend_name: string;
   status: string;
@@ -80,8 +81,8 @@ export type FriendshipItem = {
   focus_area: string;
 };
 
-export type NotificationItem = {
-  id: string;
+export type Notifications = {
+  id: number;
   title: string;
   message: string;
   category: string;
@@ -91,7 +92,8 @@ export type NotificationItem = {
   created_at: string;
 };
 
-export type UserProfileItem = {
+export type UserProfiles = {
+  user_name: string;
   display_name: string;
   training_goal: string;
   weekly_goal: number;
@@ -101,11 +103,43 @@ export type UserProfileItem = {
   bio: string;
 };
 
-export type TrainingPreferenceItem = {
+export type WorkoutPref = {
   camera_enabled: boolean;
   audio_cues: boolean;
   preferred_time: string;
   recovery_day: string;
+};
+
+export type CommunityPostReplies = {
+  id: string;
+  post_id: string;
+  display_name: string;
+  parent_reply_id: string | null;
+  body_text: string;
+  is_edited: string;
+  created_at: string;
+  updated_at: string;
+};
+
+export type FriendConversations = {
+  id: string;
+  friend_id: string;
+  user_one: string;
+  user_two: string;
+  last_message: string | null;
+  created_at: string;
+  updated_at: string;
+};
+
+export type FriendMessage = {
+  id: string;
+  conversation_id: string;
+  sender_user_id: string;
+  body: string;
+  is_read: boolean;
+  read_at: string | null;
+  created_at: string;
+  updated_at: string;
 };
 
 type AuthContext = {
@@ -115,7 +149,7 @@ type AuthContext = {
   viewerState: ViewerState;
 };
 
-const fallbackPrograms: ProgramCatalogItem[] = [
+const fallbackPrograms: Programs[] = [
   {
     id: "prog-1",
     title: "Strength Foundation",
@@ -152,7 +186,7 @@ const fallbackPrograms: ProgramCatalogItem[] = [
 ];
 
 
-const fallbackPosts: CommunityPostItem[] = [
+const fallbackPosts: CommunityPosts[] = [
   {
     id: "post-1",
     author_name: "Nina R.",
@@ -188,7 +222,7 @@ const fallbackPosts: CommunityPostItem[] = [
   },
 ];
 
-const fallbackChallenges: CommunityChallengeItem[] = [
+const fallbackChallenges: CommunityChallenges[] = [
   {
     id: "challenge-1",
     title: "7-Day Consistency Sprint",
@@ -209,7 +243,8 @@ const fallbackChallenges: CommunityChallengeItem[] = [
   },
 ];
 
-const emptyProfile: UserProfileItem = {
+const emptyProfile: UserProfiles = {
+  user_name: "",
   display_name: "Your profile",
   training_goal: "",
   weekly_goal: 0,
@@ -219,7 +254,7 @@ const emptyProfile: UserProfileItem = {
   bio: "",
 };
 
-const emptyPreferences: TrainingPreferenceItem = {
+const emptyPreferences: WorkoutPref = {
   camera_enabled: false,
   audio_cues: false,
   preferred_time: "Not set",
@@ -228,6 +263,7 @@ const emptyPreferences: TrainingPreferenceItem = {
 
 async function getAuthContext(): Promise<AuthContext> {
   noStore();
+  await connection();
 
   if (!hasEnvVars) {
     return { viewerState: "guest" };
@@ -336,49 +372,49 @@ export function formatShortDate(value: string) {
 export async function getBrowseProgramsData() {
   return withFallback(fallbackPrograms, async ({ supabase }) => {
     const { data, error } = await supabase!
-      .from("program_catalog")
-      .select("id, title, summary, focus_area, difficulty, duration_weeks, sessions_per_week, coach_note, featured")
-      .order("featured", { ascending: false })
-      .order("title", { ascending: true });
+      .from("programs")
+      .select("id, title:name, summary:description, focus_area:focus, difficulty, duration_weeks:durationWeeks, sessions_per_week:sessionsPerWeek, coach_note:coachNote, featured:isActive")
+      .order("isActive", { ascending: false })
+      .order("name", { ascending: true });
 
     if (error) {
       throw error;
     }
 
-    return (data as ProgramCatalogItem[]) ?? fallbackPrograms;
+    return (data as Programs[]) ?? fallbackPrograms;
   });
 }
 
 export async function getProgramsData() {
   return withPersonalizedData([], async ({ supabase, userId }) => {
     const { data, error } = await supabase
-      .from("user_programs")
-      .select("id, title, focus_area, status, progress_percent, next_session, streak_days, completed_sessions, weekly_target, weekly_completed")
-      .eq("user_id", userId)
-      .order("next_session", { ascending: true });
+      .from("userPrograms")
+      .select("id, title, focus_area:focus, status, progress_percent:progressPercent, next_session:nextSession, streak_days:streakDays, completed_sessions:completedSessions, weekly_target:weeklyTarget, weekly_completed:weeklyCompleted")
+      .eq("userID", userId)
+      .order("nextSession", { ascending: true });
 
     if (error) {
       throw error;
     }
 
-    return (data as UserProgramItem[]) ?? [];
+    return (data as UserPrograms[]) ?? [];
   }, (data) => data.length === 0);
 }
 
 export async function getWorkoutSessionsData() {
   return withPersonalizedData([], async ({ supabase, userId }) => {
     const { data, error } = await supabase
-      .from("workout_sessions")
-      .select("id, title, focus_area, duration_minutes, effort, score, completed_at, notes")
-      .eq("user_id", userId)
-      .order("completed_at", { ascending: false })
+      .from("workoutSessions")
+      .select("id, title:name, focus_area:focus, duration_minutes:durationMin, effort, score, completed_at:created_at, notes:userNotes")
+      .eq("userID", userId)
+      .order("created_at", { ascending: false })
       .limit(8);
 
     if (error) {
       throw error;
     }
 
-    return (data as WorkoutSessionItem[]) ?? [];
+    return (data as WorkoutSessions[]) ?? [];
   }, (data) => data.length === 0);
 }
 
@@ -388,15 +424,15 @@ export async function getCommunityData() {
     async ({ supabase }) => {
       const [{ data: posts, error: postsError }, { data: challenges, error: challengesError }] = await Promise.all([
         supabase!
-          .from("community_posts")
-          .select("id, author_name, category, title, excerpt, reply_count, like_count, created_at, is_pinned")
-          .order("is_pinned", { ascending: false })
-          .order("created_at", { ascending: false })
+          .from("communityPosts")
+          .select("id, author_name:displayName, category, title, excerpt, reply_count:replyCount, like_count:likeCount, created_at:createdAt, is_pinned:isPinned")
+          .order("isPinned", { ascending: false })
+          .order("createdAt", { ascending: false })
           .limit(6),
         supabase!
-          .from("community_challenges")
-          .select("id, title, description, cadence, participants, starts_on, ends_on")
-          .order("starts_on", { ascending: true })
+          .from("communityChallenges")
+          .select("id, title, description, cadence, participants, starts_on:startsOnDate, ends_on:endOfDate")
+          .order("startsOnDate", { ascending: true })
           .limit(4),
       ]);
 
@@ -405,8 +441,8 @@ export async function getCommunityData() {
       }
 
       return {
-        posts: (posts as CommunityPostItem[]) ?? fallbackPosts,
-        challenges: (challenges as CommunityChallengeItem[]) ?? fallbackChallenges,
+        posts: (posts as CommunityPosts[]) ?? fallbackPosts,
+        challenges: (challenges as CommunityChallenges[]) ?? fallbackChallenges,
       };
     },
   );
@@ -415,17 +451,17 @@ export async function getCommunityData() {
 export async function getFriendsData() {
   return withPersonalizedData([], async ({ supabase, userId }) => {
     const { data, error } = await supabase
-      .from("friendships")
-      .select("id, friend_name, status, shared_streak, last_workout_at, focus_area")
-      .eq("user_id", userId)
+      .from("userFriends")
+      .select("id, friend_name:friendName, status, shared_streak:sharedStreak, last_workout_at:lastWorkoutAt, focus_area:focus")
+      .eq("userID", userId)
       .order("status", { ascending: true })
-      .order("last_workout_at", { ascending: false });
+      .order("lastWorkoutAt", { ascending: false });
 
     if (error) {
       throw error;
     }
 
-    return (data as FriendshipItem[]) ?? [];
+    return (data as UserFriends[]) ?? [];
   }, (data) => data.length === 0);
 }
 
@@ -433,16 +469,16 @@ export async function getNotificationsData() {
   return withPersonalizedData([], async ({ supabase, userId }) => {
     const { data, error } = await supabase
       .from("notifications")
-      .select("id, title, message, category, cta_label, cta_href, is_read, created_at")
-      .eq("user_id", userId)
-      .order("created_at", { ascending: false })
+      .select("id, title, message, category, cta_label:label, cta_href:link, is_read:isRead, created_at:createdAt")
+      .eq("userID", userId)
+      .order("createdAt", { ascending: false })
       .limit(12);
 
     if (error) {
       throw error;
     }
 
-    return ((data as NotificationItem[]) ?? []).map((notification) => ({
+    return ((data as Notifications[]) ?? []).map((notification) => ({
       ...notification,
       cta_href: notification.cta_href?.startsWith("/") && !notification.cta_href.startsWith("//")
         ? notification.cta_href
@@ -461,14 +497,14 @@ export async function getProfileData() {
     async ({ supabase, userId, email }) => {
       const [{ data: profile, error: profileError }, { data: preferences, error: preferencesError }] = await Promise.all([
         supabase
-          .from("user_profiles")
-          .select("display_name, training_goal, weekly_goal, focus_area, level, city, bio")
-          .eq("user_id", userId)
+          .from("userProfiles")
+          .select("user_name:userName, display_name:displayName, training_goal:primaryGoal, weekly_goal:weeklyGoal, focus_area:focus, level:expLevel, city, bio")
+          .eq("email", email ?? "")
           .maybeSingle(),
         supabase
-          .from("training_preferences")
-          .select("camera_enabled, audio_cues, preferred_time, recovery_day")
-          .eq("user_id", userId)
+          .from("workoutPref")
+          .select("camera_enabled:camEnabled, audio_cues:audioEnabled, preferred_time:timePref, recovery_day:recoveryDay")
+          .eq("userID", userId)
           .maybeSingle(),
       ]);
 
@@ -477,8 +513,8 @@ export async function getProfileData() {
       }
 
       return {
-        profile: (profile as UserProfileItem) ?? emptyProfile,
-        preferences: (preferences as TrainingPreferenceItem) ?? emptyPreferences,
+        profile: (profile as UserProfiles) ?? emptyProfile,
+        preferences: (preferences as WorkoutPref) ?? emptyPreferences,
         email: email ?? "",
       };
     },

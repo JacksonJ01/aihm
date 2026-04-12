@@ -6,6 +6,14 @@ function isPublicPath(pathname: string) {
   return pathname === "/" || pathname.startsWith("/auth");
 }
 
+function redirectToLogin(request: NextRequest) {
+  const url = request.nextUrl.clone();
+  const nextPath = `${request.nextUrl.pathname}${request.nextUrl.search}`;
+  url.pathname = "/auth/login";
+  url.search = `?next=${encodeURIComponent(nextPath)}`;
+  return NextResponse.redirect(url);
+}
+
 export async function updateSession(request: NextRequest) {
   let supabaseResponse = NextResponse.next({
     request,
@@ -16,12 +24,7 @@ export async function updateSession(request: NextRequest) {
       return supabaseResponse;
     }
 
-    return new NextResponse("Authentication is not configured for this deployment.", {
-      status: 503,
-      headers: {
-        "content-type": "text/plain; charset=utf-8",
-      },
-    });
+    return redirectToLogin(request);
   }
 
   if (isPublicPath(request.nextUrl.pathname)) {
@@ -63,9 +66,7 @@ export async function updateSession(request: NextRequest) {
   const user = data?.claims;
 
   if (!user) {
-    const url = request.nextUrl.clone();
-    url.pathname = "/auth/login";
-    return NextResponse.redirect(url);
+    return redirectToLogin(request);
   }
 
   // IMPORTANT: You *must* return the supabaseResponse object as it is.

@@ -1,12 +1,12 @@
 import Link from "next/link";
 
 import { markAllNotificationsReadAction, markNotificationReadAction } from "@/app/notifications/actions";
-import type { NotificationItem } from "@/lib/site-data";
+import type { Notifications } from "@/lib/site-data";
 import { formatLongDate } from "@/lib/site-data";
 import { getSafeAppPath } from "@/lib/utils";
 
 type NotificationsInboxProps = {
-  notifications: NotificationItem[];
+  notifications: Notifications[];
 };
 
 export function NotificationsInbox({ notifications }: NotificationsInboxProps) {

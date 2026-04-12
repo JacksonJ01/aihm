@@ -1,9 +1,9 @@
 import { updateProfileAction } from "@/app/profile/actions";
-import type { TrainingPreferenceItem, UserProfileItem } from "@/lib/site-data";
+import type { UserProfiles, WorkoutPref } from "@/lib/site-data";
 
 type ProfileSettingsFormProps = {
-  profile: UserProfileItem;
-  preferences: TrainingPreferenceItem;
+  profile: UserProfiles;
+  preferences: WorkoutPref;
 };
 
 export function ProfileSettingsForm({ profile, preferences }: ProfileSettingsFormProps) {

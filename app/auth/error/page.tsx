@@ -4,6 +4,7 @@ import { Suspense } from "react";
 const ERROR_MESSAGES: Record<string, string> = {
   "invalid-link": "This confirmation link is invalid or has expired. Request a new link and try again.",
   "invalid-request": "This request could not be completed. Please retry from the previous step.",
+  "profile-init-failed": "Your email was confirmed, but creating your profile record failed. Check the server log for the exact database error and verify your userProfiles schema matches the app.",
   default: "An unspecified error occurred.",
 };
 

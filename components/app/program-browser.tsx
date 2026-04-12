@@ -3,12 +3,12 @@
 import { useMemo, useState } from "react";
 import { Search, SlidersHorizontal } from "lucide-react";
 
-import type { ProgramCatalogItem } from "@/lib/site-data";
+import type { Programs } from "@/lib/site-data";
 
 import { InlineLink } from "@/components/app/page-primitives";
 
 type ProgramBrowserProps = {
-  programs: ProgramCatalogItem[];
+  programs: Programs[];
 };
 
 export function ProgramBrowser({ programs }: ProgramBrowserProps) {

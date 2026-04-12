@@ -10,6 +10,7 @@ import {
 import { formatLongDate, getWorkoutSessionsData } from "@/lib/site-data";
 
 import WorkoutsSession from "./workoutsSession";
+import { Suspense } from "react";
 
 const prepChecklist = [
   "The session works best with enough floor space for stepping, hinging, and rotation without clipping the frame.",
@@ -17,7 +18,31 @@ const prepChecklist = [
   "Pose guidance adds the most value during technique work, while timer-led sessions can stay camera-free.",
 ];
 
-export default async function Page() {
+function WorkoutsPageFallback() {
+  return (
+    <AppPage>
+      <PageHero
+        eyebrow="Workout studio"
+        title="Start training with a setup that makes the next rep obvious."
+        description="Loading your workout studio and recent session context."
+      />
+      <section className="grid gap-4 md:grid-cols-3">
+        <StatCard label="Recent score" value="--" detail="Loading recent session quality." icon={Activity} />
+        <StatCard label="Sessions logged" value="--" detail="Loading workout history." icon={Clock3} />
+        <StatCard label="Current state" value="Loading" detail="Preparing the live workout workspace." icon={Sparkles} />
+      </section>
+      <SectionCard
+        eyebrow="Live session"
+        title="Train from one focused workspace"
+        description="The live workout area keeps controls, feed state, and camera guidance together so the page behaves like a session tool instead of a generic content block."
+      >
+        <WorkoutsSession />
+      </SectionCard>
+    </AppPage>
+  );
+}
+
+async function WorkoutsPageContent() {
   const sessions = await getWorkoutSessionsData();
   const latestSession = sessions.data[0];
   const averageScore = sessions.data.length
@@ -127,5 +152,13 @@ export default async function Page() {
         </SectionCard>
       </section>
     </AppPage>
+  );
+}
+
+export default function Page() {
+  return (
+    <Suspense fallback={<WorkoutsPageFallback />}>
+      <WorkoutsPageContent />
+    </Suspense>
   );
 }

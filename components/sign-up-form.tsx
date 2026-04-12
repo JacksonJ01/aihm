@@ -3,8 +3,8 @@
 import { signUpAction } from "@/app/auth/actions";
 import { AuthSubmitButton } from "@/components/auth/auth-submit-button";
 import { TurnstileField } from "@/components/auth/turnstile-field";
-import { cn } from "@/lib/utils";
 import { initialAuthActionState } from "@/lib/auth-form";
+import { cn } from "@/lib/utils";
 import {
   Card,
   CardContent,
@@ -32,11 +32,34 @@ export function SignUpForm({
       <Card>
         <CardHeader>
           <CardTitle className="text-2xl">Sign up</CardTitle>
-          <CardDescription>Create a new account</CardDescription>
+          <CardDescription>Create your account. You can finish profile setup later.</CardDescription>
         </CardHeader>
         <CardContent>
           <form action={formAction}>
             <div className="flex flex-col gap-6">
+              <div className="grid gap-2">
+                <Label htmlFor="user-name">Username</Label>
+                <Input
+                  id="user-name"
+                  name="user_name"
+                  placeholder="your_username"
+                  required
+                  maxLength={40}
+                  autoComplete="username"
+                />
+              </div>
+
+              <div className="grid gap-2">
+                <Label htmlFor="display-name">Display Name</Label>
+                <Input
+                  id="display-name"
+                  name="display_name"
+                  placeholder="Your Display Name"
+                  required
+                  maxLength={60}
+                />
+              </div>
+
               <div className="grid gap-2">
                 <Label htmlFor="email">Email</Label>
                 <Input
@@ -48,10 +71,9 @@ export function SignUpForm({
                   autoComplete="email"
                 />
               </div>
+
               <div className="grid gap-2">
-                <div className="flex items-center">
-                  <Label htmlFor="password">Password</Label>
-                </div>
+                <Label htmlFor="password">Password</Label>
                 <Input
                   id="password"
                   name="password"
@@ -61,10 +83,9 @@ export function SignUpForm({
                   minLength={10}
                 />
               </div>
+
               <div className="grid gap-2">
-                <div className="flex items-center">
-                  <Label htmlFor="repeat-password">Repeat Password</Label>
-                </div>
+                <Label htmlFor="repeat-password">Repeat Password</Label>
                 <Input
                   id="repeat-password"
                   name="repeat_password"
@@ -74,12 +95,14 @@ export function SignUpForm({
                   minLength={10}
                 />
               </div>
+
               <TurnstileField resetSignal={turnstileResetSignal} />
               {state.status === "error" ? (
                 <p className="text-sm text-red-500">{state.message}</p>
               ) : null}
               <AuthSubmitButton idleText="Sign up" pendingText="Creating an account..." />
             </div>
+
             <div className="mt-4 text-center text-sm">
               Already have an account?{" "}
               <Link href="/auth/login" className="underline underline-offset-4">
