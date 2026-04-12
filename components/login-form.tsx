@@ -16,6 +16,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import Link from "next/link";
 import { useActionState, useMemo } from "react";
+import { useSearchParams } from "next/navigation";
 
 export function LoginForm({
   className,
@@ -24,12 +25,13 @@ export function LoginForm({
 }: React.ComponentPropsWithoutRef<"div"> & {
   nextPath?: string;
 }) {
+  const searchParams = useSearchParams();
   const [state, formAction] = useActionState(loginAction, initialAuthActionState);
   const turnstileResetSignal = useMemo(
     () => `${state.status}:${state.message ?? ""}`,
     [state.message, state.status],
   );
-  const safeNextPath = getSafeAppPath(nextPath) ?? "/";
+  const safeNextPath = getSafeAppPath(nextPath ?? searchParams.get("next")) ?? "/";
 
   return (
     <div className={cn("flex flex-col gap-6", className)} {...props}>
