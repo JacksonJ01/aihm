@@ -9,8 +9,27 @@ import {
   StatCard,
 } from "@/components/app/page-primitives";
 import { formatShortDate, getCommunityData } from "@/lib/site-data";
+import { Suspense } from "react";
 
-export default async function CommunityPage() {
+function CommunityPageFallback() {
+  return (
+    <AppPage>
+      <PageHero
+        eyebrow="Community hub"
+        title="Bring challenges, discussion, and accountability into the same training loop."
+        description="Loading community activity, challenges, and discussion previews."
+      />
+      <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+        <StatCard label="Open challenges" value="--" detail="Loading current community challenges." icon={Trophy} />
+        <StatCard label="Recent discussions" value="--" detail="Loading recent conversation activity." icon={MessageSquareMore} />
+        <StatCard label="Pinned topics" value="--" detail="Loading pinned discussion threads." icon={Flag} />
+        <StatCard label="Participation" value="--" detail="Loading community participation totals." icon={Users2} />
+      </section>
+    </AppPage>
+  );
+}
+
+async function CommunityPageContent() {
   const community = await getCommunityData();
   const pinnedCount = community.data.posts.filter((post) => post.is_pinned).length;
 
@@ -119,5 +138,13 @@ export default async function CommunityPage() {
         </SectionCard>
       </section>
     </AppPage>
+  );
+}
+
+export default function CommunityPage() {
+  return (
+    <Suspense fallback={<CommunityPageFallback />}>
+      <CommunityPageContent />
+    </Suspense>
   );
 }

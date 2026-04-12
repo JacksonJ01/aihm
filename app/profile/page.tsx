@@ -10,8 +10,27 @@ import {
 } from "@/components/app/page-primitives";
 import { ProfileSettingsForm } from "@/components/app/profile-settings-form";
 import { getProfileData } from "@/lib/site-data";
+import { Suspense } from "react";
 
-export default async function ProfilePage() {
+function ProfilePageFallback() {
+  return (
+    <AppPage>
+      <PageHero
+        eyebrow="Profile"
+        title="Set up your profile so training can personalize around you."
+        description="Loading your profile, preferences, and account details."
+      />
+      <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+        <StatCard label="Weekly goal" value="--" detail="Loading weekly training targets." icon={Target} />
+        <StatCard label="Primary focus" value="Loading" detail="Loading current focus area." icon={BadgeCheck} />
+        <StatCard label="Experience" value="Loading" detail="Loading profile level." icon={CircleUserRound} />
+        <StatCard label="Camera mode" value="--" detail="Loading workout preferences." icon={SlidersHorizontal} />
+      </section>
+    </AppPage>
+  );
+}
+
+async function ProfilePageContent() {
   const profileData = await getProfileData();
   const { profile, preferences, email } = profileData.data;
   const isProfileEmpty = profileData.source === "empty";
@@ -109,5 +128,13 @@ export default async function ProfilePage() {
         </div>
       </section>
     </AppPage>
+  );
+}
+
+export default function ProfilePage() {
+  return (
+    <Suspense fallback={<ProfilePageFallback />}>
+      <ProfilePageContent />
+    </Suspense>
   );
 }

@@ -9,8 +9,27 @@ import {
   StatCard,
 } from "@/components/app/page-primitives";
 import { formatLongDate, getFriendsData } from "@/lib/site-data";
+import { Suspense } from "react";
 
-export default async function FriendsPage() {
+function FriendsPageFallback() {
+  return (
+    <AppPage>
+      <PageHero
+        eyebrow="Friends"
+        title="Keep your accountability circle visible, current, and easy to act on."
+        description="Loading friendships, pending invites, and shared streaks."
+      />
+      <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+        <StatCard label="Accepted" value="--" detail="Loading active friendships." icon={Users} />
+        <StatCard label="Pending" value="--" detail="Loading pending invites." icon={UserPlus2} />
+        <StatCard label="Top shared streak" value="--" detail="Loading shared streak data." icon={Flame} />
+        <StatCard label="Support mode" value="Loading" detail="Preparing accountability activity." icon={HeartHandshake} />
+      </section>
+    </AppPage>
+  );
+}
+
+async function FriendsPageContent() {
   const friendships = await getFriendsData();
   const accepted = friendships.data.filter((friend) => friend.status === "accepted");
   const pending = friendships.data.filter((friend) => friend.status !== "accepted");
@@ -114,5 +133,13 @@ export default async function FriendsPage() {
         </div>
       </section>
     </AppPage>
+  );
+}
+
+export default function FriendsPage() {
+  return (
+    <Suspense fallback={<FriendsPageFallback />}>
+      <FriendsPageContent />
+    </Suspense>
   );
 }

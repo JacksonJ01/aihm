@@ -8,12 +8,31 @@ import {
   StatCard,
 } from "@/components/app/page-primitives";
 import { formatShortDate, getWorkoutSessionsData } from "@/lib/site-data";
+import { Suspense } from "react";
 
 function trendHeight(score: number) {
   return `${Math.max(18, Math.min(100, score))}%`;
 }
 
-export default async function ProgressPage() {
+function ProgressPageFallback() {
+  return (
+    <AppPage>
+      <PageHero
+        eyebrow="Progress dashboard"
+        title="Turn completed sessions into a view you can actually steer from."
+        description="Loading recent workout trends, streaks, and highlights."
+      />
+      <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+        <StatCard label="Average score" value="--" detail="Loading recent movement quality." icon={Gauge} />
+        <StatCard label="Minutes logged" value="--" detail="Loading recent training volume." icon={CalendarRange} />
+        <StatCard label="Live streak" value="--" detail="Loading recent consistency." icon={Trophy} />
+        <StatCard label="Focus areas" value="--" detail="Loading recent training mix." icon={Activity} />
+      </section>
+    </AppPage>
+  );
+}
+
+async function ProgressPageContent() {
   const sessions = await getWorkoutSessionsData();
   const totalMinutes = sessions.data.reduce((sum, session) => sum + session.duration_minutes, 0);
   const averageScore = sessions.data.length
@@ -126,5 +145,13 @@ export default async function ProgressPage() {
         </SectionCard>
       </section>
     </AppPage>
+  );
+}
+
+export default function ProgressPage() {
+  return (
+    <Suspense fallback={<ProgressPageFallback />}>
+      <ProgressPageContent />
+    </Suspense>
   );
 }

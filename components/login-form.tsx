@@ -18,20 +18,21 @@ import Link from "next/link";
 import { useActionState, useMemo } from "react";
 import { useSearchParams } from "next/navigation";
 
-export function LoginForm({
+type LoginFormProps = React.ComponentPropsWithoutRef<"div"> & {
+  nextPath?: string;
+};
+
+function LoginFormContent({
   className,
   nextPath,
   ...props
-}: React.ComponentPropsWithoutRef<"div"> & {
-  nextPath?: string;
-}) {
-  const searchParams = useSearchParams();
+}: LoginFormProps) {
   const [state, formAction] = useActionState(loginAction, initialAuthActionState);
   const turnstileResetSignal = useMemo(
     () => `${state.status}:${state.message ?? ""}`,
     [state.message, state.status],
   );
-  const safeNextPath = getSafeAppPath(nextPath ?? searchParams.get("next")) ?? "/";
+  const safeNextPath = getSafeAppPath(nextPath) ?? "/";
 
   return (
     <div className={cn("flex flex-col gap-6", className)} {...props}>
@@ -95,4 +96,14 @@ export function LoginForm({
       </Card>
     </div>
   );
+}
+
+export function LoginForm(props: LoginFormProps) {
+  const searchParams = useSearchParams();
+
+  return <LoginFormContent {...props} nextPath={props.nextPath ?? searchParams.get("next") ?? undefined} />;
+}
+
+export function LoginFormFallback(props: Omit<LoginFormProps, "nextPath">) {
+  return <LoginFormContent {...props} nextPath="/" />;
 }

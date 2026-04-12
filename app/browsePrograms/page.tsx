@@ -9,6 +9,7 @@ import {
 } from "@/components/app/page-primitives";
 import { ProgramBrowser } from "@/components/app/program-browser";
 import { getBrowseProgramsData } from "@/lib/site-data";
+import { Suspense } from "react";
 
 const selectionGuide = [
   {
@@ -25,7 +26,24 @@ const selectionGuide = [
   },
 ];
 
-export default async function BrowseProgramsPage() {
+function BrowseProgramsPageFallback() {
+  return (
+    <AppPage>
+      <PageHero
+        eyebrow="Program library"
+        title="Browse structured plans that give your training week a real shape."
+        description="Loading the program library and featured selections."
+      />
+      <section className="grid gap-4 md:grid-cols-3">
+        <StatCard label="Programs available" value="--" detail="Loading the current program catalog." icon={Layers3} />
+        <StatCard label="Featured plans" value="--" detail="Loading highlighted programs." icon={Compass} />
+        <StatCard label="Typical cycle" value="3-6 wks" detail="Program duration stays visible while the library loads." icon={TimerReset} />
+      </section>
+    </AppPage>
+  );
+}
+
+async function BrowseProgramsPageContent() {
   const programs = await getBrowseProgramsData();
   const featuredCount = programs.data.filter((program) => program.featured).length;
 
@@ -88,5 +106,13 @@ export default async function BrowseProgramsPage() {
         </div>
       </SectionCard>
     </AppPage>
+  );
+}
+
+export default function BrowseProgramsPage() {
+  return (
+    <Suspense fallback={<BrowseProgramsPageFallback />}>
+      <BrowseProgramsPageContent />
+    </Suspense>
   );
 }

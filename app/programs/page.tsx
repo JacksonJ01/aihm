@@ -9,12 +9,30 @@ import {
   StatCard,
 } from "@/components/app/page-primitives";
 import { formatLongDate, getProgramsData } from "@/lib/site-data";
+import { Suspense } from "react";
 
 function progressWidth(value: number) {
   return `${Math.max(6, Math.min(100, value))}%`;
 }
 
-export default async function ProgramsPage() {
+function ProgramsPageFallback() {
+  return (
+    <AppPage>
+      <PageHero
+        eyebrow="Current programs"
+        title="Keep active plans visible enough that the next session never feels buried."
+        description="Loading your active programs, weekly load, and current streaks."
+      />
+      <section className="grid gap-4 md:grid-cols-3">
+        <StatCard label="Plans active" value="--" detail="Loading active training plans." icon={Layers2} />
+        <StatCard label="Weekly load" value="--" detail="Loading weekly completed and target sessions." icon={Target} />
+        <StatCard label="Top streak" value="--" detail="Loading current adherence streaks." icon={Flame} />
+      </section>
+    </AppPage>
+  );
+}
+
+async function ProgramsPageContent() {
   const programs = await getProgramsData();
   const activePrograms = programs.data.filter((program) => program.status.toLowerCase() !== "completed");
   const weeklyCompleted = programs.data.reduce((sum, program) => sum + program.weekly_completed, 0);
@@ -135,5 +153,13 @@ export default async function ProgramsPage() {
         </div>
       </section>
     </AppPage>
+  );
+}
+
+export default function ProgramsPage() {
+  return (
+    <Suspense fallback={<ProgramsPageFallback />}>
+      <ProgramsPageContent />
+    </Suspense>
   );
 }
