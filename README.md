@@ -78,6 +78,10 @@ If you wish to just develop locally and not deploy to Vercel, [follow the steps 
   ```env
   NEXT_PUBLIC_SUPABASE_URL=[INSERT SUPABASE PROJECT URL]
   NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=[INSERT SUPABASE PROJECT API PUBLISHABLE OR ANON KEY]
+  NEXT_PUBLIC_SITE_URL=[INSERT APP ORIGIN, FOR EXAMPLE http://localhost:3000]
+  SITE_URL=[OPTIONAL SERVER-SIDE OVERRIDE FOR HOSTED DEPLOYMENTS]
+  NEXT_PUBLIC_TURNSTILE_SITE_KEY=[OPTIONAL LOCALLY, REQUIRED IN PRODUCTION FOR AUTH FORMS]
+  TURNSTILE_SECRET_KEY=[OPTIONAL LOCALLY, REQUIRED IN PRODUCTION FOR AUTH FORMS]
   ```
   > [!NOTE]
   > This example uses `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`, which refers to Supabase's new **publishable** key format.
@@ -86,7 +90,21 @@ If you wish to just develop locally and not deploy to Vercel, [follow the steps 
 
   Both `NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` can be found in [your Supabase project's API settings](https://supabase.com/dashboard/project/_?showConnect=true)
 
-5. You can now run the Next.js local development server:
+  `NEXT_PUBLIC_SITE_URL` and `SITE_URL` are used when the app constructs auth confirmation and reset callback URLs. In Vercel, set one of them to your canonical deployment origin so email links resolve consistently.
+
+  `NEXT_PUBLIC_TURNSTILE_SITE_KEY` and `TURNSTILE_SECRET_KEY` are used by the login, signup, forgot-password, and update-password forms. In development those checks can be skipped when unset, but production auth flows will reject requests until both keys are configured.
+
+5. If you deploy on Vercel, add the same environment variables to the Vercel project settings for Production and Preview as needed.
+
+6. In Supabase Auth URL configuration, include redirect URLs for both local and deployed environments, including the `/auth/confirm` callback route.
+
+   ```text
+   http://localhost:3000/auth/confirm
+   https://your-production-domain/auth/confirm
+   https://your-preview-domain/auth/confirm
+   ```
+
+7. You can now run the Next.js local development server:
 
    ```bash
    npm run dev
@@ -94,7 +112,7 @@ If you wish to just develop locally and not deploy to Vercel, [follow the steps 
 
    The starter kit should now be running on [localhost:3000](http://localhost:3000/).
 
-6. This template comes with the default shadcn/ui style initialized. If you instead want other ui.shadcn styles, delete `components.json` and [re-install shadcn/ui](https://ui.shadcn.com/docs/installation/next)
+8. This template comes with the default shadcn/ui style initialized. If you instead want other ui.shadcn styles, delete `components.json` and [re-install shadcn/ui](https://ui.shadcn.com/docs/installation/next)
 
 > Check out [the docs for Local Development](https://supabase.com/docs/guides/getting-started/local-development) to also run Supabase locally.
 

@@ -7,6 +7,11 @@ import { usePathname } from 'next/navigation';
 import { createPortal } from "react-dom";
 import { createClient } from "@/lib/supabase/client";
 
+const hasSupabaseBrowserEnv = Boolean(
+  process.env.NEXT_PUBLIC_SUPABASE_URL &&
+  process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY,
+);
+
 export default function NavBar() {
   const [isSignedIn, setIsSignedIn] = useState(false);
   const [programsOpen, setProgramsOpen] = useState(false);
@@ -184,7 +189,21 @@ export default function NavBar() {
   }
 
   useEffect(() => {
-    const supabase = createClient();
+    if (!hasSupabaseBrowserEnv) {
+      setIsSignedIn(false);
+      return;
+    }
+
+    let supabase;
+
+    try {
+      supabase = createClient();
+    } catch (error) {
+      console.error("[navbar] Failed to create browser Supabase client", error);
+      setIsSignedIn(false);
+      return;
+    }
+
     let mounted = true;
 
     supabase.auth.getUser().then(({ data }) => {
