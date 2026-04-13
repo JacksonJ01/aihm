@@ -8,8 +8,13 @@ import { createPortal } from "react-dom";
 import { createClient } from "@/lib/supabase/client";
 
 const hasSupabaseBrowserEnv = Boolean(
-  process.env.NEXT_PUBLIC_SUPABASE_URL &&
-  process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY,
+  (process.env.NEXT_PUBLIC_SUPABASE_URL || process.env.NEXT_PUBLIC_aihm_SUPABASE_URL) &&
+  (
+    process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY ||
+    process.env.NEXT_PUBLIC_aihm_SUPABASE_PUBLISHABLE_KEY ||
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ||
+    process.env.NEXT_PUBLIC_aihm_SUPABASE_ANON_KEY
+  ),
 );
 
 export default function NavBar() {

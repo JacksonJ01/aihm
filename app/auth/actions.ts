@@ -13,7 +13,7 @@ import {
 import { consumeRateLimit } from "@/lib/rate-limit";
 import { createClient } from "@/lib/supabase/server";
 import { verifyTurnstileToken } from "@/lib/turnstile";
-import { getSafeAppPath, hasEnvVars } from "@/lib/utils";
+import { getMissingSupabaseEnvVars, getSafeAppPath, hasEnvVars } from "@/lib/utils";
 
 const DEFAULT_ERROR_MESSAGE = "Authentication is temporarily unavailable.";
 
@@ -96,9 +96,11 @@ async function enforceTurnstile(formData: FormData, headerStore: Headers) {
 
 function ensureAuthConfigured() {
   if (!hasEnvVars) {
+    const missing = getMissingSupabaseEnvVars();
+
     return {
       status: "error",
-      message: DEFAULT_ERROR_MESSAGE,
+      message: `Authentication is not configured for this deployment. Missing environment variables: ${missing.join(", ")}.`,
     } satisfies AuthActionState;
   }
 
