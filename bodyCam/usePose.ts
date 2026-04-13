@@ -47,6 +47,13 @@ interface PoseResults {
   poseLandmarks?: PoseLandmark[];
 }
 
+type PoseTrackerState = {
+  trackerReady: boolean;
+  poseDetected: boolean;
+};
+
+const LANDMARK_VISIBILITY_THRESHOLD = 0.35;
+
 const EXERCISE_LANDMARKS = [
     11, 12, // Shoulders
     13, 14, // Elbows
@@ -61,9 +68,10 @@ export function usePose(
   canvasRef: React.RefObject<HTMLCanvasElement | null>,
   isCameraOn: boolean,
   scriptLoaded: boolean,
-) {
+): PoseTrackerState {
   const poseRef = useRef<PoseInstance | null>(null);
   const [trackerReady, setTrackerReady] = useState(false);
+  const [poseDetected, setPoseDetected] = useState(false);
 
   useEffect(() => {
     if (!scriptLoaded || !window.Pose || poseRef.current) {
@@ -120,6 +128,7 @@ export function usePose(
     return () => {
       cancelled = true;
       setTrackerReady(false);
+      setPoseDetected(false);
 
       if (typeof pose.close === "function") {
         try {
@@ -157,11 +166,28 @@ export function usePose(
       }
     };
 
+    const syncCanvasSize = () => {
+      const video = videoRef.current;
+      const canvas = canvasRef.current;
+
+      if (!video || !canvas || !video.videoWidth || !video.videoHeight) {
+        return;
+      }
+
+      if (canvas.width !== video.videoWidth || canvas.height !== video.videoHeight) {
+        canvas.width = video.videoWidth;
+        canvas.height = video.videoHeight;
+      }
+    };
+
     clearCanvas();
     setCanvasVisibility(false);
+    setPoseDetected(false);
 
     pose.onResults((results: PoseResults) => {
       if (cancelled) return;
+
+      syncCanvasSize();
 
       const canvas = canvasRef.current;
       const ctx = canvas?.getContext("2d");
@@ -171,16 +197,27 @@ export function usePose(
       ctx.clearRect(0, 0, canvas.width, canvas.height);
 
       if (!results.poseLandmarks) {
+        setPoseDetected(false);
         setCanvasVisibility(false);
         return;
       }
 
-      setCanvasVisibility(true);
+      const visibleExerciseLandmarks = results.poseLandmarks.filter((point, index) => {
+        return EXERCISE_LANDMARKS.includes(index) && (point.visibility ?? 0) > LANDMARK_VISIBILITY_THRESHOLD;
+      });
+
+      const hasVisiblePose = visibleExerciseLandmarks.length > 0;
+      setPoseDetected(hasVisiblePose);
+      setCanvasVisibility(hasVisiblePose);
+
+      if (!hasVisiblePose) {
+        return;
+      }
 
       // Drawing Landmark Points
       results.poseLandmarks.forEach((point: PoseLandmark, index: number) => {
         const isTargetJoint = EXERCISE_LANDMARKS.includes(index);
-        const isVisible = (point.visibility ?? 0) > 0.6;
+        const isVisible = (point.visibility ?? 0) > LANDMARK_VISIBILITY_THRESHOLD;
 
         if (isTargetJoint && isVisible) {
           ctx.beginPath();
@@ -241,13 +278,17 @@ export function usePose(
     return () => {
       cancelled = true;
       cancelAnimationFrame(animationFrameId);
+      setPoseDetected(false);
 
       clearCanvas();
       setCanvasVisibility(false);
     };
   }, [isCameraOn, scriptLoaded, videoRef, canvasRef]);
 
-  return trackerReady;
+  return {
+    trackerReady,
+    poseDetected,
+  };
 }
 
 // "use client";

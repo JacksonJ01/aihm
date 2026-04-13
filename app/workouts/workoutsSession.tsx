@@ -12,7 +12,7 @@ export default function WorkoutsSession() {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const [scriptLoaded, setScriptLoaded] = useState(false);
 
-  const trackerReady = usePose(videoRef, canvasRef, isCameraOn, scriptLoaded);
+  const { trackerReady, poseDetected } = usePose(videoRef, canvasRef, isCameraOn, scriptLoaded);
 
   return (
     <section className="space-y-6">
@@ -40,10 +40,23 @@ export default function WorkoutsSession() {
             </p>
           </div>
           <div className="w-fit self-start rounded-full border border-black/10 bg-white px-4 py-2 text-sm font-medium text-foreground md:self-auto">
-            {!scriptLoaded ? "Loading tracker" : isCameraOn ? "Tracking active" : trackerReady ? "Tracker ready" : "Warming tracker"}
+            {!scriptLoaded
+              ? "Loading tracker"
+              : isCameraOn
+                ? poseDetected
+                  ? "Tracking active"
+                  : "Camera live, finding pose"
+                : trackerReady
+                  ? "Tracker ready"
+                  : "Warming tracker"}
           </div>
         </div>
         <Camera videoRef={videoRef} canvasRef={canvasRef} isVisible={isCameraOn} />
+        {isCameraOn && !poseDetected ? (
+          <div className="mt-4 rounded-2xl border border-dashed border-black/10 bg-background/60 px-4 py-4 text-sm leading-6 text-muted-foreground">
+            The camera is running, but the tracker has not found a clear full-body pose yet. Step back slightly, keep your full body in frame, and face the camera.
+          </div>
+        ) : null}
         {!isCameraOn ? (
           <div className="mt-4 rounded-2xl border border-dashed border-black/10 bg-background/60 px-4 py-4 text-sm leading-6 text-muted-foreground">
             The preview area remains inactive until camera access is enabled for the session.
