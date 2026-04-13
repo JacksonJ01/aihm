@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useRef, useState } from "react";
 
 type UserAgentData = {
   mobile?: boolean;
@@ -24,7 +24,7 @@ type PoseOptions = {
 type PoseInstance = {
   setOptions: (options: PoseOptions) => void;
   onResults: (callback: (results: PoseResults) => void) => void;
-  send: (input: { image: HTMLVideoElement }) => Promise<void>;
+  send: (input: { image: HTMLVideoElement | HTMLCanvasElement }) => Promise<void>;
   close?: () => void;
 };
 
@@ -62,19 +62,22 @@ export function usePose(
   isCameraOn: boolean,
   scriptLoaded: boolean,
 ) {
+  const poseRef = useRef<PoseInstance | null>(null);
+  const [trackerReady, setTrackerReady] = useState(false);
+
   useEffect(() => {
-    if (!isCameraOn || !scriptLoaded || !videoRef.current || !canvasRef.current) return;
-    if (!window.Pose) return;
+    if (!scriptLoaded || !window.Pose || poseRef.current) {
+      return;
+    }
+
     let cancelled = false;
-    let animationFrameId = 0;
-    let isSending = false;
-    let hasProcessedFrame = false;
 
     const pose = new window.Pose({
       locateFile: (file: string) => `/@mediapipe/pose/${file}`,
     });
 
-    // Detect mobile devices (use userAgentData when available)
+    poseRef.current = pose;
+
     const navigatorWithUserAgentData = navigator as NavigatorWithUserAgentData;
     const isMobileDevice = typeof navigator !== "undefined" &&
       (navigatorWithUserAgentData.userAgentData?.mobile ?? /Mobi|Android|iPhone|iPad|iPod|Windows Phone/.test(navigator.userAgent));
@@ -94,6 +97,50 @@ export function usePose(
         };
 
     pose.setOptions(poseOptions);
+
+    const warmTracker = async () => {
+      try {
+        const warmupCanvas = document.createElement("canvas");
+        warmupCanvas.width = 1;
+        warmupCanvas.height = 1;
+        await pose.send({ image: warmupCanvas });
+      } catch (error) {
+        if (!cancelled) {
+          console.error("Pose warmup error:", error);
+        }
+      } finally {
+        if (!cancelled) {
+          setTrackerReady(true);
+        }
+      }
+    };
+
+    void warmTracker();
+
+    return () => {
+      cancelled = true;
+      setTrackerReady(false);
+
+      if (typeof pose.close === "function") {
+        try {
+          pose.close();
+        } catch (error) {
+          console.error("Pose cleanup error:", error);
+        }
+      }
+
+      poseRef.current = null;
+    };
+  }, [scriptLoaded]);
+
+  useEffect(() => {
+    if (!isCameraOn || !scriptLoaded || !videoRef.current || !canvasRef.current) return;
+    if (!poseRef.current) return;
+    let cancelled = false;
+    let animationFrameId = 0;
+    let isSending = false;
+    let hasProcessedFrame = false;
+    const pose = poseRef.current;
 
     const clearCanvas = () => {
       const canvas = canvasRef.current;
@@ -195,19 +242,12 @@ export function usePose(
       cancelled = true;
       cancelAnimationFrame(animationFrameId);
 
-      // Avoid closing during an in-flight initialization/send, which can abort the wasm module.
-      if (hasProcessedFrame && !isSending && typeof pose.close === "function") {
-        try {
-          pose.close();
-        } catch (error) {
-          console.error("Pose cleanup error:", error);
-        }
-      }
-
       clearCanvas();
       setCanvasVisibility(false);
     };
   }, [isCameraOn, scriptLoaded, videoRef, canvasRef]);
+
+  return trackerReady;
 }
 
 // "use client";

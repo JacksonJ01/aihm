@@ -12,12 +12,13 @@ export default function WorkoutsSession() {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const [scriptLoaded, setScriptLoaded] = useState(false);
 
-  usePose(videoRef, canvasRef, isCameraOn, scriptLoaded);
+  const trackerReady = usePose(videoRef, canvasRef, isCameraOn, scriptLoaded);
 
   return (
     <section className="space-y-6">
       <Script
         src="/@mediapipe/pose/pose.js"
+        strategy="afterInteractive"
         onLoad={() => {
           console.log(" MediaPipe Script Loaded");
           setScriptLoaded(true);
@@ -39,7 +40,7 @@ export default function WorkoutsSession() {
             </p>
           </div>
           <div className="w-fit self-start rounded-full border border-black/10 bg-white px-4 py-2 text-sm font-medium text-foreground md:self-auto">
-            {scriptLoaded ? (isCameraOn ? "Tracking active" : "Ready to start") : "Loading tracker"}
+            {!scriptLoaded ? "Loading tracker" : isCameraOn ? "Tracking active" : trackerReady ? "Tracker ready" : "Warming tracker"}
           </div>
         </div>
         <Camera videoRef={videoRef} canvasRef={canvasRef} isVisible={isCameraOn} />
