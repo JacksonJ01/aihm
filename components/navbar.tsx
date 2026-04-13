@@ -229,7 +229,7 @@ export default function NavBar() {
       mounted = false;
       subscription.unsubscribe();
     };
-  }, []);
+  }, [pathname]);
 
   useEffect(() => {
     function onDoc(e: MouseEvent) {
