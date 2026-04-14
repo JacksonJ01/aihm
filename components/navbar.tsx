@@ -292,7 +292,7 @@ export default function NavBar() {
   }, []);
 
   return (
-    <header style={{ borderBottom: '1px solid rgba(255,255,255,0.08)', position: 'relative', backgroundColor: '#000' }}>
+    <header style={{ borderBottom: '1px solid rgba(255,255,255,0.08)', position: 'sticky', top: 0, zIndex: 1000, backgroundColor: '#000' }}>
       <div style={{ display: 'flex', alignItems: 'center', padding: '0 60px', whiteSpace: 'nowrap', height: 80, color: 'white' }}>
         {/* Left: logo (hidden on mobile, moved to center) */}
         <div style={{ flex: '0 0 auto' }}>
