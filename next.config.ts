@@ -56,24 +56,24 @@ const securityHeaders = [
     : []),
 ];
 
-const noStoreHeaders = [
-  {
-    key: "Cache-Control",
-    value: "no-store, max-age=0",
-  },
-  {
-    key: "Pragma",
-    value: "no-cache",
-  },
-  {
-    key: "Expires",
-    value: "0",
-  },
-];
-
 const nextConfig: NextConfig = {
   cacheComponents: true,
   async headers() {
+    const noStoreHeaders = [
+      {
+        key: "Cache-Control",
+        value: "no-store, max-age=0",
+      },
+      {
+        key: "Pragma",
+        value: "no-cache",
+      },
+      {
+        key: "Expires",
+        value: "0",
+      },
+    ];
+
     return [
       {
         source: "/(.*)",
@@ -85,38 +85,6 @@ const nextConfig: NextConfig = {
       },
       {
         source: "/protected",
-        headers: noStoreHeaders,
-      },
-      {
-        source: "/browsePrograms",
-        headers: noStoreHeaders,
-      },
-      {
-        source: "/community",
-        headers: noStoreHeaders,
-      },
-      {
-        source: "/friends",
-        headers: noStoreHeaders,
-      },
-      {
-        source: "/notifications",
-        headers: noStoreHeaders,
-      },
-      {
-        source: "/profile",
-        headers: noStoreHeaders,
-      },
-      {
-        source: "/programs",
-        headers: noStoreHeaders,
-      },
-      {
-        source: "/progress",
-        headers: noStoreHeaders,
-      },
-      {
-        source: "/workouts",
         headers: noStoreHeaders,
       },
     ];

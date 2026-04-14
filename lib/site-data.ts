@@ -1,6 +1,3 @@
-import { unstable_noStore as noStore } from "next/cache";
-import { connection } from "next/server";
-
 import { hasEnvVars } from "@/lib/utils";
 import { createClient } from "@/lib/supabase/server";
 
@@ -262,9 +259,6 @@ const emptyPreferences: WorkoutPref = {
 };
 
 async function getAuthContext(): Promise<AuthContext> {
-  noStore();
-  await connection();
-
   if (!hasEnvVars) {
     return { viewerState: "guest" };
   }
