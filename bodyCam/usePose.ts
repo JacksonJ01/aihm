@@ -93,7 +93,7 @@ export function usePose(
               return base + file;
             }
           }
-        } catch (e) {
+        } catch {
           // ignore and fallback
         }
 
@@ -166,7 +166,6 @@ export function usePose(
     let cancelled = false;
     let animationFrameId = 0;
     let isSending = false;
-    let hasProcessedFrame = false;
     const pose = poseRef.current;
 
     const clearCanvas = () => {
@@ -276,7 +275,6 @@ export function usePose(
 
         try {
           await pose.send({ image: videoRef.current });
-          hasProcessedFrame = true;
         } catch (error) {
           if (!cancelled) {
             console.error("Pose send error:", error);

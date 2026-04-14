@@ -1,213 +1,214 @@
 create extension if not exists "pgcrypto";
 
-create table if not exists public.user_profiles (
-  user_id uuid primary key references auth.users(id) on delete cascade,
-  display_name text not null,
-  training_goal text not null,
-  weekly_goal integer not null default 4 check (weekly_goal > 0),
-  focus_area text not null,
-  level text not null,
-  city text not null default 'Remote',
-  bio text not null default '',
-  created_at timestamptz not null default timezone('utc', now()),
-  updated_at timestamptz not null default timezone('utc', now())
+create table if not exists public."userProfiles" (
+  "id" uuid primary key references auth.users(id) on delete cascade,
+  "userName" text not null unique,
+  "displayName" text not null,
+  "primaryGoal" text not null,
+  "weeklyGoal" integer not null default 0 check ("weeklyGoal" >= 0),
+  "focus" text not null,
+  "expLevel" text not null,
+  "city" text not null default '',
+  "bio" text not null default '',
+  "email" text not null unique,
+  "createdAt" timestamptz not null default timezone('utc', now()),
+  "updatedAt" timestamptz not null default timezone('utc', now())
 );
 
-create table if not exists public.training_preferences (
-  user_id uuid primary key references auth.users(id) on delete cascade,
-  camera_enabled boolean not null default true,
-  audio_cues boolean not null default false,
-  preferred_time text not null default 'Evenings',
-  recovery_day text not null default 'Sunday',
-  created_at timestamptz not null default timezone('utc', now()),
-  updated_at timestamptz not null default timezone('utc', now())
+create table if not exists public."workoutPref" (
+  "userID" uuid primary key references auth.users(id) on delete cascade,
+  "camEnabled" boolean not null default true,
+  "audioEnabled" boolean not null default false,
+  "timePref" text not null default 'Evenings',
+  "recoveryDay" text not null default 'Sunday',
+  "createdAt" timestamptz not null default timezone('utc', now()),
+  "updatedAt" timestamptz not null default timezone('utc', now())
 );
 
-create table if not exists public.program_catalog (
-  id uuid primary key default gen_random_uuid(),
-  title text not null,
-  slug text not null unique,
-  summary text not null,
-  focus_area text not null,
-  difficulty text not null,
-  duration_weeks integer not null check (duration_weeks > 0),
-  sessions_per_week integer not null check (sessions_per_week > 0),
-  coach_note text not null,
-  featured boolean not null default false,
-  created_at timestamptz not null default timezone('utc', now())
+create table if not exists public."programs" (
+  "id" uuid primary key default gen_random_uuid(),
+  "name" text not null unique,
+  "description" text not null,
+  "focus" text not null,
+  "difficulty" text not null,
+  "durationWeeks" integer not null check ("durationWeeks" > 0),
+  "sessionsPerWeek" integer not null check ("sessionsPerWeek" > 0),
+  "coachNote" text not null,
+  "isActive" boolean not null default false,
+  "createdAt" timestamptz not null default timezone('utc', now())
 );
 
-create table if not exists public.user_programs (
-  id uuid primary key default gen_random_uuid(),
-  user_id uuid not null references auth.users(id) on delete cascade,
-  program_id uuid references public.program_catalog(id) on delete set null,
-  title text not null,
-  focus_area text not null,
-  status text not null,
-  progress_percent integer not null default 0 check (progress_percent between 0 and 100),
-  next_session timestamptz not null,
-  streak_days integer not null default 0,
-  completed_sessions integer not null default 0,
-  weekly_target integer not null default 3,
-  weekly_completed integer not null default 0,
-  created_at timestamptz not null default timezone('utc', now())
+create table if not exists public."userPrograms" (
+  "id" uuid primary key default gen_random_uuid(),
+  "userID" uuid not null references auth.users(id) on delete cascade,
+  "programID" uuid references public."programs"("id") on delete set null,
+  "title" text not null,
+  "focus" text not null,
+  "status" text not null,
+  "progressPercent" integer not null default 0 check ("progressPercent" between 0 and 100),
+  "nextSession" timestamptz not null,
+  "streakDays" integer not null default 0,
+  "completedSessions" integer not null default 0,
+  "weeklyTarget" integer not null default 3,
+  "weeklyCompleted" integer not null default 0,
+  "createdAt" timestamptz not null default timezone('utc', now())
 );
 
-create table if not exists public.workout_sessions (
-  id uuid primary key default gen_random_uuid(),
-  user_id uuid not null references auth.users(id) on delete cascade,
-  program_id uuid references public.program_catalog(id) on delete set null,
-  title text not null,
-  focus_area text not null,
-  duration_minutes integer not null check (duration_minutes > 0),
-  effort text not null,
-  score integer not null default 0 check (score between 0 and 100),
-  notes text not null default '',
-  completed_at timestamptz not null default timezone('utc', now())
+create table if not exists public."workoutSessions" (
+  "id" uuid primary key default gen_random_uuid(),
+  "userID" uuid not null references auth.users(id) on delete cascade,
+  "programID" uuid references public."programs"("id") on delete set null,
+  "name" text not null,
+  "focus" text not null,
+  "durationMin" integer not null check ("durationMin" > 0),
+  "effort" text not null,
+  "score" integer not null default 0 check ("score" between 0 and 100),
+  "userNotes" text not null default '',
+  "created_at" timestamptz not null default timezone('utc', now())
 );
 
-create table if not exists public.community_posts (
-  id uuid primary key default gen_random_uuid(),
-  author_id uuid references auth.users(id) on delete set null,
-  author_name text not null,
-  category text not null,
-  title text not null,
-  excerpt text not null,
-  reply_count integer not null default 0,
-  like_count integer not null default 0,
-  is_pinned boolean not null default false,
-  created_at timestamptz not null default timezone('utc', now())
+create table if not exists public."communityPosts" (
+  "id" uuid primary key default gen_random_uuid(),
+  "authorID" uuid references auth.users(id) on delete set null,
+  "displayName" text not null,
+  "category" text not null,
+  "title" text not null,
+  "excerpt" text not null,
+  "replyCount" integer not null default 0,
+  "likeCount" integer not null default 0,
+  "isPinned" boolean not null default false,
+  "createdAt" timestamptz not null default timezone('utc', now())
 );
 
-create table if not exists public.community_challenges (
-  id uuid primary key default gen_random_uuid(),
-  title text not null,
-  description text not null,
-  cadence text not null,
-  participants integer not null default 0,
-  starts_on date not null,
-  ends_on date not null,
-  created_at timestamptz not null default timezone('utc', now())
+create table if not exists public."communityChallenges" (
+  "id" uuid primary key default gen_random_uuid(),
+  "title" text not null,
+  "description" text not null,
+  "cadence" text not null,
+  "participants" integer not null default 0,
+  "startsOnDate" date not null,
+  "endOfDate" date not null,
+  "createdAt" timestamptz not null default timezone('utc', now())
 );
 
-create table if not exists public.friendships (
-  id uuid primary key default gen_random_uuid(),
-  user_id uuid not null references auth.users(id) on delete cascade,
-  friend_user_id uuid references auth.users(id) on delete set null,
-  friend_name text not null,
-  status text not null default 'pending',
-  shared_streak integer not null default 0,
-  last_workout_at timestamptz not null default timezone('utc', now()),
-  focus_area text not null default 'General',
-  created_at timestamptz not null default timezone('utc', now())
+create table if not exists public."userFriends" (
+  "id" uuid primary key default gen_random_uuid(),
+  "userID" uuid not null references auth.users(id) on delete cascade,
+  "friendUserID" uuid references auth.users(id) on delete set null,
+  "friendName" text not null,
+  "status" text not null default 'pending',
+  "sharedStreak" integer not null default 0,
+  "lastWorkoutAt" timestamptz not null default timezone('utc', now()),
+  "focus" text not null default 'General',
+  "createdAt" timestamptz not null default timezone('utc', now())
 );
 
 create table if not exists public.notifications (
-  id uuid primary key default gen_random_uuid(),
-  user_id uuid not null references auth.users(id) on delete cascade,
-  title text not null,
-  message text not null,
-  category text not null,
-  cta_label text,
-  cta_href text,
-  is_read boolean not null default false,
-  created_at timestamptz not null default timezone('utc', now())
+  "id" uuid primary key default gen_random_uuid(),
+  "userID" uuid not null references auth.users(id) on delete cascade,
+  "title" text not null,
+  "message" text not null,
+  "category" text not null,
+  "label" text,
+  "link" text,
+  "isRead" boolean not null default false,
+  "createdAt" timestamptz not null default timezone('utc', now())
 );
 
-create or replace function public.set_updated_at()
+create or replace function public."setUpdatedAt"()
 returns trigger
 language plpgsql
 as $$
 begin
-  new.updated_at = timezone('utc', now());
+  new."updatedAt" = timezone('utc', now());
   return new;
 end;
 $$;
 
-drop trigger if exists user_profiles_set_updated_at on public.user_profiles;
-create trigger user_profiles_set_updated_at
-before update on public.user_profiles
+drop trigger if exists "userProfiles_setUpdatedAt" on public."userProfiles";
+create trigger "userProfiles_setUpdatedAt"
+before update on public."userProfiles"
 for each row
-execute procedure public.set_updated_at();
+execute procedure public."setUpdatedAt"();
 
-drop trigger if exists training_preferences_set_updated_at on public.training_preferences;
-create trigger training_preferences_set_updated_at
-before update on public.training_preferences
+drop trigger if exists "workoutPref_setUpdatedAt" on public."workoutPref";
+create trigger "workoutPref_setUpdatedAt"
+before update on public."workoutPref"
 for each row
-execute procedure public.set_updated_at();
+execute procedure public."setUpdatedAt"();
 
-alter table public.user_profiles enable row level security;
-alter table public.training_preferences enable row level security;
-alter table public.program_catalog enable row level security;
-alter table public.user_programs enable row level security;
-alter table public.workout_sessions enable row level security;
-alter table public.community_posts enable row level security;
-alter table public.community_challenges enable row level security;
-alter table public.friendships enable row level security;
+alter table public."userProfiles" enable row level security;
+alter table public."workoutPref" enable row level security;
+alter table public."programs" enable row level security;
+alter table public."userPrograms" enable row level security;
+alter table public."workoutSessions" enable row level security;
+alter table public."communityPosts" enable row level security;
+alter table public."communityChallenges" enable row level security;
+alter table public."userFriends" enable row level security;
 alter table public.notifications enable row level security;
 
-drop policy if exists "users manage own profile" on public.user_profiles;
+drop policy if exists "users manage own profile" on public."userProfiles";
 create policy "users manage own profile"
-on public.user_profiles
+on public."userProfiles"
 for all
-using (auth.uid() = user_id)
-with check (auth.uid() = user_id);
+using (auth.uid() = "id")
+with check (auth.uid() = "id");
 
-drop policy if exists "users manage own preferences" on public.training_preferences;
+drop policy if exists "users manage own preferences" on public."workoutPref";
 create policy "users manage own preferences"
-on public.training_preferences
+on public."workoutPref"
 for all
-using (auth.uid() = user_id)
-with check (auth.uid() = user_id);
+using (auth.uid() = "userID")
+with check (auth.uid() = "userID");
 
-drop policy if exists "authenticated users can read program catalog" on public.program_catalog;
-create policy "authenticated users can read program catalog"
-on public.program_catalog
+drop policy if exists "authenticated users can read programs" on public."programs";
+create policy "authenticated users can read programs"
+on public."programs"
 for select
 using (auth.role() = 'authenticated');
 
-drop policy if exists "users manage own programs" on public.user_programs;
+drop policy if exists "users manage own programs" on public."userPrograms";
 create policy "users manage own programs"
-on public.user_programs
+on public."userPrograms"
 for all
-using (auth.uid() = user_id)
-with check (auth.uid() = user_id);
+using (auth.uid() = "userID")
+with check (auth.uid() = "userID");
 
-drop policy if exists "users manage own workout sessions" on public.workout_sessions;
+drop policy if exists "users manage own workout sessions" on public."workoutSessions";
 create policy "users manage own workout sessions"
-on public.workout_sessions
+on public."workoutSessions"
 for all
-using (auth.uid() = user_id)
-with check (auth.uid() = user_id);
+using (auth.uid() = "userID")
+with check (auth.uid() = "userID");
 
-drop policy if exists "authenticated users can read community posts" on public.community_posts;
+drop policy if exists "authenticated users can read community posts" on public."communityPosts";
 create policy "authenticated users can read community posts"
-on public.community_posts
+on public."communityPosts"
 for select
 using (auth.role() = 'authenticated');
 
-drop policy if exists "users can create community posts" on public.community_posts;
+drop policy if exists "users can create community posts" on public."communityPosts";
 create policy "users can create community posts"
-on public.community_posts
+on public."communityPosts"
 for insert
-with check (auth.uid() = author_id);
+with check (auth.uid() = "authorID");
 
-drop policy if exists "authenticated users can read community challenges" on public.community_challenges;
+drop policy if exists "authenticated users can read community challenges" on public."communityChallenges";
 create policy "authenticated users can read community challenges"
-on public.community_challenges
+on public."communityChallenges"
 for select
 using (auth.role() = 'authenticated');
 
-drop policy if exists "users manage own friendships" on public.friendships;
-create policy "users manage own friendships"
-on public.friendships
+drop policy if exists "users manage own friends" on public."userFriends";
+create policy "users manage own friends"
+on public."userFriends"
 for all
-using (auth.uid() = user_id)
-with check (auth.uid() = user_id);
+using (auth.uid() = "userID")
+with check (auth.uid() = "userID");
 
 drop policy if exists "users manage own notifications" on public.notifications;
 create policy "users manage own notifications"
 on public.notifications
 for all
-using (auth.uid() = user_id)
-with check (auth.uid() = user_id);
+using (auth.uid() = "userID")
+with check (auth.uid() = "userID");

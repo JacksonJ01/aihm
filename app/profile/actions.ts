@@ -50,32 +50,53 @@ export async function updateProfileAction(formData: FormData) {
   }
 
   const userId = data.claims.sub;
+  const { data: existingProfile } = await supabase
+    .from("userProfiles")
+    .select("userName, email")
+    .eq("id", userId)
+    .maybeSingle();
+
+  const displayName = sanitizeText(formData.get("display_name"), "Athlete", 80);
+  const generatedUserName = sanitizeText(formData.get("display_name"), "Athlete", 24)
+    .replace(/\s+/g, "_")
+    .replace(/[^A-Za-z0-9_]/g, "")
+    .toLowerCase();
+  const fallbackUserName = `${generatedUserName || "athlete"}_${userId.slice(0, 8)}`;
+  const resolvedUserName = (existingProfile?.userName as string | undefined) || fallbackUserName;
+  const resolvedEmail = (existingProfile?.email as string | undefined) || data.claims.email;
+
+  if (!resolvedEmail) {
+    throw new Error("Unable to resolve profile email for this account.");
+  }
+
   const profilePayload = {
-    user_id: userId,
-    display_name: sanitizeText(formData.get("display_name"), "Athlete", 80),
-    training_goal: sanitizeText(formData.get("training_goal"), "Build a stronger weekly routine.", 300),
-    weekly_goal: parseWeeklyGoal(formData.get("weekly_goal")),
-    focus_area: sanitizeAllowedValue(formData.get("focus_area"), "General", ALLOWED_FOCUS_AREAS),
-    level: sanitizeAllowedValue(formData.get("level"), "Intermediate", ALLOWED_LEVELS),
+    id: userId,
+    userName: resolvedUserName,
+    displayName,
+    primaryGoal: sanitizeText(formData.get("training_goal"), "Build a stronger weekly routine.", 300),
+    weeklyGoal: parseWeeklyGoal(formData.get("weekly_goal")),
+    focus: sanitizeAllowedValue(formData.get("focus_area"), "General", ALLOWED_FOCUS_AREAS),
+    expLevel: sanitizeAllowedValue(formData.get("level"), "Intermediate", ALLOWED_LEVELS),
     city: sanitizeText(formData.get("city"), "Remote", 80),
     bio: sanitizeText(formData.get("bio"), "", 500),
+    email: resolvedEmail,
   };
 
   const preferencesPayload = {
-    user_id: userId,
-    camera_enabled: formData.get("camera_enabled") === "on",
-    audio_cues: formData.get("audio_cues") === "on",
-    preferred_time: sanitizeAllowedValue(
+    userID: userId,
+    camEnabled: formData.get("camera_enabled") === "on",
+    audioEnabled: formData.get("audio_cues") === "on",
+    timePref: sanitizeAllowedValue(
       formData.get("preferred_time"),
       "Evenings",
       ALLOWED_PREFERRED_TIMES,
     ),
-    recovery_day: sanitizeAllowedValue(formData.get("recovery_day"), "Sunday", ALLOWED_RECOVERY_DAYS),
+    recoveryDay: sanitizeAllowedValue(formData.get("recovery_day"), "Sunday", ALLOWED_RECOVERY_DAYS),
   };
 
   const [{ error: profileError }, { error: preferencesError }] = await Promise.all([
-    supabase.from("user_profiles").upsert(profilePayload, { onConflict: "user_id" }),
-    supabase.from("training_preferences").upsert(preferencesPayload, { onConflict: "user_id" }),
+    supabase.from("userProfiles").upsert(profilePayload, { onConflict: "id" }),
+    supabase.from("workoutPref").upsert(preferencesPayload, { onConflict: "userID" }),
   ]);
 
   if (profileError || preferencesError) {

@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Script from "next/script";
 import Camera from "@/components/camera/camera";
 import Controls from "@/components/controls";
@@ -11,6 +11,13 @@ export default function WorkoutsSession() {
   const { videoRef, isCameraOn, startCamera, stopCamera } = useCamera();
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const [scriptLoaded, setScriptLoaded] = useState(false);
+  const [scriptError, setScriptError] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (typeof window !== "undefined" && typeof window.Pose !== "undefined") {
+      setScriptLoaded(true);
+    }
+  }, []);
 
   const { trackerReady, poseDetected } = usePose(videoRef, canvasRef, isCameraOn, scriptLoaded);
 
@@ -19,9 +26,17 @@ export default function WorkoutsSession() {
       <Script
         src="/@mediapipe/pose/pose.js"
         strategy="afterInteractive"
-        onLoad={() => {
-          console.log(" MediaPipe Script Loaded");
+        onReady={() => {
           setScriptLoaded(true);
+          setScriptError(null);
+        }}
+        onLoad={() => {
+          setScriptLoaded(true);
+          setScriptError(null);
+        }}
+        onError={() => {
+          setScriptError("MediaPipe script failed to load.");
+          setScriptLoaded(false);
         }}
       />
 
@@ -52,6 +67,11 @@ export default function WorkoutsSession() {
           </div>
         </div>
         <Camera videoRef={videoRef} canvasRef={canvasRef} isVisible={isCameraOn} />
+        {scriptError ? (
+          <div className="mt-4 rounded-2xl border border-dashed border-red-300/70 bg-red-50 px-4 py-4 text-sm leading-6 text-red-700">
+            {scriptError} Check the browser console and verify that /@mediapipe/pose/pose.js is accessible.
+          </div>
+        ) : null}
         {isCameraOn && !poseDetected ? (
           <div className="mt-4 rounded-2xl border border-dashed border-black/10 bg-background/60 px-4 py-4 text-sm leading-6 text-muted-foreground">
             The camera is running, but the tracker has not found a clear full-body pose yet. Step back slightly, keep your full body in frame, and face the camera.

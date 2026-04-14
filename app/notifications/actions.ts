@@ -31,9 +31,9 @@ export async function markNotificationReadAction(formData: FormData) {
 
   const { error } = await supabase
     .from("notifications")
-    .update({ is_read: true })
+    .update({ isRead: true })
     .eq("id", notificationId)
-    .eq("user_id", userId);
+    .eq("userID", userId);
 
   if (error) {
     throw error;
@@ -46,9 +46,9 @@ export async function markAllNotificationsReadAction() {
   const { supabase, userId } = await getAuthedClient();
   const { error } = await supabase
     .from("notifications")
-    .update({ is_read: true })
-    .eq("user_id", userId)
-    .eq("is_read", false);
+    .update({ isRead: true })
+    .eq("userID", userId)
+    .eq("isRead", false);
 
   if (error) {
     throw error;
