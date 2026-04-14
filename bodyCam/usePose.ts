@@ -81,7 +81,25 @@ export function usePose(
     let cancelled = false;
 
     const pose = new window.Pose({
-      locateFile: (file: string) => `/@mediapipe/pose/${file}`,
+      locateFile: (file: string) => {
+        try {
+          if (typeof document !== "undefined") {
+            const scriptEl = document.querySelector<HTMLScriptElement>(
+              'script[src*="/@mediapipe/pose/"], script[src*="/mediapipe/pose/"]'
+            );
+
+            if (scriptEl && scriptEl.src) {
+              const base = scriptEl.src.substring(0, scriptEl.src.lastIndexOf("/") + 1);
+              return base + file;
+            }
+          }
+        } catch (e) {
+          // ignore and fallback
+        }
+
+        // Fallback to jsdelivr CDN if local files are not available on the host
+        return `https://cdn.jsdelivr.net/npm/@mediapipe/pose/${file}`;
+      },
     });
 
     poseRef.current = pose;
