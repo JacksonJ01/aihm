@@ -193,11 +193,20 @@ export function usePose(
     };
 
     const syncCanvasSize = () => {
-      const video = videoRef.current;
-      if (!video || !video.videoWidth || !video.videoHeight) return;
-      if (canvas.width !== video.videoWidth || canvas.height !== video.videoHeight) {
-        canvas.width = video.videoWidth;
-        canvas.height = video.videoHeight;
+      const clientWidth = canvas.clientWidth;
+      const clientHeight = canvas.clientHeight;
+
+      if (!clientWidth || !clientHeight) {
+        return;
+      }
+
+      const dpr = window.devicePixelRatio || 1;
+      const nextWidth = Math.round(clientWidth * dpr);
+      const nextHeight = Math.round(clientHeight * dpr);
+
+      if (canvas.width !== nextWidth || canvas.height !== nextHeight) {
+        canvas.width = nextWidth;
+        canvas.height = nextHeight;
         // After a resize the canvas state resets — re-cache the context
         ctxRef.current = canvas.getContext("2d");
       }
@@ -247,6 +256,23 @@ export function usePose(
       const landmarks = results.poseLandmarks;
       const w = canvas.width;
       const h = canvas.height;
+      const video = videoRef.current;
+
+      if (!video || !video.videoWidth || !video.videoHeight) {
+        animationFrameId = requestAnimationFrame(sendFrame);
+        return;
+      }
+
+      const sourceWidth = video.videoWidth;
+      const sourceHeight = video.videoHeight;
+      const containScale = Math.min(w / sourceWidth, h / sourceHeight);
+      const drawWidth = sourceWidth * containScale;
+      const drawHeight = sourceHeight * containScale;
+      const offsetX = (w - drawWidth) / 2;
+      const offsetY = (h - drawHeight) / 2;
+
+      const mapX = (x: number) => offsetX + x * drawWidth;
+      const mapY = (y: number) => offsetY + y * drawHeight;
 
       const visibleExerciseCount = landmarks.filter((point, index) =>
         EXERCISE_LANDMARKS.includes(index) && (point.visibility ?? 0) > LANDMARK_VISIBILITY_THRESHOLD,
@@ -267,8 +293,8 @@ export function usePose(
           if ((pA.visibility ?? 0) <= LANDMARK_VISIBILITY_THRESHOLD) continue;
           if ((pB.visibility ?? 0) <= LANDMARK_VISIBILITY_THRESHOLD) continue;
           ctx.beginPath();
-          ctx.moveTo(pA.x * w, pA.y * h);
-          ctx.lineTo(pB.x * w, pB.y * h);
+          ctx.moveTo(mapX(pA.x), mapY(pA.y));
+          ctx.lineTo(mapX(pB.x), mapY(pB.y));
           ctx.stroke();
         }
 
@@ -276,8 +302,8 @@ export function usePose(
         for (const index of EXERCISE_LANDMARKS) {
           const point = landmarks[index];
           if (!point || (point.visibility ?? 0) <= LANDMARK_VISIBILITY_THRESHOLD) continue;
-          const x = point.x * w;
-          const y = point.y * h;
+          const x = mapX(point.x);
+          const y = mapY(point.y);
 
           // Outer filled circle
           ctx.beginPath();
