@@ -19,6 +19,7 @@ const hasSupabaseBrowserEnv = Boolean(
 
 export default function NavBar() {
   const [isSignedIn, setIsSignedIn] = useState(false);
+  const [isAuthChecking, setIsAuthChecking] = useState(true);
   const [programsOpen, setProgramsOpen] = useState(false);
   const [communityOpen, setCommunityOpen] = useState(false);
   const [profileOpen, setProfileOpen] = useState(false);
@@ -196,6 +197,7 @@ export default function NavBar() {
   useEffect(() => {
     if (!hasSupabaseBrowserEnv) {
       setIsSignedIn(false);
+      setIsAuthChecking(false);
       return;
     }
 
@@ -206,17 +208,27 @@ export default function NavBar() {
     } catch (error) {
       console.error("[navbar] Failed to create browser Supabase client", error);
       setIsSignedIn(false);
+      setIsAuthChecking(false);
       return;
     }
 
     let mounted = true;
 
+    // Initial auth check
     supabase.auth.getUser().then(({ data }) => {
       if (mounted) {
         setIsSignedIn(Boolean(data.user));
+        setIsAuthChecking(false);
+      }
+    }).catch((error) => {
+      console.error("[navbar] Failed to get user", error);
+      if (mounted) {
+        setIsSignedIn(false);
+        setIsAuthChecking(false);
       }
     });
 
+    // Listen for auth state changes
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange((_event, session) => {
@@ -232,7 +244,17 @@ export default function NavBar() {
   }, []);
 
   useEffect(() => {
-    function onDoc(e: MouseEvent) {
+    // Close mobile menu if user signs out
+    if (!isSignedIn && mobileMenuOpen) {
+      setMobileMenuOpen(false);
+      setProgramsMobileOpen(false);
+      setCommunityMobileOpen(false);
+      setProfileMobileOpen(false);
+      setActiveFor(null);
+    }
+  }, [isSignedIn, mobileMenuOpen]);
+
+  useEffect(() => {
       const target = e.target as Node;
 
       if (programsRef.current && !programsRef.current.contains(target)) {
@@ -491,7 +513,7 @@ export default function NavBar() {
           {!isMobile && isSignedIn ? (
             <div
               ref={profileRef}
-              style={{ position: 'relative' }}
+              style={{ position: 'relative', display: 'flex', alignItems: 'center', gap: 16 }}
               onMouseEnter={openProfileMenu}
               onMouseLeave={() => scheduleClose(profileCloseTimerRef, setProfileOpen)}
             >
@@ -517,6 +539,19 @@ export default function NavBar() {
               >
                 Profile ▾
               </button>
+              <Link
+                href="/signout"
+                style={{
+                  ...navItemBase,
+                  textDecoration: 'none',
+                  color: 'rgba(255,255,255,0.7)',
+                  fontSize: 14,
+                }}
+                onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.color = 'white'; (e.currentTarget as HTMLElement).style.transform = 'translateY(-2px)'; }}
+                onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.color = 'rgba(255,255,255,0.7)'; (e.currentTarget as HTMLElement).style.transform = ''; }}
+              >
+                Sign Out
+              </Link>
               <PortalMenu
                 anchorRef={profileBtnRef}
                 isOpen={profileOpen}
@@ -589,26 +624,30 @@ export default function NavBar() {
                 >
                   Notifications
                 </Link>
+
+                <Link
+                  href="/profile"
+                  onClick={() => { setMobileMenuOpen(false); setActiveFor('profile'); }}
+                  style={{ color: activeMobileTop === 'profile' ? 'white' : 'rgba(255,255,255,0.6)', transition: 'color 180ms ease', borderTop: '1px solid rgba(255,255,255,0.06)', paddingTop: 10 }}
+                >
+                  Profile Settings
+                </Link>
+                <Link
+                  href="/help"
+                  onClick={() => { setMobileMenuOpen(false); setActiveFor(null); }}
+                  style={{ color: 'rgba(255,255,255,0.6)', transition: 'color 150ms ease' }}
+                >
+                  Help / Docs
+                </Link>
+                <Link
+                  href="/signout"
+                  onClick={() => { setMobileMenuOpen(false); setActiveFor(null); }}
+                  style={{ color: 'rgba(255,255,255,0.6)', fontWeight: 500, transition: 'color 150ms ease' }}
+                >
+                  Sign Out
+                </Link>
               </>
             ) : null}
-            {/* Profile dropdown for mobile (inside hamburger) */}
-            <div style={{ borderTop: '1px solid rgba(255,255,255,0.06)', paddingTop: 10 }}>
-              <button
-                onClick={() => { toggleProfileMobile(); setActiveFor(profileMobileOpen ? null : 'profile'); }}
-                style={{ width: '100%', textAlign: 'left', color: activeMobileTop === 'profile' ? 'white' : 'rgba(255,255,255,0.6)', backgroundColor: 'transparent', border: 'none', transition: 'color 180ms ease', colorScheme: 'dark' }}
-              >
-                Profile ▾
-              </button>
-              <div style={{ overflow: 'hidden', maxHeight: profileMobileOpen ? 160 : 0, opacity: profileMobileOpen ? 1 : 0, transition: 'max-height 220ms ease, opacity 180ms ease' }}>
-                <div style={{ paddingLeft: 12, display: 'flex', flexDirection: 'column', gap: 8 }}>
-                  <Link href={isSignedIn ? "/profile" : "/auth/login"} onClick={() => { setMobileMenuOpen(false); setProfileMobileOpen(false); setActiveFor(null); }} style={{ color: 'white' }}>{isSignedIn ? 'Profile Settings' : 'Sign in'}</Link>
-                  <Link href="/help" onClick={() => { setMobileMenuOpen(false); setProfileMobileOpen(false); setActiveFor(null); }} style={{ color: 'white' }}>Help / Docs</Link>
-                  {isSignedIn ? (
-                    <Link href="/signout" onClick={() => { setMobileMenuOpen(false); setProfileMobileOpen(false); setActiveFor(null); }} style={{ color: 'white' }}>Sign out</Link>
-                  ) : null}
-                </div>
-              </div>
-            </div>
           </div>
         </div>
       )}
