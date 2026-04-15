@@ -6,6 +6,7 @@ import { useState, useRef, useEffect, useLayoutEffect, useCallback } from "react
 import { usePathname } from 'next/navigation';
 import { createPortal } from "react-dom";
 import { createClient } from "@/lib/supabase/client";
+import { logoutAction } from "@/app/auth/actions";
 
 const hasSupabaseBrowserEnv = Boolean(
   (process.env.NEXT_PUBLIC_SUPABASE_URL || process.env.NEXT_PUBLIC_aihm_SUPABASE_URL) &&
@@ -85,7 +86,7 @@ export default function NavBar() {
   const startActive = isActivePath('/workouts');
   const communityActive = notRoot && ['/community', '/friends'].some(p => pathname.startsWith(p));
   const notificationsActive = isActivePath('/notifications');
-  const profileActive = notRoot && ['/profile', '/help', '/signout'].some(p => pathname.startsWith(p));
+  const profileActive = notRoot && ['/profile', '/help'].some(p => pathname.startsWith(p));
 
   // treat AIHM as "aware" of the same top-level routes (used for sizing/alignment only)
   // Make AIHM active when any of the main nav items are active so visuals match exactly
@@ -103,6 +104,16 @@ export default function NavBar() {
     color: 'inherit',
     cursor: 'pointer',
     font: 'inherit',
+  };
+  const signOutButtonBase: React.CSSProperties = {
+    background: 'transparent',
+    border: 'none',
+    color: 'inherit',
+    cursor: 'pointer',
+    font: 'inherit',
+    padding: 0,
+    margin: 0,
+    textAlign: 'left',
   };
   const clearCloseTimer = (timerRef: React.MutableRefObject<number | null>) => {
     if (timerRef.current !== null) {
@@ -585,19 +596,21 @@ export default function NavBar() {
               >
                 Profile ▾
               </button>
-              <Link
-                href="/signout"
-                style={{
-                  ...navItemBase,
-                  textDecoration: 'none',
-                  color: 'rgba(255,255,255,0.7)',
-                  fontSize: 14,
-                }}
-                onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.color = 'white'; (e.currentTarget as HTMLElement).style.transform = 'translateY(-2px)'; }}
-                onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.color = 'rgba(255,255,255,0.7)'; (e.currentTarget as HTMLElement).style.transform = ''; }}
-              >
-                Sign Out
-              </Link>
+              <form action={logoutAction}>
+                <button
+                  type="submit"
+                  style={{
+                    ...navItemBase,
+                    ...signOutButtonBase,
+                    color: 'rgba(255,255,255,0.7)',
+                    fontSize: 14,
+                  }}
+                  onMouseEnter={(e) => { (e.currentTarget as HTMLButtonElement).style.color = 'white'; (e.currentTarget as HTMLButtonElement).style.transform = 'translateY(-2px)'; }}
+                  onMouseLeave={(e) => { (e.currentTarget as HTMLButtonElement).style.color = 'rgba(255,255,255,0.7)'; (e.currentTarget as HTMLButtonElement).style.transform = ''; }}
+                >
+                  Sign Out
+                </button>
+              </form>
               <PortalMenu
                 anchorRef={profileBtnRef}
                 isOpen={profileOpen}
@@ -609,7 +622,15 @@ export default function NavBar() {
                   <Link href={isSignedIn ? "/profile" : "/auth/login"} onClick={() => setProfileOpen(false)} style={{ whiteSpace: 'nowrap', color: 'inherit' }}>{isSignedIn ? 'Profile Settings' : 'Sign in'}</Link>
                   <Link href="/help" onClick={() => setProfileOpen(false)} style={{ whiteSpace: 'nowrap', color: 'inherit' }}>Help / Docs</Link>
                   {isSignedIn ? (
-                    <Link href="/signout" onClick={() => setProfileOpen(false)} style={{ whiteSpace: 'nowrap', color: 'inherit' }}>Sign out</Link>
+                    <form action={logoutAction}>
+                      <button
+                        type="submit"
+                        onClick={() => setProfileOpen(false)}
+                        style={{ ...signOutButtonBase, whiteSpace: 'nowrap', color: 'inherit' }}
+                      >
+                        Sign out
+                      </button>
+                    </form>
                   ) : null}
                 </div>
               </PortalMenu>
@@ -685,13 +706,15 @@ export default function NavBar() {
                 >
                   Help / Docs
                 </Link>
-                <Link
-                  href="/signout"
-                  onClick={() => { setMobileMenuOpen(false); setActiveFor(null); }}
-                  style={{ color: 'rgba(255,255,255,0.6)', fontWeight: 500, transition: 'color 150ms ease' }}
-                >
-                  Sign Out
-                </Link>
+                <form action={logoutAction}>
+                  <button
+                    type="submit"
+                    onClick={() => { setMobileMenuOpen(false); setActiveFor(null); }}
+                    style={{ ...signOutButtonBase, color: 'rgba(255,255,255,0.6)', fontWeight: 500, transition: 'color 150ms ease' }}
+                  >
+                    Sign Out
+                  </button>
+                </form>
               </>
             ) : null}
           </div>
