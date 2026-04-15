@@ -255,6 +255,7 @@ export default function NavBar() {
   }, [isSignedIn, mobileMenuOpen]);
 
   useEffect(() => {
+    function onDoc(e: MouseEvent) {
       const target = e.target as Node;
 
       if (programsRef.current && !programsRef.current.contains(target)) {

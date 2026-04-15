@@ -63,6 +63,16 @@ const EXERCISE_LANDMARKS = [
     27, 28  // Ankles
 ];
 
+const POSE_CONNECTIONS: [number, number][] = [
+  [11, 13], [13, 15], // Left arm: shoulder → elbow → wrist
+  [12, 14], [14, 16], // Right arm: shoulder → elbow → wrist
+  [11, 12],           // Shoulders bar
+  [11, 23], [12, 24], // Torso sides
+  [23, 24],           // Hips bar
+  [23, 25], [25, 27], // Left leg: hip → knee → ankle
+  [24, 26], [26, 28], // Right leg: hip → knee → ankle
+];
+
 export function usePose(
   videoRef: React.RefObject<HTMLVideoElement | null>,
   canvasRef: React.RefObject<HTMLCanvasElement | null>,
@@ -70,6 +80,7 @@ export function usePose(
   scriptLoaded: boolean,
 ): PoseTrackerState {
   const poseRef = useRef<PoseInstance | null>(null);
+  const ctxRef = useRef<CanvasRenderingContext2D | null>(null);
   const [trackerReady, setTrackerReady] = useState(false);
   const [poseDetected, setPoseDetected] = useState(false);
 
@@ -163,37 +174,32 @@ export function usePose(
   useEffect(() => {
     if (!isCameraOn || !scriptLoaded || !videoRef.current || !canvasRef.current) return;
     if (!poseRef.current) return;
+
     let cancelled = false;
     let animationFrameId = 0;
-    let isSending = false;
     const pose = poseRef.current;
+    const canvas = canvasRef.current;
+
+    // Cache the 2D context — resizing canvas resets its state but the ref remains valid
+    ctxRef.current = canvas.getContext("2d");
 
     const clearCanvas = () => {
-      const canvas = canvasRef.current;
-      const ctx = canvas?.getContext("2d");
-
-      if (ctx && canvas) {
-        ctx.clearRect(0, 0, canvas.width, canvas.height);
-      }
+      const ctx = ctxRef.current;
+      if (ctx) ctx.clearRect(0, 0, canvas.width, canvas.height);
     };
 
     const setCanvasVisibility = (isVisible: boolean) => {
-      if (canvasRef.current) {
-        canvasRef.current.style.opacity = isVisible ? "1" : "0";
-      }
+      canvas.style.opacity = isVisible ? "1" : "0";
     };
 
     const syncCanvasSize = () => {
       const video = videoRef.current;
-      const canvas = canvasRef.current;
-
-      if (!video || !canvas || !video.videoWidth || !video.videoHeight) {
-        return;
-      }
-
+      if (!video || !video.videoWidth || !video.videoHeight) return;
       if (canvas.width !== video.videoWidth || canvas.height !== video.videoHeight) {
         canvas.width = video.videoWidth;
         canvas.height = video.videoHeight;
+        // After a resize the canvas state resets — re-cache the context
+        ctxRef.current = canvas.getContext("2d");
       }
     };
 
@@ -201,103 +207,106 @@ export function usePose(
     setCanvasVisibility(false);
     setPoseDetected(false);
 
+    // Callback-driven pipeline: onResults schedules the next send so there is
+    // no wasted RAF tick between when MediaPipe finishes and the next frame starts.
+    const sendFrame = async () => {
+      if (cancelled) return;
+      const video = videoRef.current;
+      if (!video || video.readyState < 2) {
+        // Video not ready yet — retry next tick
+        animationFrameId = requestAnimationFrame(sendFrame);
+        return;
+      }
+      try {
+        await pose.send({ image: video });
+        // onResults fires during the await and schedules the next RAF
+      } catch (error) {
+        if (!cancelled) console.error("Pose send error:", error);
+        // onResults won't fire on error — keep the loop alive
+        if (!cancelled) animationFrameId = requestAnimationFrame(sendFrame);
+      }
+    };
+
     pose.onResults((results: PoseResults) => {
       if (cancelled) return;
 
       syncCanvasSize();
 
-      const canvas = canvasRef.current;
-      const ctx = canvas?.getContext("2d");
-      if (!ctx || !canvas) return;
+      const ctx = ctxRef.current;
+      if (!ctx) return;
 
-      // Clearing Previous Frame
       ctx.clearRect(0, 0, canvas.width, canvas.height);
 
       if (!results.poseLandmarks) {
         setPoseDetected(false);
         setCanvasVisibility(false);
+        animationFrameId = requestAnimationFrame(sendFrame);
         return;
       }
 
-      const visibleExerciseLandmarks = results.poseLandmarks.filter((point, index) => {
-        return EXERCISE_LANDMARKS.includes(index) && (point.visibility ?? 0) > LANDMARK_VISIBILITY_THRESHOLD;
-      });
+      const landmarks = results.poseLandmarks;
+      const w = canvas.width;
+      const h = canvas.height;
 
-      const hasVisiblePose = visibleExerciseLandmarks.length > 0;
+      const visibleExerciseCount = landmarks.filter((point, index) =>
+        EXERCISE_LANDMARKS.includes(index) && (point.visibility ?? 0) > LANDMARK_VISIBILITY_THRESHOLD,
+      ).length;
+
+      const hasVisiblePose = visibleExerciseCount > 0;
       setPoseDetected(hasVisiblePose);
       setCanvasVisibility(hasVisiblePose);
 
-      if (!hasVisiblePose) {
-        return;
-      }
-
-      // Drawing Landmark Points
-      results.poseLandmarks.forEach((point: PoseLandmark, index: number) => {
-        const isTargetJoint = EXERCISE_LANDMARKS.includes(index);
-        const isVisible = (point.visibility ?? 0) > LANDMARK_VISIBILITY_THRESHOLD;
-
-        if (isTargetJoint && isVisible) {
+      if (hasVisiblePose) {
+        // Draw skeleton connection lines behind the joint dots
+        ctx.lineWidth = 2.5;
+        ctx.strokeStyle = "rgba(255, 255, 255, 0.5)";
+        for (const [a, b] of POSE_CONNECTIONS) {
+          const pA = landmarks[a];
+          const pB = landmarks[b];
+          if (!pA || !pB) continue;
+          if ((pA.visibility ?? 0) <= LANDMARK_VISIBILITY_THRESHOLD) continue;
+          if ((pB.visibility ?? 0) <= LANDMARK_VISIBILITY_THRESHOLD) continue;
           ctx.beginPath();
-          ctx.arc(
-            point.x * canvas.width,
-            point.y * canvas.height,
-            10,
-            0,
-            2 * Math.PI,
-          );
-          ctx.fillStyle = "rgba(255, 47, 0, 0.5)";
+          ctx.moveTo(pA.x * w, pA.y * h);
+          ctx.lineTo(pB.x * w, pB.y * h);
+          ctx.stroke();
+        }
+
+        // Draw joint dots on top of the lines
+        for (const index of EXERCISE_LANDMARKS) {
+          const point = landmarks[index];
+          if (!point || (point.visibility ?? 0) <= LANDMARK_VISIBILITY_THRESHOLD) continue;
+          const x = point.x * w;
+          const y = point.y * h;
+
+          // Outer filled circle
+          ctx.beginPath();
+          ctx.arc(x, y, 8, 0, 2 * Math.PI);
+          ctx.fillStyle = "rgba(255, 60, 0, 0.9)";
           ctx.fill();
 
+          // Inner white dot for contrast
           ctx.beginPath();
-          ctx.arc(
-            point.x * canvas.width,
-            point.y * canvas.height,
-            5,
-            0,
-            2 * Math.PI,
-          );
-          ctx.fillStyle = "rgba(255, 47, 0, 0.5)";
+          ctx.arc(x, y, 3, 0, 2 * Math.PI);
+          ctx.fillStyle = "rgba(255, 255, 255, 0.95)";
           ctx.fill();
         }
-      });
+      }
+
+      // Schedule the next frame immediately after drawing
+      animationFrameId = requestAnimationFrame(sendFrame);
     });
 
-    const run = async () => {
-      if (cancelled) return;
-
-      if (
-        !isSending &&
-        videoRef.current &&
-        isCameraOn &&
-        videoRef.current.readyState >= 2
-      ) {
-        isSending = true;
-
-        try {
-          await pose.send({ image: videoRef.current });
-        } catch (error) {
-          if (!cancelled) {
-            console.error("Pose send error:", error);
-          }
-        } finally {
-          isSending = false;
-        }
-      }
-
-      if (!cancelled) {
-        animationFrameId = requestAnimationFrame(run);
-      }
-    };
-
-    animationFrameId = requestAnimationFrame(run);
+    // Kick off the pipeline
+    animationFrameId = requestAnimationFrame(sendFrame);
 
     return () => {
       cancelled = true;
       cancelAnimationFrame(animationFrameId);
       setPoseDetected(false);
-
       clearCanvas();
       setCanvasVisibility(false);
+      ctxRef.current = null;
     };
   }, [isCameraOn, scriptLoaded, videoRef, canvasRef]);
 

@@ -33,8 +33,13 @@ export function useCamera() {
     try {
       stopCamera();
 
+      const isMobile = /Mobi|Android|iPhone|iPad|iPod|Windows Phone/.test(navigator.userAgent);
+      const videoConstraints: MediaTrackConstraints = isMobile
+        ? { width: { ideal: 480 }, height: { ideal: 360 }, facingMode: "user" }
+        : { width: { ideal: 640 }, height: { ideal: 480 } };
+
       const stream = await navigator.mediaDevices.getUserMedia({
-        video: true,
+        video: videoConstraints,
       });
 
       streamRef.current = stream;
