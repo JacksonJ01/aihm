@@ -31,7 +31,7 @@ function CommunityPageFallback() {
 
 async function CommunityPageContent() {
   const community = await getCommunityData();
-  const pinnedCount = community.data.posts.filter((post) => post.is_pinned).length;
+  const pinnedCount = community.data.posts.filter((post) => post.isPinned).length;
 
   return (
     <AppPage>
@@ -85,7 +85,7 @@ async function CommunityPageContent() {
                   <p className="mt-3 text-sm leading-7 text-muted-foreground">{challenge.description}</p>
                   <div className="mt-5 flex flex-wrap gap-2 text-xs font-medium text-muted-foreground">
                     <span className="rounded-full border border-black/10 bg-background/70 px-3 py-1">{challenge.participants} participants</span>
-                    <span className="rounded-full border border-black/10 bg-background/70 px-3 py-1">{formatShortDate(challenge.starts_on)} to {formatShortDate(challenge.ends_on)}</span>
+                    <span className="rounded-full border border-black/10 bg-background/70 px-3 py-1">{formatShortDate(challenge.startsOnDate)} to {formatShortDate(challenge.endOfDate)}</span>
                   </div>
                 </article>
               ))
@@ -110,7 +110,7 @@ async function CommunityPageContent() {
                     <span className="rounded-full bg-accent px-3 py-1 text-xs font-semibold uppercase tracking-[0.16em] text-accent-foreground">
                       {post.category}
                     </span>
-                    {post.is_pinned ? (
+                    {post.isPinned ? (
                       <span className="rounded-full border border-primary/20 bg-primary/10 px-3 py-1 text-xs font-semibold uppercase tracking-[0.16em] text-primary">
                         Pinned
                       </span>
@@ -119,10 +119,10 @@ async function CommunityPageContent() {
                   <h2 className="mt-4 text-2xl font-semibold tracking-[-0.03em] text-foreground">{post.title}</h2>
                   <p className="mt-3 text-sm leading-7 text-muted-foreground">{post.excerpt}</p>
                   <div className="mt-5 flex flex-wrap gap-2 text-xs font-medium text-muted-foreground">
-                    <span className="rounded-full border border-black/10 bg-background/70 px-3 py-1">{post.author_name}</span>
-                    <span className="rounded-full border border-black/10 bg-background/70 px-3 py-1">{post.reply_count} replies</span>
-                    <span className="rounded-full border border-black/10 bg-background/70 px-3 py-1">{post.like_count} likes</span>
-                    <span className="rounded-full border border-black/10 bg-background/70 px-3 py-1">{formatShortDate(post.created_at)}</span>
+                    <span className="rounded-full border border-black/10 bg-background/70 px-3 py-1">{post.displayName}</span>
+                    <span className="rounded-full border border-black/10 bg-background/70 px-3 py-1">{post.replyCount} replies</span>
+                    <span className="rounded-full border border-black/10 bg-background/70 px-3 py-1">{post.likeCount} likes</span>
+                    <span className="rounded-full border border-black/10 bg-background/70 px-3 py-1">{formatShortDate(post.createdAt)}</span>
                   </div>
                 </article>
               ))

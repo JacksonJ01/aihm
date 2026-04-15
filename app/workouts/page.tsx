@@ -70,11 +70,11 @@ async function WorkoutsPageContent() {
               <div className="text-sm font-semibold uppercase tracking-[0.2em] text-white/55">Latest session</div>
               {latestSession ? (
                 <>
-                  <div className="mt-3 text-2xl font-semibold tracking-[-0.04em]">{latestSession.title}</div>
-                  <p className="mt-3 text-sm leading-6 text-white/70">{latestSession.notes}</p>
+                  <div className="mt-3 text-2xl font-semibold tracking-[-0.04em]">{latestSession.name}</div>
+                  <p className="mt-3 text-sm leading-6 text-white/70">{latestSession.userNotes}</p>
                   <div className="mt-5 flex flex-wrap gap-2 text-xs font-medium text-white/80">
-                    <span className="rounded-full bg-white/10 px-3 py-1">{latestSession.focus_area}</span>
-                    <span className="rounded-full bg-white/10 px-3 py-1">{latestSession.duration_minutes} min</span>
+                    <span className="rounded-full bg-white/10 px-3 py-1">{latestSession.focus}</span>
+                    <span className="rounded-full bg-white/10 px-3 py-1">{latestSession.durationMin} min</span>
                     <span className="rounded-full bg-white/10 px-3 py-1">Score {latestSession.score}</span>
                   </div>
                 </>
@@ -129,17 +129,17 @@ async function WorkoutsPageContent() {
                 <article key={session.id} className="rounded-[24px] border border-black/10 bg-white/72 px-5 py-5">
                   <div className="flex flex-wrap items-start justify-between gap-3">
                     <div className="max-w-2xl">
-                      <div className="text-xl font-semibold tracking-[-0.03em] text-foreground">{session.title}</div>
-                      <p className="mt-2 text-sm leading-6 text-muted-foreground">{session.notes}</p>
+                      <div className="text-xl font-semibold tracking-[-0.03em] text-foreground">{session.name}</div>
+                      <p className="mt-2 text-sm leading-6 text-muted-foreground">{session.userNotes}</p>
                     </div>
                     <div className="rounded-full bg-accent px-3 py-1 text-xs font-semibold uppercase tracking-[0.16em] text-accent-foreground">
                       {session.effort}
                     </div>
                   </div>
                   <div className="mt-4 flex flex-wrap gap-2 text-xs font-medium text-muted-foreground">
-                    <span className="rounded-full border border-black/10 bg-background/70 px-3 py-1">{session.focus_area}</span>
-                    <span className="rounded-full border border-black/10 bg-background/70 px-3 py-1">{session.duration_minutes} min</span>
-                    <span className="rounded-full border border-black/10 bg-background/70 px-3 py-1">{formatLongDate(session.completed_at)}</span>
+                    <span className="rounded-full border border-black/10 bg-background/70 px-3 py-1">{session.focus}</span>
+                    <span className="rounded-full border border-black/10 bg-background/70 px-3 py-1">{session.durationMin} min</span>
+                    <span className="rounded-full border border-black/10 bg-background/70 px-3 py-1">{formatLongDate(session.createdAt)}</span>
                   </div>
                 </article>
               ))

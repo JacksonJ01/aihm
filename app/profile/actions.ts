@@ -56,8 +56,8 @@ export async function updateProfileAction(formData: FormData) {
     .eq("id", userId)
     .maybeSingle();
 
-  const displayName = sanitizeText(formData.get("display_name"), "Athlete", 80);
-  const generatedUserName = sanitizeText(formData.get("display_name"), "Athlete", 24)
+  const displayName = sanitizeText(formData.get("displayName"), "Athlete", 80);
+  const generatedUserName = sanitizeText(formData.get("displayName"), "Athlete", 24)
     .replace(/\s+/g, "_")
     .replace(/[^A-Za-z0-9_]/g, "")
     .toLowerCase();
@@ -73,10 +73,10 @@ export async function updateProfileAction(formData: FormData) {
     id: userId,
     userName: resolvedUserName,
     displayName,
-    primaryGoal: sanitizeText(formData.get("training_goal"), "Build a stronger weekly routine.", 300),
-    weeklyGoal: parseWeeklyGoal(formData.get("weekly_goal")),
-    focus: sanitizeAllowedValue(formData.get("focus_area"), "General", ALLOWED_FOCUS_AREAS),
-    expLevel: sanitizeAllowedValue(formData.get("level"), "Intermediate", ALLOWED_LEVELS),
+    primaryGoal: sanitizeText(formData.get("primaryGoal"), "Build a stronger weekly routine.", 300),
+    weeklyGoal: parseWeeklyGoal(formData.get("weeklyGoal")),
+    focus: sanitizeAllowedValue(formData.get("focus"), "General", ALLOWED_FOCUS_AREAS),
+    expLevel: sanitizeAllowedValue(formData.get("expLevel"), "Intermediate", ALLOWED_LEVELS),
     city: sanitizeText(formData.get("city"), "Remote", 80),
     bio: sanitizeText(formData.get("bio"), "", 500),
     email: resolvedEmail,
@@ -84,14 +84,14 @@ export async function updateProfileAction(formData: FormData) {
 
   const preferencesPayload = {
     userID: userId,
-    camEnabled: formData.get("camera_enabled") === "on",
-    audioEnabled: formData.get("audio_cues") === "on",
+    camEnabled: formData.get("camEnabled") === "on",
+    audioEnabled: formData.get("audioEnabled") === "on",
     timePref: sanitizeAllowedValue(
-      formData.get("preferred_time"),
+      formData.get("timePref"),
       "Evenings",
       ALLOWED_PREFERRED_TIMES,
     ),
-    recoveryDay: sanitizeAllowedValue(formData.get("recovery_day"), "Sunday", ALLOWED_RECOVERY_DAYS),
+    recoveryDay: sanitizeAllowedValue(formData.get("recoveryDay"), "Sunday", ALLOWED_RECOVERY_DAYS),
   };
 
   const [{ error: profileError }, { error: preferencesError }] = await Promise.all([

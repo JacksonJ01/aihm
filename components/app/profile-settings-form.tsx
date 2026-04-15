@@ -19,15 +19,15 @@ export function ProfileSettingsForm({ profile, preferences }: ProfileSettingsFor
       <div className="grid gap-4 md:grid-cols-2">
         <label className="space-y-2">
           <span className="text-sm font-medium text-foreground">Display name</span>
-          <input name="display_name" defaultValue={profile.display_name} className="w-full rounded-2xl border border-black/10 bg-background/60 px-4 py-3 text-sm text-foreground outline-none" />
+          <input name="displayName" defaultValue={profile.displayName} className="w-full rounded-2xl border border-black/10 bg-background/60 px-4 py-3 text-sm text-foreground outline-none" />
         </label>
         <label className="space-y-2">
           <span className="text-sm font-medium text-foreground">Focus area</span>
-          <input name="focus_area" defaultValue={profile.focus_area} className="w-full rounded-2xl border border-black/10 bg-background/60 px-4 py-3 text-sm text-foreground outline-none" />
+          <input name="focus" defaultValue={profile.focus} className="w-full rounded-2xl border border-black/10 bg-background/60 px-4 py-3 text-sm text-foreground outline-none" />
         </label>
         <label className="space-y-2">
           <span className="text-sm font-medium text-foreground">Level</span>
-          <input name="level" defaultValue={profile.level} className="w-full rounded-2xl border border-black/10 bg-background/60 px-4 py-3 text-sm text-foreground outline-none" />
+          <input name="expLevel" defaultValue={profile.expLevel} className="w-full rounded-2xl border border-black/10 bg-background/60 px-4 py-3 text-sm text-foreground outline-none" />
         </label>
         <label className="space-y-2">
           <span className="text-sm font-medium text-foreground">City</span>
@@ -35,15 +35,15 @@ export function ProfileSettingsForm({ profile, preferences }: ProfileSettingsFor
         </label>
         <label className="space-y-2">
           <span className="text-sm font-medium text-foreground">Weekly goal</span>
-          <input name="weekly_goal" type="number" min={1} defaultValue={profile.weekly_goal} className="w-full rounded-2xl border border-black/10 bg-background/60 px-4 py-3 text-sm text-foreground outline-none" />
+          <input name="weeklyGoal" type="number" min={1} defaultValue={profile.weeklyGoal} className="w-full rounded-2xl border border-black/10 bg-background/60 px-4 py-3 text-sm text-foreground outline-none" />
         </label>
         <label className="space-y-2">
           <span className="text-sm font-medium text-foreground">Preferred time</span>
-          <input name="preferred_time" defaultValue={preferences.preferred_time} className="w-full rounded-2xl border border-black/10 bg-background/60 px-4 py-3 text-sm text-foreground outline-none" />
+          <input name="timePref" defaultValue={preferences.timePref} className="w-full rounded-2xl border border-black/10 bg-background/60 px-4 py-3 text-sm text-foreground outline-none" />
         </label>
         <label className="space-y-2 md:col-span-2">
           <span className="text-sm font-medium text-foreground">Training goal</span>
-          <textarea name="training_goal" defaultValue={profile.training_goal} rows={3} className="w-full rounded-2xl border border-black/10 bg-background/60 px-4 py-3 text-sm text-foreground outline-none" />
+          <textarea name="primaryGoal" defaultValue={profile.primaryGoal} rows={3} className="w-full rounded-2xl border border-black/10 bg-background/60 px-4 py-3 text-sm text-foreground outline-none" />
         </label>
         <label className="space-y-2 md:col-span-2">
           <span className="text-sm font-medium text-foreground">Bio</span>
@@ -53,16 +53,16 @@ export function ProfileSettingsForm({ profile, preferences }: ProfileSettingsFor
 
       <div className="grid gap-3 md:grid-cols-3">
         <label className="flex items-center gap-3 rounded-2xl border border-black/10 bg-background/60 px-4 py-3 text-sm text-foreground">
-          <input type="checkbox" name="camera_enabled" defaultChecked={preferences.camera_enabled} className="h-4 w-4" />
+          <input type="checkbox" name="camEnabled" defaultChecked={preferences.camEnabled} className="h-4 w-4" />
           Camera guidance enabled
         </label>
         <label className="flex items-center gap-3 rounded-2xl border border-black/10 bg-background/60 px-4 py-3 text-sm text-foreground">
-          <input type="checkbox" name="audio_cues" defaultChecked={preferences.audio_cues} className="h-4 w-4" />
+          <input type="checkbox" name="audioEnabled" defaultChecked={preferences.audioEnabled} className="h-4 w-4" />
           Audio cues enabled
         </label>
         <label className="space-y-2">
           <span className="text-sm font-medium text-foreground">Recovery day</span>
-          <input name="recovery_day" defaultValue={preferences.recovery_day} className="w-full rounded-2xl border border-black/10 bg-background/60 px-4 py-3 text-sm text-foreground outline-none" />
+          <input name="recoveryDay" defaultValue={preferences.recoveryDay} className="w-full rounded-2xl border border-black/10 bg-background/60 px-4 py-3 text-sm text-foreground outline-none" />
         </label>
       </div>
 

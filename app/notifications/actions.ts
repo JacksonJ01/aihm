@@ -4,8 +4,7 @@ import { revalidatePath } from "next/cache";
 
 import { createClient } from "@/lib/supabase/server";
 
-const UUID_PATTERN =
-  /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+const INTEGER_ID_PATTERN = /^\d+$/;
 
 async function getAuthedClient() {
   const supabase = await createClient();
@@ -23,9 +22,15 @@ async function getAuthedClient() {
 
 export async function markNotificationReadAction(formData: FormData) {
   const { supabase, userId } = await getAuthedClient();
-  const notificationId = String(formData.get("notification_id") ?? "").trim();
+  const notificationIdRaw = String(formData.get("notification_id") ?? "").trim();
 
-  if (!notificationId || !UUID_PATTERN.test(notificationId)) {
+  if (!notificationIdRaw || !INTEGER_ID_PATTERN.test(notificationIdRaw)) {
+    return;
+  }
+
+  const notificationId = Number(notificationIdRaw);
+
+  if (!Number.isSafeInteger(notificationId) || notificationId <= 0) {
     return;
   }
 

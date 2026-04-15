@@ -35,9 +35,9 @@ function ProgramsPageFallback() {
 async function ProgramsPageContent() {
   const programs = await getProgramsData();
   const activePrograms = programs.data.filter((program) => program.status.toLowerCase() !== "completed");
-  const weeklyCompleted = programs.data.reduce((sum, program) => sum + program.weekly_completed, 0);
-  const weeklyTarget = programs.data.reduce((sum, program) => sum + program.weekly_target, 0);
-  const topStreak = programs.data.length ? Math.max(...programs.data.map((program) => program.streak_days)) : 0;
+  const weeklyCompleted = programs.data.reduce((sum, program) => sum + program.weeklyCompleted, 0);
+  const weeklyTarget = programs.data.reduce((sum, program) => sum + program.weeklyTarget, 0);
+  const topStreak = programs.data.length ? Math.max(...programs.data.map((program) => program.streakDays)) : 0;
 
   return (
     <AppPage>
@@ -85,7 +85,7 @@ async function ProgramsPageContent() {
                     <div className="max-w-2xl">
                       <div className="flex flex-wrap gap-2">
                         <span className="rounded-full bg-accent px-3 py-1 text-xs font-semibold uppercase tracking-[0.16em] text-accent-foreground">
-                          {program.focus_area}
+                          {program.focus}
                         </span>
                         <span className="rounded-full border border-black/10 bg-background/70 px-3 py-1 text-xs font-semibold uppercase tracking-[0.16em] text-muted-foreground">
                           {program.status}
@@ -93,28 +93,28 @@ async function ProgramsPageContent() {
                       </div>
                       <h2 className="mt-4 text-2xl font-semibold tracking-[-0.03em] text-foreground">{program.title}</h2>
                       <p className="mt-3 text-sm leading-6 text-muted-foreground">
-                        {program.completed_sessions} sessions completed so far. Next session scheduled for {formatLongDate(program.next_session)}.
+                        {program.completedSessions} sessions completed so far. Next session scheduled for {formatLongDate(program.nextSession)}.
                       </p>
                     </div>
 
                     <div className="grid gap-3 sm:grid-cols-3 lg:min-w-[280px] lg:grid-cols-1">
                       <div className="rounded-2xl border border-black/10 bg-background/60 px-4 py-3">
                         <div className="text-xs font-semibold uppercase tracking-[0.16em] text-muted-foreground">Progress</div>
-                        <div className="mt-2 text-lg font-semibold text-foreground">{program.progress_percent}%</div>
+                        <div className="mt-2 text-lg font-semibold text-foreground">{program.progressPercent}%</div>
                       </div>
                       <div className="rounded-2xl border border-black/10 bg-background/60 px-4 py-3">
                         <div className="text-xs font-semibold uppercase tracking-[0.16em] text-muted-foreground">Weekly target</div>
-                        <div className="mt-2 text-lg font-semibold text-foreground">{program.weekly_completed}/{program.weekly_target}</div>
+                        <div className="mt-2 text-lg font-semibold text-foreground">{program.weeklyCompleted}/{program.weeklyTarget}</div>
                       </div>
                       <div className="rounded-2xl border border-black/10 bg-background/60 px-4 py-3">
                         <div className="text-xs font-semibold uppercase tracking-[0.16em] text-muted-foreground">Streak</div>
-                        <div className="mt-2 text-lg font-semibold text-foreground">{program.streak_days} days</div>
+                        <div className="mt-2 text-lg font-semibold text-foreground">{program.streakDays} days</div>
                       </div>
                     </div>
                   </div>
 
                   <div className="mt-5 h-3 overflow-hidden rounded-full bg-muted">
-                    <div className="h-full rounded-full bg-primary" style={{ width: progressWidth(program.progress_percent) }} />
+                    <div className="h-full rounded-full bg-primary" style={{ width: progressWidth(program.progressPercent) }} />
                   </div>
                 </article>
               ))

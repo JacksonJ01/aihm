@@ -45,7 +45,7 @@ function BrowseProgramsPageFallback() {
 
 async function BrowseProgramsPageContent() {
   const programs = await getBrowseProgramsData();
-  const featuredCount = programs.data.filter((program) => program.featured).length;
+  const featuredCount = programs.data.filter((program) => program.isActive).length;
 
   return (
     <AppPage>

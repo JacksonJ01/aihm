@@ -40,7 +40,7 @@ function NotificationsPageFallback() {
 
 async function NotificationsPageContent() {
   const notifications = await getNotificationsData();
-  const unread = notifications.data.filter((notification) => !notification.is_read);
+  const unread = notifications.data.filter((notification) => !notification.isRead);
 
   return (
     <AppPage>

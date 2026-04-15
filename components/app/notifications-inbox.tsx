@@ -10,7 +10,7 @@ type NotificationsInboxProps = {
 };
 
 export function NotificationsInbox({ notifications }: NotificationsInboxProps) {
-  const unreadCount = notifications.filter((notification) => !notification.is_read).length;
+  const unreadCount = notifications.filter((notification) => !notification.isRead).length;
 
   return (
     <div className="space-y-4">
@@ -30,7 +30,7 @@ export function NotificationsInbox({ notifications }: NotificationsInboxProps) {
 
       {notifications.length ? (
         notifications.map((notification) => {
-          const safeHref = getSafeAppPath(notification.cta_href);
+          const safeHref = getSafeAppPath(notification.link);
 
           return (
           <article key={notification.id} className="rounded-[26px] border border-black/10 bg-white/72 px-5 py-5">
@@ -40,8 +40,8 @@ export function NotificationsInbox({ notifications }: NotificationsInboxProps) {
                   <span className="rounded-full bg-accent px-3 py-1 text-xs font-semibold uppercase tracking-[0.16em] text-accent-foreground">
                     {notification.category}
                   </span>
-                  <span className={`rounded-full px-3 py-1 text-xs font-semibold uppercase tracking-[0.16em] ${notification.is_read ? "border border-black/10 bg-background/70 text-muted-foreground" : "bg-primary/10 text-primary"}`}>
-                    {notification.is_read ? "Read" : "Unread"}
+                  <span className={`rounded-full px-3 py-1 text-xs font-semibold uppercase tracking-[0.16em] ${notification.isRead ? "border border-black/10 bg-background/70 text-muted-foreground" : "bg-primary/10 text-primary"}`}>
+                    {notification.isRead ? "Read" : "Unread"}
                   </span>
                 </div>
                 <h2 className="mt-4 text-2xl font-semibold tracking-[-0.03em] text-foreground">{notification.title}</h2>
@@ -50,15 +50,15 @@ export function NotificationsInbox({ notifications }: NotificationsInboxProps) {
 
               <div className="flex min-w-[200px] flex-col items-start gap-3 lg:items-end">
                 <div className="text-xs font-semibold uppercase tracking-[0.16em] text-muted-foreground">
-                  {formatLongDate(notification.created_at)}
+                  {formatLongDate(notification.createdAt)}
                 </div>
                 <div className="flex flex-wrap gap-2 lg:justify-end">
-                  {safeHref && notification.cta_label ? (
+                  {safeHref && notification.label ? (
                     <Link href={safeHref} className="button-secondary">
-                      {notification.cta_label}
+                      {notification.label}
                     </Link>
                   ) : null}
-                  {!notification.is_read ? (
+                  {!notification.isRead ? (
                     <form action={markNotificationReadAction}>
                       <input type="hidden" name="notification_id" value={notification.id} />
                       <button type="submit" className="button-primary">

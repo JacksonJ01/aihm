@@ -34,7 +34,7 @@ function ProgressPageFallback() {
 
 async function ProgressPageContent() {
   const sessions = await getWorkoutSessionsData();
-  const totalMinutes = sessions.data.reduce((sum, session) => sum + session.duration_minutes, 0);
+  const totalMinutes = sessions.data.reduce((sum, session) => sum + session.durationMin, 0);
   const averageScore = sessions.data.length
     ? Math.round(sessions.data.reduce((sum, session) => sum + session.score, 0) / sessions.data.length)
     : 0;
@@ -45,7 +45,7 @@ async function ProgressPageContent() {
   const longestSession = sessions.data.length
     ? sessions.data.reduce(
         (currentLongest, session) =>
-          session.duration_minutes > currentLongest.duration_minutes ? session : currentLongest,
+          session.durationMin > currentLongest.durationMin ? session : currentLongest,
         sessions.data[0],
       )
     : null;
@@ -81,7 +81,7 @@ async function ProgressPageContent() {
         <StatCard label="Average score" value={`${averageScore}%`} detail="Movement quality averaged across your most recent logged sessions." icon={Gauge} />
         <StatCard label="Minutes logged" value={`${totalMinutes}`} detail="Recent training volume, including short recovery and mobility work." icon={CalendarRange} />
         <StatCard label="Live streak" value={`${streak} sessions`} detail="A simple read on whether progress is still active instead of stale." icon={Trophy} />
-        <StatCard label="Focus areas" value={`${new Set(sessions.data.map((session) => session.focus_area)).size}`} detail="A snapshot of variety in your recent training mix." icon={Activity} />
+        <StatCard label="Focus areas" value={`${new Set(sessions.data.map((session) => session.focus)).size}`} detail="A snapshot of variety in your recent training mix." icon={Activity} />
       </section>
 
       <section className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_340px]">
@@ -97,7 +97,7 @@ async function ProgressPageContent() {
                   <div key={session.id} className="flex flex-col items-center justify-end gap-3">
                     <div className="flex w-full items-end justify-center rounded-t-[18px] bg-[linear-gradient(180deg,rgba(237,104,41,0.88),rgba(237,104,41,0.42))]" style={{ height: trendHeight(session.score) }} />
                     <div className="text-center text-xs font-semibold uppercase tracking-[0.14em] text-muted-foreground">
-                      {formatShortDate(session.completed_at)}
+                      {formatShortDate(session.createdAt)}
                     </div>
                     <div className="text-sm font-semibold text-foreground">{session.score}</div>
                   </div>
@@ -113,9 +113,9 @@ async function ProgressPageContent() {
               {sessions.data.length ? (
                 sessions.data.slice(0, 3).map((session) => (
                   <article key={session.id} className="rounded-[24px] border border-black/10 bg-background/70 px-4 py-4">
-                    <div className="text-xs font-semibold uppercase tracking-[0.16em] text-muted-foreground">{session.focus_area}</div>
-                    <div className="mt-2 text-lg font-semibold tracking-[-0.03em] text-foreground">{session.title}</div>
-                    <p className="mt-2 text-sm leading-6 text-muted-foreground">{session.notes}</p>
+                    <div className="text-xs font-semibold uppercase tracking-[0.16em] text-muted-foreground">{session.focus}</div>
+                    <div className="mt-2 text-lg font-semibold tracking-[-0.03em] text-foreground">{session.name}</div>
+                    <p className="mt-2 text-sm leading-6 text-muted-foreground">{session.userNotes}</p>
                   </article>
                 ))
               ) : null}
@@ -131,11 +131,11 @@ async function ProgressPageContent() {
           <div className="space-y-3">
             <div className="rounded-[24px] border border-black/10 bg-white/70 px-4 py-4">
               <div className="text-lg font-semibold tracking-[-0.03em] text-foreground">Most stable session</div>
-                <p className="mt-2 text-sm leading-6 text-muted-foreground">{strongestSession?.title ?? "Start tracking sessions to unlock this highlight."}</p>
+                <p className="mt-2 text-sm leading-6 text-muted-foreground">{strongestSession?.name ?? "Start tracking sessions to unlock this highlight."}</p>
             </div>
             <div className="rounded-[24px] border border-black/10 bg-white/70 px-4 py-4">
               <div className="text-lg font-semibold tracking-[-0.03em] text-foreground">Biggest workload day</div>
-                <p className="mt-2 text-sm leading-6 text-muted-foreground">{longestSession?.title ?? "This appears after your first longer workout is recorded."}</p>
+                <p className="mt-2 text-sm leading-6 text-muted-foreground">{longestSession?.name ?? "This appears after your first longer workout is recorded."}</p>
             </div>
             <div className="rounded-[24px] border border-black/10 bg-white/70 px-4 py-4">
               <div className="text-lg font-semibold tracking-[-0.03em] text-foreground">Best use of recovery</div>

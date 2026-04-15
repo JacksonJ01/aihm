@@ -27,6 +27,7 @@ create table if not exists public."workoutPref" (
 
 create table if not exists public."programs" (
   "id" uuid primary key default gen_random_uuid(),
+  "slug" text not null unique,
   "name" text not null unique,
   "description" text not null,
   "focus" text not null,
@@ -35,7 +36,9 @@ create table if not exists public."programs" (
   "sessionsPerWeek" integer not null check ("sessionsPerWeek" > 0),
   "coachNote" text not null,
   "isActive" boolean not null default false,
-  "createdAt" timestamptz not null default timezone('utc', now())
+  "usersNum" integer not null default 0,
+  "createdAt" timestamptz not null default timezone('utc', now()),
+  "updatedAt" timestamptz not null default timezone('utc', now())
 );
 
 create table if not exists public."userPrograms" (
@@ -51,7 +54,8 @@ create table if not exists public."userPrograms" (
   "completedSessions" integer not null default 0,
   "weeklyTarget" integer not null default 3,
   "weeklyCompleted" integer not null default 0,
-  "createdAt" timestamptz not null default timezone('utc', now())
+  "createdAt" timestamptz not null default timezone('utc', now()),
+  "updatedAt" timestamptz not null default timezone('utc', now())
 );
 
 create table if not exists public."workoutSessions" (
@@ -64,12 +68,13 @@ create table if not exists public."workoutSessions" (
   "effort" text not null,
   "score" integer not null default 0 check ("score" between 0 and 100),
   "userNotes" text not null default '',
-  "created_at" timestamptz not null default timezone('utc', now())
+  "createdAt" timestamptz not null default timezone('utc', now()),
+  "updatedAt" timestamptz not null default timezone('utc', now())
 );
 
 create table if not exists public."communityPosts" (
   "id" uuid primary key default gen_random_uuid(),
-  "authorID" uuid references auth.users(id) on delete set null,
+  "userID" uuid references auth.users(id) on delete set null,
   "displayName" text not null,
   "category" text not null,
   "title" text not null,
@@ -77,7 +82,19 @@ create table if not exists public."communityPosts" (
   "replyCount" integer not null default 0,
   "likeCount" integer not null default 0,
   "isPinned" boolean not null default false,
-  "createdAt" timestamptz not null default timezone('utc', now())
+  "createdAt" timestamptz not null default timezone('utc', now()),
+  "updatedAt" timestamptz not null default timezone('utc', now())
+);
+
+create table if not exists public."communityPostReplies" (
+  "id" uuid primary key default gen_random_uuid(),
+  "postID" uuid not null references public."communityPosts"("id") on delete cascade,
+  "displayName" text not null,
+  "parentReplyID" uuid references public."communityPostReplies"("id") on delete cascade,
+  "bodyText" text not null,
+  "isEdited" boolean not null default false,
+  "createdAt" timestamptz not null default timezone('utc', now()),
+  "updatedAt" timestamptz not null default timezone('utc', now())
 );
 
 create table if not exists public."communityChallenges" (
@@ -86,9 +103,10 @@ create table if not exists public."communityChallenges" (
   "description" text not null,
   "cadence" text not null,
   "participants" integer not null default 0,
-  "startsOnDate" date not null,
-  "endOfDate" date not null,
-  "createdAt" timestamptz not null default timezone('utc', now())
+  "startsOnDate" timestamptz not null default timezone('utc', now()),
+  "endOfDate" timestamptz not null default timezone('utc', now()),
+  "createdAt" timestamptz not null default timezone('utc', now()),
+  "updatedAt" timestamptz not null default timezone('utc', now())
 );
 
 create table if not exists public."userFriends" (
@@ -100,11 +118,33 @@ create table if not exists public."userFriends" (
   "sharedStreak" integer not null default 0,
   "lastWorkoutAt" timestamptz not null default timezone('utc', now()),
   "focus" text not null default 'General',
-  "createdAt" timestamptz not null default timezone('utc', now())
+  "createdAt" timestamptz not null default timezone('utc', now()),
+  "updatedAt" timestamptz not null default timezone('utc', now())
+);
+
+create table if not exists public."friendConversations" (
+  "id" uuid primary key default gen_random_uuid(),
+  "friendID" uuid not null references public."userFriends"("id") on delete cascade unique,
+  "userOne" uuid not null references auth.users(id) on delete cascade,
+  "userTwo" uuid not null references auth.users(id) on delete cascade,
+  "lastMessage" timestamptz,
+  "createdAt" timestamptz not null default timezone('utc', now()),
+  "updatedAt" timestamptz not null default timezone('utc', now())
+);
+
+create table if not exists public."friendMessage" (
+  "id" uuid primary key default gen_random_uuid(),
+  "conversationID" uuid not null references public."friendConversations"("id") on delete cascade,
+  "senderUserID" uuid not null references auth.users(id) on delete cascade,
+  "body" text not null,
+  "isRead" boolean not null default false,
+  "readAt" timestamptz,
+  "createdAt" timestamptz not null default timezone('utc', now()),
+  "updatedAt" timestamptz not null default timezone('utc', now())
 );
 
 create table if not exists public.notifications (
-  "id" uuid primary key default gen_random_uuid(),
+  "id" bigint generated always as identity primary key,
   "userID" uuid not null references auth.users(id) on delete cascade,
   "title" text not null,
   "message" text not null,
@@ -112,7 +152,8 @@ create table if not exists public.notifications (
   "label" text,
   "link" text,
   "isRead" boolean not null default false,
-  "createdAt" timestamptz not null default timezone('utc', now())
+  "createdAt" timestamptz not null default timezone('utc', now()),
+  "updatedAt" timestamptz not null default timezone('utc', now())
 );
 
 create or replace function public."setUpdatedAt"()
@@ -143,8 +184,11 @@ alter table public."programs" enable row level security;
 alter table public."userPrograms" enable row level security;
 alter table public."workoutSessions" enable row level security;
 alter table public."communityPosts" enable row level security;
+alter table public."communityPostReplies" enable row level security;
 alter table public."communityChallenges" enable row level security;
 alter table public."userFriends" enable row level security;
+alter table public."friendConversations" enable row level security;
+alter table public."friendMessage" enable row level security;
 alter table public.notifications enable row level security;
 
 drop policy if exists "users manage own profile" on public."userProfiles";
@@ -191,7 +235,14 @@ drop policy if exists "users can create community posts" on public."communityPos
 create policy "users can create community posts"
 on public."communityPosts"
 for insert
-with check (auth.uid() = "authorID");
+with check (auth.uid() = "userID");
+
+drop policy if exists "users read and create replies" on public."communityPostReplies";
+create policy "users read and create replies"
+on public."communityPostReplies"
+for all
+using (auth.role() = 'authenticated')
+with check (auth.role() = 'authenticated');
 
 drop policy if exists "authenticated users can read community challenges" on public."communityChallenges";
 create policy "authenticated users can read community challenges"
@@ -205,6 +256,28 @@ on public."userFriends"
 for all
 using (auth.uid() = "userID")
 with check (auth.uid() = "userID");
+
+drop policy if exists "users manage own conversations" on public."friendConversations";
+create policy "users manage own conversations"
+on public."friendConversations"
+for all
+using (auth.uid() = "userOne" or auth.uid() = "userTwo")
+with check (auth.uid() = "userOne" or auth.uid() = "userTwo");
+
+drop policy if exists "users manage own messages" on public."friendMessage";
+create policy "users manage own messages"
+on public."friendMessage"
+for all
+using (exists (
+  select 1 from public."friendConversations" fc
+  where fc."id" = "conversationID"
+    and (fc."userOne" = auth.uid() or fc."userTwo" = auth.uid())
+))
+with check (exists (
+  select 1 from public."friendConversations" fc
+  where fc."id" = "conversationID"
+    and (fc."userOne" = auth.uid() or fc."userTwo" = auth.uid())
+));
 
 drop policy if exists "users manage own notifications" on public.notifications;
 create policy "users manage own notifications"

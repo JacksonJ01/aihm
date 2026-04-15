@@ -133,8 +133,8 @@ async function isUserNameTaken(supabase: BootstrapClient, userName: string): Pro
 
 function getSignupProfileSeedFromForm(formData: FormData, email: string): SignupProfileSeed {
   return {
-    userName: sanitizeUserName(formData.get("user_name"), email.split("@")[0] || "Athlete"),
-    displayName: sanitizeDisplayName(formData.get("display_name"), email.split("@")[0] || "Athlete"),
+    userName: sanitizeUserName(formData.get("userName"), email.split("@")[0] || "Athlete"),
+    displayName: sanitizeDisplayName(formData.get("displayName"), email.split("@")[0] || "Athlete"),
   };
 }
 

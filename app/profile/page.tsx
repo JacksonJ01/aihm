@@ -39,7 +39,7 @@ async function ProfilePageContent() {
     <AppPage>
       <PageHero
         eyebrow="Profile"
-        title={isProfileEmpty ? "Set up your profile so training can personalize around you." : `${profile.display_name} keeps training centered around ${profile.focus_area.toLowerCase()}.`}
+        title={isProfileEmpty ? "Set up your profile so training can personalize around you." : `${profile.displayName} keeps training centered around ${profile.focus.toLowerCase()}.`}
         description={isProfileEmpty ? "Profile details, preferences, and account information will appear here once you save them for this account." : "Profile details, preferences, and account information stay together here for quick review and updates."}
         actions={[
           { href: "/help", label: "Open help", secondary: true },
@@ -58,7 +58,7 @@ async function ProfilePageContent() {
               </div>
               <div className="mt-3 text-xl font-semibold tracking-[-0.03em]">{email || profileData.viewerEmail || "Signed-in account"}</div>
               <p className="mt-3 text-sm leading-6 text-white/70">
-                {isProfileEmpty ? "Save your first profile details below to personalize workouts, programs, and preferences." : `Training goal: ${profile.training_goal}`}
+                {isProfileEmpty ? "Save your first profile details below to personalize workouts, programs, and preferences." : `Training goal: ${profile.primaryGoal}`}
               </p>
             </div>
           </>
@@ -66,10 +66,10 @@ async function ProfilePageContent() {
       />
 
       <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-        <StatCard label="Weekly goal" value={isProfileEmpty ? "Not set" : `${profile.weekly_goal} sessions`} detail="How much training this profile is trying to hold each week." icon={Target} />
-        <StatCard label="Primary focus" value={isProfileEmpty ? "Choose one" : profile.focus_area} detail="The dominant lens currently shaping programs and workouts." icon={BadgeCheck} />
-        <StatCard label="Experience" value={isProfileEmpty ? "Add level" : profile.level} detail="Useful context for how aggressive plans and cues should feel." icon={CircleUserRound} />
-        <StatCard label="Camera mode" value={isProfileEmpty ? "Not set" : preferences.camera_enabled ? "Enabled" : "Off"} detail="Live tracking preferences for workout sessions." icon={SlidersHorizontal} />
+        <StatCard label="Weekly goal" value={isProfileEmpty ? "Not set" : `${profile.weeklyGoal} sessions`} detail="How much training this profile is trying to hold each week." icon={Target} />
+        <StatCard label="Primary focus" value={isProfileEmpty ? "Choose one" : profile.focus} detail="The dominant lens currently shaping programs and workouts." icon={BadgeCheck} />
+        <StatCard label="Experience" value={isProfileEmpty ? "Add level" : profile.expLevel} detail="Useful context for how aggressive plans and cues should feel." icon={CircleUserRound} />
+        <StatCard label="Camera mode" value={isProfileEmpty ? "Not set" : preferences.camEnabled ? "Enabled" : "Off"} detail="Live tracking preferences for workout sessions." icon={SlidersHorizontal} />
       </section>
 
       <section className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_340px]">
@@ -82,7 +82,7 @@ async function ProfilePageContent() {
             <div className="rounded-[24px] border border-black/10 bg-white/72 px-5 py-5">
               <div className="text-sm font-semibold uppercase tracking-[0.18em] text-muted-foreground">Goal</div>
               <p className="mt-3 text-sm leading-7 text-muted-foreground">
-                {profile.training_goal || "Add a training goal to tailor recommendations and keep the rest of the app aligned with this account."}
+                {profile.primaryGoal || "Add a training goal to tailor recommendations and keep the rest of the app aligned with this account."}
               </p>
             </div>
             <div className="rounded-[24px] border border-black/10 bg-white/72 px-5 py-5">
@@ -97,7 +97,7 @@ async function ProfilePageContent() {
             </div>
             <div className="rounded-[24px] border border-black/10 bg-white/72 px-5 py-5">
               <div className="text-sm font-semibold uppercase tracking-[0.18em] text-muted-foreground">Preferred window</div>
-              <div className="mt-3 text-xl font-semibold tracking-[-0.03em] text-foreground">{preferences.preferred_time}</div>
+              <div className="mt-3 text-xl font-semibold tracking-[-0.03em] text-foreground">{preferences.timePref}</div>
             </div>
           </div>
         </SectionCard>
@@ -110,13 +110,13 @@ async function ProfilePageContent() {
           >
             <div className="space-y-3">
               <div className="rounded-[22px] border border-black/10 bg-white/70 px-4 py-4 text-sm leading-6 text-muted-foreground">
-                Camera tracking: <span className="font-semibold text-foreground">{preferences.camera_enabled ? "Enabled" : "Disabled"}</span>
+                Camera tracking: <span className="font-semibold text-foreground">{preferences.camEnabled ? "Enabled" : "Disabled"}</span>
               </div>
               <div className="rounded-[22px] border border-black/10 bg-white/70 px-4 py-4 text-sm leading-6 text-muted-foreground">
-                Audio cues: <span className="font-semibold text-foreground">{preferences.audio_cues ? "Enabled" : "Disabled"}</span>
+                Audio cues: <span className="font-semibold text-foreground">{preferences.audioEnabled ? "Enabled" : "Disabled"}</span>
               </div>
               <div className="rounded-[22px] border border-black/10 bg-white/70 px-4 py-4 text-sm leading-6 text-muted-foreground">
-                Recovery day: <span className="font-semibold text-foreground">{preferences.recovery_day}</span>
+                Recovery day: <span className="font-semibold text-foreground">{preferences.recoveryDay}</span>
               </div>
             </div>
             <div className="mt-5">

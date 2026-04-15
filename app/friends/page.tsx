@@ -33,7 +33,7 @@ async function FriendsPageContent() {
   const friendships = await getFriendsData();
   const accepted = friendships.data.filter((friend) => friend.status === "accepted");
   const pending = friendships.data.filter((friend) => friend.status !== "accepted");
-  const longestSharedStreak = accepted.length ? Math.max(...accepted.map((friend) => friend.shared_streak)) : 0;
+  const longestSharedStreak = accepted.length ? Math.max(...accepted.map((friend) => friend.sharedStreak)) : 0;
 
   return (
     <AppPage>
@@ -80,15 +80,15 @@ async function FriendsPageContent() {
                 <article key={friend.id} className="rounded-[26px] border border-black/10 bg-white/72 px-5 py-5">
                   <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
                     <div>
-                      <div className="text-2xl font-semibold tracking-[-0.03em] text-foreground">{friend.friend_name}</div>
+                      <div className="text-2xl font-semibold tracking-[-0.03em] text-foreground">{friend.friendName}</div>
                       <p className="mt-2 text-sm leading-6 text-muted-foreground">
-                        Focused on {friend.focus_area.toLowerCase()} and last active {formatLongDate(friend.last_workout_at)}.
+                        Focused on {friend.focus.toLowerCase()} and last active {formatLongDate(friend.lastWorkoutAt)}.
                       </p>
                     </div>
                     <div className="grid gap-3 sm:grid-cols-2 lg:min-w-[260px]">
                       <div className="rounded-2xl border border-black/10 bg-background/60 px-4 py-3">
                         <div className="text-xs font-semibold uppercase tracking-[0.16em] text-muted-foreground">Shared streak</div>
-                        <div className="mt-2 text-lg font-semibold text-foreground">{friend.shared_streak} days</div>
+                        <div className="mt-2 text-lg font-semibold text-foreground">{friend.sharedStreak} days</div>
                       </div>
                       <div className="rounded-2xl border border-black/10 bg-background/60 px-4 py-3">
                         <div className="text-xs font-semibold uppercase tracking-[0.16em] text-muted-foreground">Status</div>
@@ -116,8 +116,8 @@ async function FriendsPageContent() {
               {pending.length ? (
                 pending.map((friend) => (
                   <div key={friend.id} className="rounded-[22px] border border-black/10 bg-white/70 px-4 py-4">
-                    <div className="text-lg font-semibold tracking-[-0.03em] text-foreground">{friend.friend_name}</div>
-                    <p className="mt-2 text-sm leading-6 text-muted-foreground">Status: {friend.status}. Shared focus: {friend.focus_area}.</p>
+                    <div className="text-lg font-semibold tracking-[-0.03em] text-foreground">{friend.friendName}</div>
+                    <p className="mt-2 text-sm leading-6 text-muted-foreground">Status: {friend.status}. Shared focus: {friend.focus}.</p>
                   </div>
                 ))
               ) : (

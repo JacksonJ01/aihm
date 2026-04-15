@@ -2,7 +2,7 @@
 
 import React from "react";
 import Link from "next/link";
-import { useState, useRef, useEffect, useLayoutEffect } from "react";
+import { useState, useRef, useEffect, useLayoutEffect, useCallback } from "react";
 import { usePathname } from 'next/navigation';
 import { createPortal } from "react-dom";
 import { createClient } from "@/lib/supabase/client";
@@ -194,6 +194,39 @@ export default function NavBar() {
     );
   }
 
+  const refreshAuthState = useCallback(async (showLoading = false) => {
+    if (!hasSupabaseBrowserEnv) {
+      setIsSignedIn(false);
+      setIsAuthChecking(false);
+      return;
+    }
+
+    if (showLoading) {
+      setIsAuthChecking(true);
+    }
+
+    let supabase;
+
+    try {
+      supabase = createClient();
+    } catch (error) {
+      console.error("[navbar] Failed to create browser Supabase client", error);
+      setIsSignedIn(false);
+      setIsAuthChecking(false);
+      return;
+    }
+
+    try {
+      const { data } = await supabase.auth.getUser();
+      setIsSignedIn(Boolean(data.user));
+    } catch (error) {
+      console.error("[navbar] Failed to get user", error);
+      setIsSignedIn(false);
+    } finally {
+      setIsAuthChecking(false);
+    }
+  }, []);
+
   useEffect(() => {
     if (!hasSupabaseBrowserEnv) {
       setIsSignedIn(false);
@@ -214,19 +247,7 @@ export default function NavBar() {
 
     let mounted = true;
 
-    // Initial auth check
-    supabase.auth.getUser().then(({ data }) => {
-      if (mounted) {
-        setIsSignedIn(Boolean(data.user));
-        setIsAuthChecking(false);
-      }
-    }).catch((error) => {
-      console.error("[navbar] Failed to get user", error);
-      if (mounted) {
-        setIsSignedIn(false);
-        setIsAuthChecking(false);
-      }
-    });
+    void refreshAuthState(true);
 
     // Listen for auth state changes
     const {
@@ -241,7 +262,31 @@ export default function NavBar() {
       mounted = false;
       subscription.unsubscribe();
     };
-  }, []);
+  }, [refreshAuthState]);
+
+  useEffect(() => {
+    void refreshAuthState(false);
+  }, [pathname, refreshAuthState]);
+
+  useEffect(() => {
+    const handleWindowFocus = () => {
+      void refreshAuthState(false);
+    };
+
+    const handleVisibilityChange = () => {
+      if (!document.hidden) {
+        void refreshAuthState(false);
+      }
+    };
+
+    window.addEventListener("focus", handleWindowFocus);
+    document.addEventListener("visibilitychange", handleVisibilityChange);
+
+    return () => {
+      window.removeEventListener("focus", handleWindowFocus);
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
+    };
+  }, [refreshAuthState]);
 
   useEffect(() => {
     // Close mobile menu if user signs out
@@ -456,7 +501,7 @@ export default function NavBar() {
 
         {/* Right: notifications + profile (and hamburger on mobile) */}
         <div style={{ flex: '0 0 auto', display: 'flex', gap: 20, alignItems: 'center' }}>
-          {isMobile && isSignedIn ? (
+          {isMobile && !isAuthChecking && isSignedIn ? (
             <button
               ref={mobileMenuButtonRef}
               aria-label="Open menu"
@@ -478,7 +523,7 @@ export default function NavBar() {
             </button>
           ) : null}
 
-          {!isSignedIn ? (
+          {!isAuthChecking && !isSignedIn ? (
             <div style={{ display: 'flex', gap: 14, alignItems: 'center' }}>
               <Link
                 href="/auth/login"

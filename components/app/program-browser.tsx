@@ -18,7 +18,7 @@ export function ProgramBrowser({ programs }: ProgramBrowserProps) {
   const [sortBy, setSortBy] = useState<"featured" | "duration" | "sessions">("featured");
 
   const focusOptions = useMemo(
-    () => ["All", ...Array.from(new Set(programs.map((program) => program.focus_area)))],
+    () => ["All", ...Array.from(new Set(programs.map((program) => program.focus)))],
     [programs],
   );
 
@@ -32,10 +32,10 @@ export function ProgramBrowser({ programs }: ProgramBrowserProps) {
     const nextPrograms = programs.filter((program) => {
       const matchesQuery =
         lowered.length === 0 ||
-        program.title.toLowerCase().includes(lowered) ||
-        program.summary.toLowerCase().includes(lowered) ||
-        program.coach_note.toLowerCase().includes(lowered);
-      const matchesFocus = focus === "All" || program.focus_area === focus;
+        program.name.toLowerCase().includes(lowered) ||
+        program.description.toLowerCase().includes(lowered) ||
+        program.coachNote.toLowerCase().includes(lowered);
+      const matchesFocus = focus === "All" || program.focus === focus;
       const matchesDifficulty = difficulty === "All" || program.difficulty === difficulty;
 
       return matchesQuery && matchesFocus && matchesDifficulty;
@@ -43,14 +43,14 @@ export function ProgramBrowser({ programs }: ProgramBrowserProps) {
 
     return nextPrograms.sort((left, right) => {
       if (sortBy === "duration") {
-        return left.duration_weeks - right.duration_weeks;
+        return left.durationWeeks - right.durationWeeks;
       }
 
       if (sortBy === "sessions") {
-        return right.sessions_per_week - left.sessions_per_week;
+        return right.sessionsPerWeek - left.sessionsPerWeek;
       }
 
-      return Number(right.featured) - Number(left.featured) || left.title.localeCompare(right.title);
+      return Number(right.isActive) - Number(left.isActive) || left.name.localeCompare(right.name);
     });
   }, [difficulty, focus, programs, query, sortBy]);
 
@@ -109,16 +109,16 @@ export function ProgramBrowser({ programs }: ProgramBrowserProps) {
             <article key={program.id} className="group rounded-[28px] border border-black/10 bg-white/72 px-6 py-6 transition-transform duration-150 hover:-translate-y-1">
               <div className="flex items-center justify-between gap-3">
                 <div className="rounded-full bg-accent px-3 py-1 text-xs font-semibold uppercase tracking-[0.18em] text-accent-foreground">
-                  {program.focus_area}
+                  {program.focus}
                 </div>
-                {program.featured ? (
+                {program.isActive ? (
                   <div className="rounded-full bg-primary/10 px-3 py-1 text-xs font-semibold uppercase tracking-[0.18em] text-primary">
                     Featured
                   </div>
                 ) : null}
               </div>
-              <h2 className="mt-5 text-2xl font-semibold tracking-[-0.03em] text-foreground">{program.title}</h2>
-              <p className="mt-3 text-sm leading-7 text-muted-foreground">{program.summary}</p>
+              <h2 className="mt-5 text-2xl font-semibold tracking-[-0.03em] text-foreground">{program.name}</h2>
+              <p className="mt-3 text-sm leading-7 text-muted-foreground">{program.description}</p>
               <div className="mt-5 grid gap-3 sm:grid-cols-3 xl:grid-cols-1">
                 <div className="rounded-2xl border border-black/10 bg-background/65 px-4 py-3">
                   <div className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">Difficulty</div>
@@ -126,15 +126,15 @@ export function ProgramBrowser({ programs }: ProgramBrowserProps) {
                 </div>
                 <div className="rounded-2xl border border-black/10 bg-background/65 px-4 py-3">
                   <div className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">Duration</div>
-                  <div className="mt-2 text-sm font-semibold text-foreground">{program.duration_weeks} weeks</div>
+                  <div className="mt-2 text-sm font-semibold text-foreground">{program.durationWeeks} weeks</div>
                 </div>
                 <div className="rounded-2xl border border-black/10 bg-background/65 px-4 py-3">
                   <div className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">Sessions</div>
-                  <div className="mt-2 text-sm font-semibold text-foreground">{program.sessions_per_week} / week</div>
+                  <div className="mt-2 text-sm font-semibold text-foreground">{program.sessionsPerWeek} / week</div>
                 </div>
               </div>
               <p className="mt-5 rounded-2xl border border-black/10 bg-background/60 px-4 py-4 text-sm leading-6 text-muted-foreground">
-                {program.coach_note}
+                {program.coachNote}
               </p>
               <div className="mt-5">
                 <InlineLink href="/programs">Move this into your active plan list</InlineLink>

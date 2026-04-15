@@ -13,50 +13,52 @@ type PageResult<T> = {
 
 export type Programs = {
   id: string;
-  title: string;
-  summary: string;
-  focus_area: string;
+  slug: string;
+  name: string;
+  description: string;
+  focus: string;
   difficulty: string;
-  duration_weeks: number;
-  sessions_per_week: number;
-  coach_note: string;
-  featured: boolean;
+  durationWeeks: number;
+  sessionsPerWeek: number;
+  coachNote: string;
+  isActive: boolean;
+  usersNum: number;
 };
 
 export type UserPrograms = {
   id: string;
   title: string;
-  focus_area: string;
+  focus: string;
   status: string;
-  progress_percent: number;
-  next_session: string;
-  streak_days: number;
-  completed_sessions: number;
-  weekly_target: number;
-  weekly_completed: number;
+  progressPercent: number;
+  nextSession: string;
+  streakDays: number;
+  completedSessions: number;
+  weeklyTarget: number;
+  weeklyCompleted: number;
 };
 
 export type WorkoutSessions = {
   id: string;
-  title: string;
-  focus_area: string;
-  duration_minutes: number;
+  name: string;
+  focus: string;
+  durationMin: number;
   effort: string;
   score: number;
-  completed_at: string;
-  notes: string;
+  createdAt: string;
+  userNotes: string;
 };
 
 export type CommunityPosts = {
   id: string;
-  author_name: string;
+  displayName: string;
   category: string;
   title: string;
   excerpt: string;
-  reply_count: number;
-  like_count: number;
-  created_at: string;
-  is_pinned: boolean;
+  replyCount: number;
+  likeCount: number;
+  createdAt: string;
+  isPinned: boolean;
 };
 
 export type CommunityChallenges = {
@@ -65,17 +67,17 @@ export type CommunityChallenges = {
   description: string;
   cadence: string;
   participants: number;
-  starts_on: string;
-  ends_on: string;
+  startsOnDate: string;
+  endOfDate: string;
 };
 
 export type UserFriends = {
   id: string;
-  friend_name: string;
+  friendName: string;
   status: string;
-  shared_streak: number;
-  last_workout_at: string;
-  focus_area: string;
+  sharedStreak: number;
+  lastWorkoutAt: string;
+  focus: string;
 };
 
 export type Notifications = {
@@ -83,60 +85,60 @@ export type Notifications = {
   title: string;
   message: string;
   category: string;
-  cta_label: string | null;
-  cta_href: string | null;
-  is_read: boolean;
-  created_at: string;
+  label: string | null;
+  link: string | null;
+  isRead: boolean;
+  createdAt: string;
 };
 
 export type UserProfiles = {
-  user_name: string;
-  display_name: string;
-  training_goal: string;
-  weekly_goal: number;
-  focus_area: string;
-  level: string;
+  userName: string;
+  displayName: string;
+  primaryGoal: string;
+  weeklyGoal: number;
+  focus: string;
+  expLevel: string;
   city: string;
   bio: string;
 };
 
 export type WorkoutPref = {
-  camera_enabled: boolean;
-  audio_cues: boolean;
-  preferred_time: string;
-  recovery_day: string;
+  camEnabled: boolean;
+  audioEnabled: boolean;
+  timePref: string;
+  recoveryDay: string;
 };
 
 export type CommunityPostReplies = {
   id: string;
-  post_id: string;
-  display_name: string;
-  parent_reply_id: string | null;
-  body_text: string;
-  is_edited: string;
-  created_at: string;
-  updated_at: string;
+  postID: string;
+  displayName: string;
+  parentReplyID: string | null;
+  bodyText: string;
+  isEdited: string;
+  createdAt: string;
+  updatedAt: string;
 };
 
 export type FriendConversations = {
   id: string;
-  friend_id: string;
-  user_one: string;
-  user_two: string;
-  last_message: string | null;
-  created_at: string;
-  updated_at: string;
+  friendID: string;
+  userOne: string;
+  userTwo: string;
+  lastMessage: string | null;
+  createdAt: string;
+  updatedAt: string;
 };
 
 export type FriendMessage = {
   id: string;
-  conversation_id: string;
-  sender_user_id: string;
+  conversationID: string;
+  senderUserID: string;
   body: string;
-  is_read: boolean;
-  read_at: string | null;
-  created_at: string;
-  updated_at: string;
+  isRead: boolean;
+  readAt: string | null;
+  createdAt: string;
+  updatedAt: string;
 };
 
 type AuthContext = {
@@ -149,73 +151,78 @@ type AuthContext = {
 const fallbackPrograms: Programs[] = [
   {
     id: "prog-1",
-    title: "Strength Foundation",
-    summary: "A four-week base plan for rebuilding lifting rhythm, movement quality, and upper or lower split consistency.",
-    focus_area: "Strength",
+    slug: "strength-foundation",
+    name: "Strength Foundation",
+    description: "A four-week base plan for rebuilding lifting rhythm, movement quality, and upper or lower split consistency.",
+    focus: "Strength",
     difficulty: "Intermediate",
-    duration_weeks: 4,
-    sessions_per_week: 4,
-    coach_note: "Use this when you want a repeatable weekly structure with enough room for recovery.",
-    featured: true,
+    durationWeeks: 4,
+    sessionsPerWeek: 4,
+    coachNote: "Use this when you want a repeatable weekly structure with enough room for recovery.",
+    isActive: true,
+    usersNum: 0,
   },
   {
     id: "prog-2",
-    title: "Mobility Reset",
-    summary: "Short guided sessions that improve range, core control, and joint prep before harder training blocks.",
-    focus_area: "Mobility",
+    slug: "mobility-reset",
+    name: "Mobility Reset",
+    description: "Short guided sessions that improve range, core control, and joint prep before harder training blocks.",
+    focus: "Mobility",
     difficulty: "Beginner",
-    duration_weeks: 3,
-    sessions_per_week: 5,
-    coach_note: "Best for users returning from inconsistency or spending long hours seated.",
-    featured: true,
+    durationWeeks: 3,
+    sessionsPerWeek: 5,
+    coachNote: "Best for users returning from inconsistency or spending long hours seated.",
+    isActive: true,
+    usersNum: 0,
   },
   {
     id: "prog-3",
-    title: "Conditioning Builder",
-    summary: "Progressive intervals and full-body circuits designed to raise work capacity without losing structure.",
-    focus_area: "Conditioning",
+    slug: "conditioning-builder",
+    name: "Conditioning Builder",
+    description: "Progressive intervals and full-body circuits designed to raise work capacity without losing structure.",
+    focus: "Conditioning",
     difficulty: "Advanced",
-    duration_weeks: 6,
-    sessions_per_week: 3,
-    coach_note: "Works well alongside a primary strength block when your weekly capacity is stable.",
-    featured: false,
+    durationWeeks: 6,
+    sessionsPerWeek: 3,
+    coachNote: "Works well alongside a primary strength block when your weekly capacity is stable.",
+    isActive: false,
+    usersNum: 0,
   },
 ];
-
 
 const fallbackPosts: CommunityPosts[] = [
   {
     id: "post-1",
-    author_name: "Nina R.",
+    displayName: "Nina R.",
     category: "Form check",
     title: "What cues help you keep your rib cage stacked during overhead work?",
     excerpt: "I keep losing position in the second half of a set and want one cue that keeps me organized without overthinking it.",
-    reply_count: 14,
-    like_count: 29,
-    created_at: "2026-04-03T07:00:00.000Z",
-    is_pinned: true,
+    replyCount: 14,
+    likeCount: 29,
+    createdAt: "2026-04-03T07:00:00.000Z",
+    isPinned: true,
   },
   {
     id: "post-2",
-    author_name: "Miles T.",
+    displayName: "Miles T.",
     category: "Challenge log",
     title: "Day 12 of the morning mobility streak",
     excerpt: "Ten minutes has been enough to keep the habit intact, and the app cues are making the start feel easier.",
-    reply_count: 8,
-    like_count: 21,
-    created_at: "2026-04-02T14:00:00.000Z",
-    is_pinned: false,
+    replyCount: 8,
+    likeCount: 21,
+    createdAt: "2026-04-02T14:00:00.000Z",
+    isPinned: false,
   },
   {
     id: "post-3",
-    author_name: "Avery K.",
+    displayName: "Avery K.",
     category: "Programs",
     title: "How are people combining conditioning with Strength Foundation?",
     excerpt: "I want to keep two conditioning sessions each week without flattening recovery on the main lifting days.",
-    reply_count: 11,
-    like_count: 17,
-    created_at: "2026-04-01T18:45:00.000Z",
-    is_pinned: false,
+    replyCount: 11,
+    likeCount: 17,
+    createdAt: "2026-04-01T18:45:00.000Z",
+    isPinned: false,
   },
 ];
 
@@ -226,8 +233,8 @@ const fallbackChallenges: CommunityChallenges[] = [
     description: "Complete one focused session each day, even if it is only fifteen minutes.",
     cadence: "Daily",
     participants: 184,
-    starts_on: "2026-04-01",
-    ends_on: "2026-04-07",
+    startsOnDate: "2026-04-01",
+    endOfDate: "2026-04-07",
   },
   {
     id: "challenge-2",
@@ -235,27 +242,27 @@ const fallbackChallenges: CommunityChallenges[] = [
     description: "Stack mobility, breathing, and camera-assisted alignment checks into a single recovery block.",
     cadence: "5 sessions",
     participants: 92,
-    starts_on: "2026-04-08",
-    ends_on: "2026-04-14",
+    startsOnDate: "2026-04-08",
+    endOfDate: "2026-04-14",
   },
 ];
 
 const emptyProfile: UserProfiles = {
-  user_name: "",
-  display_name: "Your profile",
-  training_goal: "",
-  weekly_goal: 0,
-  focus_area: "General",
-  level: "Not set",
+  userName: "",
+  displayName: "Your profile",
+  primaryGoal: "",
+  weeklyGoal: 0,
+  focus: "General",
+  expLevel: "Not set",
   city: "",
   bio: "",
 };
 
 const emptyPreferences: WorkoutPref = {
-  camera_enabled: false,
-  audio_cues: false,
-  preferred_time: "Not set",
-  recovery_day: "Not set",
+  camEnabled: false,
+  audioEnabled: false,
+  timePref: "Not set",
+  recoveryDay: "Not set",
 };
 
 async function getAuthContext(): Promise<AuthContext> {
@@ -367,7 +374,7 @@ export async function getBrowseProgramsData() {
   return withFallback(fallbackPrograms, async ({ supabase }) => {
     const { data, error } = await supabase!
       .from("programs")
-      .select("id, title:name, summary:description, focus_area:focus, difficulty, duration_weeks:durationWeeks, sessions_per_week:sessionsPerWeek, coach_note:coachNote, featured:isActive")
+      .select("id, slug, name, description, focus, difficulty, durationWeeks, sessionsPerWeek, coachNote, isActive, usersNum")
       .order("isActive", { ascending: false })
       .order("name", { ascending: true });
 
@@ -383,7 +390,7 @@ export async function getProgramsData() {
   return withPersonalizedData([], async ({ supabase, userId }) => {
     const { data, error } = await supabase
       .from("userPrograms")
-      .select("id, title, focus_area:focus, status, progress_percent:progressPercent, next_session:nextSession, streak_days:streakDays, completed_sessions:completedSessions, weekly_target:weeklyTarget, weekly_completed:weeklyCompleted")
+      .select("id, title, focus, status, progressPercent, nextSession, streakDays, completedSessions, weeklyTarget, weeklyCompleted")
       .eq("userID", userId)
       .order("nextSession", { ascending: true });
 
@@ -399,9 +406,9 @@ export async function getWorkoutSessionsData() {
   return withPersonalizedData([], async ({ supabase, userId }) => {
     const { data, error } = await supabase
       .from("workoutSessions")
-      .select("id, title:name, focus_area:focus, duration_minutes:durationMin, effort, score, completed_at:created_at, notes:userNotes")
+      .select("id, name, focus, durationMin, effort, score, createdAt, userNotes")
       .eq("userID", userId)
-      .order("created_at", { ascending: false })
+      .order("createdAt", { ascending: false })
       .limit(8);
 
     if (error) {
@@ -419,13 +426,13 @@ export async function getCommunityData() {
       const [{ data: posts, error: postsError }, { data: challenges, error: challengesError }] = await Promise.all([
         supabase!
           .from("communityPosts")
-          .select("id, author_name:displayName, category, title, excerpt, reply_count:replyCount, like_count:likeCount, created_at:createdAt, is_pinned:isPinned")
+          .select("id, displayName, category, title, excerpt, replyCount, likeCount, createdAt, isPinned")
           .order("isPinned", { ascending: false })
           .order("createdAt", { ascending: false })
           .limit(6),
         supabase!
           .from("communityChallenges")
-          .select("id, title, description, cadence, participants, starts_on:startsOnDate, ends_on:endOfDate")
+          .select("id, title, description, cadence, participants, startsOnDate, endOfDate")
           .order("startsOnDate", { ascending: true })
           .limit(4),
       ]);
@@ -446,7 +453,7 @@ export async function getFriendsData() {
   return withPersonalizedData([], async ({ supabase, userId }) => {
     const { data, error } = await supabase
       .from("userFriends")
-      .select("id, friend_name:friendName, status, shared_streak:sharedStreak, last_workout_at:lastWorkoutAt, focus_area:focus")
+      .select("id, friendName, status, sharedStreak, lastWorkoutAt, focus")
       .eq("userID", userId)
       .order("status", { ascending: true })
       .order("lastWorkoutAt", { ascending: false });
@@ -463,7 +470,7 @@ export async function getNotificationsData() {
   return withPersonalizedData([], async ({ supabase, userId }) => {
     const { data, error } = await supabase
       .from("notifications")
-      .select("id, title, message, category, cta_label:label, cta_href:link, is_read:isRead, created_at:createdAt")
+      .select("id, title, message, category, label, link, isRead, createdAt")
       .eq("userID", userId)
       .order("createdAt", { ascending: false })
       .limit(12);
@@ -474,8 +481,8 @@ export async function getNotificationsData() {
 
     return ((data as Notifications[]) ?? []).map((notification) => ({
       ...notification,
-      cta_href: notification.cta_href?.startsWith("/") && !notification.cta_href.startsWith("//")
-        ? notification.cta_href
+      link: notification.link?.startsWith("/") && !notification.link.startsWith("//")
+        ? notification.link
         : null,
     }));
   }, (data) => data.length === 0);
@@ -492,12 +499,12 @@ export async function getProfileData() {
       const [{ data: profile, error: profileError }, { data: preferences, error: preferencesError }] = await Promise.all([
         supabase
           .from("userProfiles")
-          .select("user_name:userName, display_name:displayName, training_goal:primaryGoal, weekly_goal:weeklyGoal, focus_area:focus, level:expLevel, city, bio")
+          .select("userName, displayName, primaryGoal, weeklyGoal, focus, expLevel, city, bio")
           .eq("email", email ?? "")
           .maybeSingle(),
         supabase
           .from("workoutPref")
-          .select("camera_enabled:camEnabled, audio_cues:audioEnabled, preferred_time:timePref, recovery_day:recoveryDay")
+          .select("camEnabled, audioEnabled, timePref, recoveryDay")
           .eq("userID", userId)
           .maybeSingle(),
       ]);
@@ -512,6 +519,6 @@ export async function getProfileData() {
         email: email ?? "",
       };
     },
-    (data) => !data.email && !data.profile.training_goal && !data.profile.bio,
+    (data) => !data.email && !data.profile.primaryGoal && !data.profile.bio,
   );
 }

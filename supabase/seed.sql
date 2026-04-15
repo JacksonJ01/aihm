@@ -1,10 +1,11 @@
-insert into public."programs" ("name", "description", "focus", "difficulty", "durationWeeks", "sessionsPerWeek", "coachNote", "isActive")
+insert into public."programs" ("slug", "name", "description", "focus", "difficulty", "durationWeeks", "sessionsPerWeek", "coachNote", "isActive")
 values
-  ('Strength Foundation', 'A four-week base plan for rebuilding lifting rhythm, movement quality, and weekly structure.', 'Strength', 'Intermediate', 4, 4, 'Use this when you want a repeatable training week with enough room for recovery.', true),
-  ('Mobility Reset', 'Short guided sessions that improve range, core control, and joint prep before harder work.', 'Mobility', 'Beginner', 3, 5, 'Best for returning from inconsistency or long seated workdays.', true),
-  ('Conditioning Builder', 'Progressive intervals and full-body circuits for raising work capacity without losing structure.', 'Conditioning', 'Advanced', 6, 3, 'Works well beside a primary strength block when recovery is steady.', false)
+  ('strength-foundation', 'Strength Foundation', 'A four-week base plan for rebuilding lifting rhythm, movement quality, and weekly structure.', 'Strength', 'Intermediate', 4, 4, 'Use this when you want a repeatable training week with enough room for recovery.', true),
+  ('mobility-reset', 'Mobility Reset', 'Short guided sessions that improve range, core control, and joint prep before harder work.', 'Mobility', 'Beginner', 3, 5, 'Best for returning from inconsistency or long seated workdays.', true),
+  ('conditioning-builder', 'Conditioning Builder', 'Progressive intervals and full-body circuits for raising work capacity without losing structure.', 'Conditioning', 'Advanced', 6, 3, 'Works well beside a primary strength block when recovery is steady.', false)
 on conflict ("name") do update
 set
+  "slug" = excluded."slug",
   "description" = excluded."description",
   "focus" = excluded."focus",
   "difficulty" = excluded."difficulty",
@@ -93,7 +94,7 @@ with target_user as (
   order by created_at asc
   limit 1
 )
-insert into public."workoutSessions" ("userID", "name", "focus", "durationMin", "effort", "score", "userNotes", "created_at")
+insert into public."workoutSessions" ("userID", "name", "focus", "durationMin", "effort", "score", "userNotes", "createdAt")
 select id, 'Mobility + Core Reset', 'Mobility', 28, 'Moderate', 92, 'Camera alignment stayed stable after the first three minutes.', timezone('utc', now()) - interval '1 day' from target_user
 union all
 select id, 'Upper Push Strength', 'Strength', 44, 'High', 88, 'Good cadence, but shoulder position drifted during the last set.', timezone('utc', now()) - interval '3 day' from target_user

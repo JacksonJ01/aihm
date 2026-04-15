@@ -41,7 +41,7 @@ export function SignUpForm({
                 <Label htmlFor="user-name">Username</Label>
                 <Input
                   id="user-name"
-                  name="user_name"
+                  name="userName"
                   placeholder="your_username"
                   required
                   maxLength={40}
@@ -53,7 +53,7 @@ export function SignUpForm({
                 <Label htmlFor="display-name">Display Name</Label>
                 <Input
                   id="display-name"
-                  name="display_name"
+                  name="displayName"
                   placeholder="Your Display Name"
                   required
                   maxLength={60}
