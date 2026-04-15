@@ -3,7 +3,11 @@ import { NextResponse, type NextRequest } from "next/server";
 import { hasEnvVars, supabasePublishableKey, supabaseUrl } from "../utils";
 
 function isPublicPath(pathname: string) {
-  return pathname === "/" || pathname.startsWith("/auth");
+  return (
+    pathname === "/" ||
+    pathname.startsWith("/auth") ||
+    pathname.startsWith("/@mediapipe/")
+  );
 }
 
 function redirectToLogin(request: NextRequest) {
