@@ -1,11 +1,13 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import Script from "next/script";
 import Camera from "@/components/camera/camera";
 import Controls from "@/components/controls";
 import { useCamera } from "@/bodyCam/useCamera";
 import { usePose } from "@/bodyCam/usePose";
+
+const POSE_SCRIPT_ID = "mediapipe-pose-script";
+const POSE_SCRIPT_SRC = "/@mediapipe/pose/pose.js";
 
 export default function WorkoutsSession() {
   const { videoRef, isCameraOn, startCamera, stopCamera } = useCamera();
@@ -14,32 +16,86 @@ export default function WorkoutsSession() {
   const [scriptError, setScriptError] = useState<string | null>(null);
 
   useEffect(() => {
-    if (typeof window !== "undefined" && typeof window.Pose !== "undefined") {
-      setScriptLoaded(true);
+    if (typeof window === "undefined") {
+      return;
     }
+
+    let isMounted = true;
+    let scriptAddedByThisComponent = false;
+
+    const onScriptLoad = () => {
+      if (!isMounted) {
+        return;
+      }
+
+      setScriptLoaded(true);
+      setScriptError(null);
+    };
+
+    const onScriptError = () => {
+      if (!isMounted) {
+        return;
+      }
+
+      setScriptError("MediaPipe script failed to load.");
+      setScriptLoaded(false);
+    };
+
+    if (typeof window.Pose !== "undefined") {
+      setScriptLoaded(true);
+      setScriptError(null);
+      return () => {
+        isMounted = false;
+      };
+    }
+
+    let scriptEl = document.getElementById(POSE_SCRIPT_ID) as HTMLScriptElement | null;
+
+    if (!scriptEl) {
+      scriptEl = document.createElement("script");
+      scriptEl.id = POSE_SCRIPT_ID;
+      scriptEl.src = POSE_SCRIPT_SRC;
+      scriptEl.async = true;
+      scriptEl.setAttribute("data-managed-by", "workouts-session");
+      scriptEl.addEventListener("load", onScriptLoad);
+      scriptEl.addEventListener("error", onScriptError);
+      document.body.appendChild(scriptEl);
+      scriptAddedByThisComponent = true;
+    } else {
+      scriptEl.addEventListener("load", onScriptLoad);
+      scriptEl.addEventListener("error", onScriptError);
+
+      if (typeof window.Pose !== "undefined") {
+        onScriptLoad();
+      }
+    }
+
+    return () => {
+      isMounted = false;
+
+      if (scriptEl) {
+        scriptEl.removeEventListener("load", onScriptLoad);
+        scriptEl.removeEventListener("error", onScriptError);
+      }
+
+      if (scriptAddedByThisComponent && scriptEl?.parentNode) {
+        scriptEl.parentNode.removeChild(scriptEl);
+      }
+
+      // Release the global constructor when leaving the workout page so the tab owns the asset lifecycle.
+      if (typeof window !== "undefined" && scriptAddedByThisComponent) {
+        delete window.Pose;
+      }
+
+      setScriptLoaded(false);
+      setScriptError(null);
+    };
   }, []);
 
   const { trackerReady, poseDetected } = usePose(videoRef, canvasRef, isCameraOn, scriptLoaded);
 
   return (
     <section className="space-y-6">
-      <Script
-        src="/@mediapipe/pose/pose.js"
-        strategy="afterInteractive"
-        onReady={() => {
-          setScriptLoaded(true);
-          setScriptError(null);
-        }}
-        onLoad={() => {
-          setScriptLoaded(true);
-          setScriptError(null);
-        }}
-        onError={() => {
-          setScriptError("MediaPipe script failed to load.");
-          setScriptLoaded(false);
-        }}
-      />
-
       <div className="rounded-[26px] border border-black/10 bg-white/70 px-5 py-5 shadow-[0_18px_40px_rgba(29,35,43,0.08)]">
         <Controls isCameraOn={isCameraOn} startCamera={startCamera} stopCamera={stopCamera} />
       </div>
