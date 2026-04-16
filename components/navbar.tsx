@@ -692,20 +692,20 @@ export default function NavBar() {
                   Notifications
                 </Link>
 
-                <Link
-                  href="/profile"
-                  onClick={() => { setMobileMenuOpen(false); setActiveFor('profile'); }}
-                  style={{ color: activeMobileTop === 'profile' ? 'white' : 'rgba(255,255,255,0.6)', transition: 'color 180ms ease', borderTop: '1px solid rgba(255,255,255,0.06)', paddingTop: 10 }}
-                >
-                  Profile Settings
-                </Link>
-                <Link
-                  href="/help"
-                  onClick={() => { setMobileMenuOpen(false); setActiveFor(null); }}
-                  style={{ color: 'rgba(255,255,255,0.6)', transition: 'color 150ms ease' }}
-                >
-                  Help / Docs
-                </Link>
+                <div style={{ borderTop: '1px solid rgba(255,255,255,0.06)', paddingTop: 10 }}>
+                  <button
+                    onClick={() => { toggleProfileMobile(); setActiveFor(profileMobileOpen ? null : 'profile'); }}
+                    style={{ width: '100%', textAlign: 'left', color: activeMobileTop === 'profile' ? 'white' : 'rgba(255,255,255,0.6)', backgroundColor: 'transparent', border: 'none', transition: 'color 180ms ease', colorScheme: 'dark' }}
+                  >
+                    Profile ▾
+                  </button>
+                  <div style={{ overflow: 'hidden', maxHeight: profileMobileOpen ? 160 : 0, opacity: profileMobileOpen ? 1 : 0, transition: 'max-height 220ms ease, opacity 180ms ease' }}>
+                    <div style={{ paddingLeft: 12, display: 'flex', flexDirection: 'column', gap: 8 }}>
+                      <Link href="/profile" onClick={() => { setMobileMenuOpen(false); setProfileMobileOpen(false); setActiveFor(null); }} style={{ color: 'white' }}>Profile Settings</Link>
+                      <Link href="/help" onClick={() => { setMobileMenuOpen(false); setProfileMobileOpen(false); setActiveFor(null); }} style={{ color: 'white' }}>Help / Docs</Link>
+                    </div>
+                  </div>
+                </div>
                 <form action={logoutAction}>
                   <button
                     type="submit"
