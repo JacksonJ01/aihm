@@ -2,6 +2,8 @@
 
 import { useEffect, useRef, useState } from "react";
 
+import { calculateJointAngles, EMPTY_JOINT_ANGLES, type JointAngles, type PoseLandmark } from "@/lib/pose";
+
 type UserAgentData = {
   mobile?: boolean;
 };
@@ -36,41 +38,28 @@ declare global {
   }
 }
 
-interface PoseLandmark {
-  x: number;
-  y: number;
-  z: number;
-  visibility?: number;
-}
-
 interface PoseResults {
   poseLandmarks?: PoseLandmark[];
+  poseWorldLandmarks?: PoseLandmark[];
 }
 
 type PoseTrackerState = {
   trackerReady: boolean;
   poseDetected: boolean;
+  jointAngles: JointAngles;
 };
 
 const LANDMARK_VISIBILITY_THRESHOLD = 0.35;
-
-const EXERCISE_LANDMARKS = [
-    11, 12, // Shoulders
-    13, 14, // Elbows
-    15, 16, // Wrists
-    23, 24, // Hips
-    25, 26, // Knees
-    27, 28  // Ankles
-];
-
+const MAX_MISSED_FRAMES = 4;
+const EXERCISE_LANDMARK_INDICES = [11, 12, 13, 14, 15, 16, 23, 24, 25, 26, 27, 28];
 const POSE_CONNECTIONS: [number, number][] = [
-  [11, 13], [13, 15], // Left arm: shoulder → elbow → wrist
-  [12, 14], [14, 16], // Right arm: shoulder → elbow → wrist
-  [11, 12],           // Shoulders bar
-  [11, 23], [12, 24], // Torso sides
-  [23, 24],           // Hips bar
-  [23, 25], [25, 27], // Left leg: hip → knee → ankle
-  [24, 26], [26, 28], // Right leg: hip → knee → ankle
+  [11, 13], [13, 15],
+  [12, 14], [14, 16],
+  [11, 12],
+  [11, 23], [12, 24],
+  [23, 24],
+  [23, 25], [25, 27],
+  [24, 26], [26, 28],
 ];
 
 export function usePose(
@@ -80,9 +69,11 @@ export function usePose(
   scriptLoaded: boolean,
 ): PoseTrackerState {
   const poseRef = useRef<PoseInstance | null>(null);
-  const ctxRef = useRef<CanvasRenderingContext2D | null>(null);
+  const lastStableAnglesRef = useRef<JointAngles>({ ...EMPTY_JOINT_ANGLES });
+  const missedFramesRef = useRef(0);
   const [trackerReady, setTrackerReady] = useState(false);
   const [poseDetected, setPoseDetected] = useState(false);
+  const [jointAngles, setJointAngles] = useState<JointAngles>({ ...EMPTY_JOINT_ANGLES });
 
   useEffect(() => {
     if (!scriptLoaded || !window.Pose || poseRef.current) {
@@ -96,19 +87,18 @@ export function usePose(
         try {
           if (typeof document !== "undefined") {
             const scriptEl = document.querySelector<HTMLScriptElement>(
-              'script[src*="/@mediapipe/pose/"], script[src*="/mediapipe/pose/"]'
+              'script[src*="/@mediapipe/pose/"], script[src*="/mediapipe/pose/"]',
             );
 
-            if (scriptEl && scriptEl.src) {
+            if (scriptEl?.src) {
               const base = scriptEl.src.substring(0, scriptEl.src.lastIndexOf("/") + 1);
               return base + file;
             }
           }
         } catch {
-          // ignore and fallback
+          // fall back to CDN below
         }
 
-        // Fallback to jsdelivr CDN if local files are not available on the host
         return `https://cdn.jsdelivr.net/npm/@mediapipe/pose/${file}`;
       },
     });
@@ -116,24 +106,25 @@ export function usePose(
     poseRef.current = pose;
 
     const navigatorWithUserAgentData = navigator as NavigatorWithUserAgentData;
-    const isMobileDevice = typeof navigator !== "undefined" &&
+    const isMobileDevice =
+      typeof navigator !== "undefined" &&
       (navigatorWithUserAgentData.userAgentData?.mobile ?? /Mobi|Android|iPhone|iPad|iPod|Windows Phone/.test(navigator.userAgent));
 
-    const poseOptions = isMobileDevice
-      ? {
-          modelComplexity: 0,
-          smoothLandmarks: true,
-          minDetectionConfidence: 0.5,
-          minTrackingConfidence: 0.5,
-        }
-      : {
-          modelComplexity: 1,
-          smoothLandmarks: true,
-          minDetectionConfidence: 0.6,
-          minTrackingConfidence: 0.6,
-        };
-
-    pose.setOptions(poseOptions);
+    pose.setOptions(
+      isMobileDevice
+        ? {
+            modelComplexity: 0,
+            smoothLandmarks: true,
+            minDetectionConfidence: 0.5,
+            minTrackingConfidence: 0.5,
+          }
+        : {
+            modelComplexity: 1,
+            smoothLandmarks: true,
+            minDetectionConfidence: 0.6,
+            minTrackingConfidence: 0.6,
+          },
+    );
 
     const warmTracker = async () => {
       try {
@@ -158,6 +149,9 @@ export function usePose(
       cancelled = true;
       setTrackerReady(false);
       setPoseDetected(false);
+      setJointAngles({ ...EMPTY_JOINT_ANGLES });
+      lastStableAnglesRef.current = { ...EMPTY_JOINT_ANGLES };
+      missedFramesRef.current = 0;
 
       if (typeof pose.close === "function") {
         try {
@@ -172,27 +166,35 @@ export function usePose(
   }, [scriptLoaded]);
 
   useEffect(() => {
-    if (!isCameraOn || !scriptLoaded || !videoRef.current || !canvasRef.current) return;
-    if (!poseRef.current) return;
+    if (!isCameraOn || !scriptLoaded || !videoRef.current || !canvasRef.current) {
+      return;
+    }
+
+    if (!poseRef.current) {
+      return;
+    }
 
     let cancelled = false;
     let animationFrameId = 0;
     const pose = poseRef.current;
     const canvas = canvasRef.current;
+    const context = canvas?.getContext("2d");
 
-    // Cache the 2D context — resizing canvas resets its state but the ref remains valid
-    ctxRef.current = canvas.getContext("2d");
+    setPoseDetected(false);
 
     const clearCanvas = () => {
-      const ctx = ctxRef.current;
-      if (ctx) ctx.clearRect(0, 0, canvas.width, canvas.height);
-    };
+      if (!canvas || !context) {
+        return;
+      }
 
-    const setCanvasVisibility = (isVisible: boolean) => {
-      canvas.style.opacity = isVisible ? "1" : "0";
+      context.clearRect(0, 0, canvas.width, canvas.height);
     };
 
     const syncCanvasSize = () => {
+      if (!canvas) {
+        return;
+      }
+
       const clientWidth = canvas.clientWidth;
       const clientHeight = canvas.clientHeight;
 
@@ -207,184 +209,161 @@ export function usePose(
       if (canvas.width !== nextWidth || canvas.height !== nextHeight) {
         canvas.width = nextWidth;
         canvas.height = nextHeight;
-        // After a resize the canvas state resets — re-cache the context
-        ctxRef.current = canvas.getContext("2d");
       }
     };
 
-    clearCanvas();
-    setCanvasVisibility(false);
-    setPoseDetected(false);
-
-    // Callback-driven pipeline: onResults schedules the next send so there is
-    // no wasted RAF tick between when MediaPipe finishes and the next frame starts.
-    const sendFrame = async () => {
-      if (cancelled) return;
-      const video = videoRef.current;
-      if (!video || video.readyState < 2) {
-        // Video not ready yet — retry next tick
-        animationFrameId = requestAnimationFrame(sendFrame);
+    const drawPoseOverlay = (landmarks: PoseLandmark[]) => {
+      if (!canvas || !context) {
         return;
       }
-      try {
-        await pose.send({ image: video });
-        // onResults fires during the await and schedules the next RAF
-      } catch (error) {
-        if (!cancelled) console.error("Pose send error:", error);
-        // onResults won't fire on error — keep the loop alive
-        if (!cancelled) animationFrameId = requestAnimationFrame(sendFrame);
-      }
-    };
-
-    pose.onResults((results: PoseResults) => {
-      if (cancelled) return;
 
       syncCanvasSize();
+      const width = canvas.width;
+      const height = canvas.height;
 
-      const ctx = ctxRef.current;
-      if (!ctx) return;
-
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-      if (!results.poseLandmarks) {
-        setPoseDetected(false);
-        setCanvasVisibility(false);
-        animationFrameId = requestAnimationFrame(sendFrame);
+      if (!width || !height) {
         return;
       }
 
-      const landmarks = results.poseLandmarks;
-      const w = canvas.width;
-      const h = canvas.height;
       const video = videoRef.current;
-
       if (!video || !video.videoWidth || !video.videoHeight) {
-        animationFrameId = requestAnimationFrame(sendFrame);
         return;
       }
 
       const sourceWidth = video.videoWidth;
       const sourceHeight = video.videoHeight;
-      const containScale = Math.min(w / sourceWidth, h / sourceHeight);
+      const containScale = Math.min(width / sourceWidth, height / sourceHeight);
       const drawWidth = sourceWidth * containScale;
       const drawHeight = sourceHeight * containScale;
-      const offsetX = (w - drawWidth) / 2;
-      const offsetY = (h - drawHeight) / 2;
+      const offsetX = (width - drawWidth) / 2;
+      const offsetY = (height - drawHeight) / 2;
 
       const mapX = (x: number) => offsetX + x * drawWidth;
       const mapY = (y: number) => offsetY + y * drawHeight;
 
-      const visibleExerciseCount = landmarks.filter((point, index) =>
-        EXERCISE_LANDMARKS.includes(index) && (point.visibility ?? 0) > LANDMARK_VISIBILITY_THRESHOLD,
-      ).length;
+      context.clearRect(0, 0, width, height);
+      context.lineCap = "round";
+      context.lineJoin = "round";
 
-      const hasVisiblePose = visibleExerciseCount > 0;
-      setPoseDetected(hasVisiblePose);
-      setCanvasVisibility(hasVisiblePose);
+      context.lineWidth = 3;
+      context.strokeStyle = "rgba(255, 255, 255, 0.65)";
 
-      if (hasVisiblePose) {
-        // Draw skeleton connection lines behind the joint dots
-        ctx.lineWidth = 2.5;
-        ctx.strokeStyle = "rgba(255, 255, 255, 0.5)";
-        for (const [a, b] of POSE_CONNECTIONS) {
-          const pA = landmarks[a];
-          const pB = landmarks[b];
-          if (!pA || !pB) continue;
-          if ((pA.visibility ?? 0) <= LANDMARK_VISIBILITY_THRESHOLD) continue;
-          if ((pB.visibility ?? 0) <= LANDMARK_VISIBILITY_THRESHOLD) continue;
-          ctx.beginPath();
-          ctx.moveTo(mapX(pA.x), mapY(pA.y));
-          ctx.lineTo(mapX(pB.x), mapY(pB.y));
-          ctx.stroke();
+      for (const [startIndex, endIndex] of POSE_CONNECTIONS) {
+        const startPoint = landmarks[startIndex];
+        const endPoint = landmarks[endIndex];
+
+        if (!startPoint || !endPoint) {
+          continue;
         }
 
-        // Draw joint dots on top of the lines
-        for (const index of EXERCISE_LANDMARKS) {
-          const point = landmarks[index];
-          if (!point || (point.visibility ?? 0) <= LANDMARK_VISIBILITY_THRESHOLD) continue;
-          const x = mapX(point.x);
-          const y = mapY(point.y);
+        if ((startPoint.visibility ?? 0) <= LANDMARK_VISIBILITY_THRESHOLD) continue;
+        if ((endPoint.visibility ?? 0) <= LANDMARK_VISIBILITY_THRESHOLD) continue;
 
-          // Outer filled circle
-          ctx.beginPath();
-          ctx.arc(x, y, 8, 0, 2 * Math.PI);
-          ctx.fillStyle = "rgba(255, 60, 0, 0.9)";
-          ctx.fill();
-
-          // Inner white dot for contrast
-          ctx.beginPath();
-          ctx.arc(x, y, 3, 0, 2 * Math.PI);
-          ctx.fillStyle = "rgba(255, 255, 255, 0.95)";
-          ctx.fill();
-        }
+        context.beginPath();
+        context.moveTo(mapX(startPoint.x), mapY(startPoint.y));
+        context.lineTo(mapX(endPoint.x), mapY(endPoint.y));
+        context.stroke();
       }
 
-      // Schedule the next frame immediately after drawing
+      for (const index of EXERCISE_LANDMARK_INDICES) {
+        const point = landmarks[index];
+
+        if (!point || (point.visibility ?? 0) <= LANDMARK_VISIBILITY_THRESHOLD) {
+          continue;
+        }
+
+        const x = mapX(point.x);
+        const y = mapY(point.y);
+
+        context.beginPath();
+        context.arc(x, y, 8, 0, 2 * Math.PI);
+        context.fillStyle = "rgba(255, 94, 0, 0.9)";
+        context.fill();
+
+        context.beginPath();
+        context.arc(x, y, 3, 0, 2 * Math.PI);
+        context.fillStyle = "rgba(255, 255, 255, 0.95)";
+        context.fill();
+      }
+    };
+
+    const sendFrame = async () => {
+      if (cancelled) {
+        return;
+      }
+
+      const video = videoRef.current;
+      if (!video || video.readyState < 2) {
+        animationFrameId = requestAnimationFrame(sendFrame);
+        return;
+      }
+
+      try {
+        await pose.send({ image: video });
+      } catch (error) {
+        if (!cancelled) {
+          console.error("Pose send error:", error);
+          animationFrameId = requestAnimationFrame(sendFrame);
+        }
+      }
+    };
+
+    pose.onResults((results: PoseResults) => {
+      if (cancelled) {
+        return;
+      }
+
+      const landmarks = results.poseLandmarks;
+
+      if (!landmarks?.length) {
+        missedFramesRef.current += 1;
+
+        if (missedFramesRef.current >= MAX_MISSED_FRAMES) {
+          setJointAngles({ ...EMPTY_JOINT_ANGLES });
+          lastStableAnglesRef.current = { ...EMPTY_JOINT_ANGLES };
+        } else {
+          setJointAngles({ ...lastStableAnglesRef.current });
+        }
+
+        setPoseDetected(false);
+        clearCanvas();
+        animationFrameId = requestAnimationFrame(sendFrame);
+        return;
+      }
+
+      const visibleLandmarkCount = landmarks.filter((point, index) =>
+        EXERCISE_LANDMARK_INDICES.includes(index) && (point.visibility ?? 0) > LANDMARK_VISIBILITY_THRESHOLD,
+      ).length;
+      const hasVisiblePose = visibleLandmarkCount > 0;
+
+      missedFramesRef.current = 0;
+      setPoseDetected(hasVisiblePose);
+
+      const nextAngles = calculateJointAngles(landmarks, {
+        visibilityThreshold: LANDMARK_VISIBILITY_THRESHOLD,
+      });
+      lastStableAnglesRef.current = { ...nextAngles };
+      setJointAngles(nextAngles);
+
+      drawPoseOverlay(landmarks);
+
       animationFrameId = requestAnimationFrame(sendFrame);
     });
 
-    // Kick off the pipeline
     animationFrameId = requestAnimationFrame(sendFrame);
 
     return () => {
       cancelled = true;
       cancelAnimationFrame(animationFrameId);
       setPoseDetected(false);
+      setJointAngles({ ...EMPTY_JOINT_ANGLES });
       clearCanvas();
-      setCanvasVisibility(false);
-      ctxRef.current = null;
     };
   }, [isCameraOn, scriptLoaded, videoRef, canvasRef]);
 
   return {
     trackerReady,
     poseDetected,
+    jointAngles,
   };
 }
-
-// "use client";
-
-// import { useEffect } from "react";
-// import { Pose } from "@mediapipe/pose";
-
-// export function usePose(
-//   videoRef: React.RefObject<HTMLVideoElement | null>,
-//   isCameraOn: boolean
-// ) {
-//   useEffect(() => {
-//     if (!isCameraOn || !videoRef.current) return;
-
-//     const pose = new Pose({
-//       locateFile: (file) =>
-//         `https://cdn.jsdelivr.net/npm/@mediapipe/pose/${file}`,
-//     });
-
-//     pose.setOptions({
-//       modelComplexity: 1,
-//       smoothLandmarks: true,
-//       enableSegmentation: false,
-//       minDetectionConfidence: 0.5,
-//       minTrackingConfidence: 0.5,
-//     });
-
-//     pose.onResults((results) => {
-//       if (results.poseLandmarks) {
-//         console.log(results.poseLandmarks); // 🔥 YOUR DATA
-//       }
-//     });
-
-//     let animationFrameId: number;
-
-//     const run = async () => {
-//       if (videoRef.current) {
-//         await pose.send({ image: videoRef.current });
-//       }
-//       animationFrameId = requestAnimationFrame(run);
-//     };
-
-//     run();
-
-//     return () => cancelAnimationFrame(animationFrameId);
-//   }, [isCameraOn, videoRef]);
-// }
-

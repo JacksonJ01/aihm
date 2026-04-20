@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import Camera from "@/components/camera/camera";
 import Controls from "@/components/controls";
+import PoseEstimation from "@/components/pose/poseEstimation";
 import { useCamera } from "@/bodyCam/useCamera";
 import { usePose } from "@/bodyCam/usePose";
 
@@ -92,7 +93,7 @@ export default function WorkoutsSession() {
     };
   }, []);
 
-  const { trackerReady, poseDetected } = usePose(videoRef, canvasRef, isCameraOn, scriptLoaded);
+  const { trackerReady, poseDetected, jointAngles } = usePose(videoRef, canvasRef, isCameraOn, scriptLoaded);
 
   return (
     <section className="space-y-6">
@@ -104,10 +105,10 @@ export default function WorkoutsSession() {
         <div className="mb-4 flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
           <div className="min-w-0">
             <div className="text-sm font-semibold uppercase tracking-[0.2em] text-muted-foreground">
-              Live tracking canvas
+              Live tracking studio
             </div>
             <p className="mt-1 text-sm leading-6 text-muted-foreground">
-              When the camera is active, pose landmarks render directly on top of the session feed.
+              The camera stays clean on the left while the current 3D joint angles update on the right in real time.
             </p>
           </div>
           <div className="w-fit self-start rounded-full border border-black/10 bg-white px-4 py-2 text-sm font-medium text-foreground md:self-auto">
@@ -122,22 +123,45 @@ export default function WorkoutsSession() {
                   : "Warming tracker"}
           </div>
         </div>
-        <Camera videoRef={videoRef} canvasRef={canvasRef} isVisible={isCameraOn} />
-        {scriptError ? (
-          <div className="mt-4 rounded-2xl border border-dashed border-red-300/70 bg-red-50 px-4 py-4 text-sm leading-6 text-red-700">
-            {scriptError} Check the browser console and verify that /@mediapipe/pose/pose.js is accessible.
+
+        <div className="grid gap-4 lg:grid-cols-[minmax(180px,0.72fr)_minmax(0,1.3fr)_minmax(180px,0.72fr)] lg:items-start xl:gap-6">
+          <PoseEstimation
+            jointAngles={jointAngles}
+            trackerReady={trackerReady}
+            poseDetected={poseDetected}
+            isCameraOn={isCameraOn}
+            side="left"
+            className="min-w-0"
+          />
+
+          <div className="space-y-4 min-w-0">
+            <Camera videoRef={videoRef} canvasRef={canvasRef} isVisible={isCameraOn} />
+            {scriptError ? (
+              <div className="rounded-2xl border border-dashed border-red-300/70 bg-red-50 px-4 py-4 text-sm leading-6 text-red-700">
+                {scriptError} Check the browser console and verify that /@mediapipe/pose/pose.js is accessible.
+              </div>
+            ) : null}
+            {isCameraOn && !poseDetected ? (
+              <div className="rounded-2xl border border-dashed border-black/10 bg-background/60 px-4 py-4 text-sm leading-6 text-muted-foreground">
+                The camera is running, but the tracker has not found a clear full-body pose yet. Step back slightly, keep your full body in frame, and face the camera.
+              </div>
+            ) : null}
+            {!isCameraOn ? (
+              <div className="rounded-2xl border border-dashed border-black/10 bg-background/60 px-4 py-4 text-sm leading-6 text-muted-foreground">
+                The preview area remains inactive until camera access is enabled for the session.
+              </div>
+            ) : null}
           </div>
-        ) : null}
-        {isCameraOn && !poseDetected ? (
-          <div className="mt-4 rounded-2xl border border-dashed border-black/10 bg-background/60 px-4 py-4 text-sm leading-6 text-muted-foreground">
-            The camera is running, but the tracker has not found a clear full-body pose yet. Step back slightly, keep your full body in frame, and face the camera.
-          </div>
-        ) : null}
-        {!isCameraOn ? (
-          <div className="mt-4 rounded-2xl border border-dashed border-black/10 bg-background/60 px-4 py-4 text-sm leading-6 text-muted-foreground">
-            The preview area remains inactive until camera access is enabled for the session.
-          </div>
-        ) : null}
+
+          <PoseEstimation
+            jointAngles={jointAngles}
+            trackerReady={trackerReady}
+            poseDetected={poseDetected}
+            isCameraOn={isCameraOn}
+            side="right"
+            className="min-w-0"
+          />
+        </div>
       </div>
     </section>
   );
