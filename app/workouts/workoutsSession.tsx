@@ -124,7 +124,48 @@ export default function WorkoutsSession() {
           </div>
         </div>
 
-        <div className="grid gap-4 lg:grid-cols-[minmax(180px,0.72fr)_minmax(0,1.3fr)_minmax(180px,0.72fr)] lg:items-start xl:gap-6">
+        <div className="space-y-4 lg:hidden">
+          <div className="space-y-4 min-w-0">
+            <Camera videoRef={videoRef} canvasRef={canvasRef} isVisible={isCameraOn} />
+            {scriptError ? (
+              <div className="rounded-2xl border border-dashed border-red-300/70 bg-red-50 px-4 py-4 text-sm leading-6 text-red-700">
+                {scriptError} Check the browser console and verify that /@mediapipe/pose/pose.js is accessible.
+              </div>
+            ) : null}
+            {isCameraOn && !poseDetected ? (
+              <div className="rounded-2xl border border-dashed border-black/10 bg-background/60 px-4 py-4 text-sm leading-6 text-muted-foreground">
+                The camera is running, but the tracker has not found a clear full-body pose yet. Step back slightly, keep your full body in frame, and face the camera.
+              </div>
+            ) : null}
+            {!isCameraOn ? (
+              <div className="rounded-2xl border border-dashed border-black/10 bg-background/60 px-4 py-4 text-sm leading-6 text-muted-foreground">
+                The preview area remains inactive until camera access is enabled for the session.
+              </div>
+            ) : null}
+          </div>
+
+          <div className="grid grid-cols-2 gap-2">
+            <PoseEstimation
+              jointAngles={jointAngles}
+              trackerReady={trackerReady}
+              poseDetected={poseDetected}
+              isCameraOn={isCameraOn}
+              side="left"
+              className="min-w-0"
+            />
+
+            <PoseEstimation
+              jointAngles={jointAngles}
+              trackerReady={trackerReady}
+              poseDetected={poseDetected}
+              isCameraOn={isCameraOn}
+              side="right"
+              className="min-w-0"
+            />
+          </div>
+        </div>
+
+        <div className="hidden lg:grid gap-4 lg:grid-cols-[minmax(180px,0.72fr)_minmax(0,1.3fr)_minmax(180px,0.72fr)] lg:items-start xl:gap-6">
           <PoseEstimation
             jointAngles={jointAngles}
             trackerReady={trackerReady}
