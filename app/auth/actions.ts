@@ -187,7 +187,7 @@ async function bootstrapUserData(
 
   const { error: profileError } = await supabase
     .from("userProfiles")
-    .insert(profilePayload);
+    .upsert(profilePayload, { onConflict: "id" });
 
   if (profileError) {
     console.error("[auth] Failed creating user profile", {
@@ -197,6 +197,31 @@ async function bootstrapUserData(
     });
     throw profileError;
   }
+}
+
+function hasDisplayName(value: unknown) {
+  return typeof value === "string" && value.trim().length > 0;
+}
+
+async function shouldRedirectToProfileSetup(
+  supabase: BootstrapClient,
+  userId: string,
+) {
+  const { data, error } = await supabase
+    .from("userProfiles")
+    .select("displayName")
+    .eq("id", userId)
+    .maybeSingle();
+
+  if (error) {
+    console.error("[auth] Failed checking displayName", {
+      userId,
+      error,
+    });
+    return false;
+  }
+
+  return !hasDisplayName((data as { displayName?: string } | null)?.displayName);
 }
 
 export async function loginAction(
@@ -273,6 +298,12 @@ export async function loginAction(
         email: data.user.email ?? email,
         error,
       });
+    }
+
+    const needsProfileSetup = await shouldRedirectToProfileSetup(supabase, data.user.id);
+    if (needsProfileSetup) {
+      const next = encodeURIComponent(nextPath);
+      redirect(`/profile?required=displayName&next=${next}`);
     }
   }
 

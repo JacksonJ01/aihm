@@ -92,6 +92,7 @@ export type Notifications = {
 };
 
 export type UserProfiles = {
+  email: string;
   userName: string;
   displayName: string;
   primaryGoal: string;
@@ -248,8 +249,9 @@ const fallbackChallenges: CommunityChallenges[] = [
 ];
 
 const emptyProfile: UserProfiles = {
+  email: "",
   userName: "",
-  displayName: "Your profile",
+  displayName: "",
   primaryGoal: "",
   weeklyGoal: 0,
   focus: "General",
@@ -499,8 +501,8 @@ export async function getProfileData() {
       const [{ data: profile, error: profileError }, { data: preferences, error: preferencesError }] = await Promise.all([
         supabase
           .from("userProfiles")
-          .select("userName, displayName, primaryGoal, weeklyGoal, focus, expLevel, city, bio")
-          .eq("email", email ?? "")
+          .select("email, userName, displayName, primaryGoal, weeklyGoal, focus, expLevel, city, bio")
+          .eq("id", userId)
           .maybeSingle(),
         supabase
           .from("workoutPref")
@@ -516,9 +518,9 @@ export async function getProfileData() {
       return {
         profile: (profile as UserProfiles) ?? emptyProfile,
         preferences: (preferences as WorkoutPref) ?? emptyPreferences,
-        email: email ?? "",
+        email: (profile as UserProfiles | null)?.email ?? email ?? "",
       };
     },
-    (data) => !data.email && !data.profile.primaryGoal && !data.profile.bio,
+    (data) => !data.profile.displayName?.trim(),
   );
 }

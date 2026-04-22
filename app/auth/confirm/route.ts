@@ -65,7 +65,7 @@ async function bootstrapConfirmedUser(supabase: Awaited<ReturnType<typeof create
     return;
   }
 
-  const { error: profileError } = await supabase.from("userProfiles").insert(
+  const { error: profileError } = await supabase.from("userProfiles").upsert(
     {
       id: user.id,
       userName,
@@ -78,6 +78,7 @@ async function bootstrapConfirmedUser(supabase: Awaited<ReturnType<typeof create
       focus: "General",
       email: user.email,
     },
+    { onConflict: "id" },
   );
 
   if (profileError) {
@@ -88,6 +89,35 @@ async function bootstrapConfirmedUser(supabase: Awaited<ReturnType<typeof create
     });
     throw profileError;
   }
+}
+
+function hasDisplayName(value: unknown) {
+  return typeof value === "string" && value.trim().length > 0;
+}
+
+async function needsProfileSetupRedirect(supabase: Awaited<ReturnType<typeof createClient>>) {
+  const { data: userData } = await supabase.auth.getUser();
+  const user = userData.user;
+
+  if (!user?.id) {
+    return false;
+  }
+
+  const { data, error } = await supabase
+    .from("userProfiles")
+    .select("displayName")
+    .eq("id", user.id)
+    .maybeSingle();
+
+  if (error) {
+    console.error("[auth-confirm] Failed checking displayName", {
+      userId: user.id,
+      error,
+    });
+    return false;
+  }
+
+  return !hasDisplayName((data as { displayName?: string } | null)?.displayName);
 }
 
 export async function GET(request: NextRequest) {
@@ -111,6 +141,10 @@ export async function GET(request: NextRequest) {
           error: profileError,
         });
       }
+      const needsProfileSetup = await needsProfileSetupRedirect(supabase);
+      if (needsProfileSetup) {
+        redirect(`/profile?required=displayName&next=${encodeURIComponent(next)}`);
+      }
       redirect(next);
     }
 
@@ -131,6 +165,10 @@ export async function GET(request: NextRequest) {
         console.error("[auth-confirm] profile bootstrap failed after verifyOtp", {
           error: profileError,
         });
+      }
+      const needsProfileSetup = await needsProfileSetupRedirect(supabase);
+      if (needsProfileSetup) {
+        redirect(`/profile?required=displayName&next=${encodeURIComponent(next)}`);
       }
       redirect(next);
     } else {
