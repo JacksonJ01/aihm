@@ -6,6 +6,7 @@ import Controls from "@/components/controls";
 import PoseEstimation from "@/components/pose/poseEstimation";
 import { useCamera } from "@/bodyCam/useCamera";
 import { usePose } from "@/bodyCam/usePose";
+import { WORKOUT_DETECTION_ORDER } from "@/lib/workout-detections";
 
 const POSE_SCRIPT_ID = "mediapipe-pose-script";
 const POSE_SCRIPT_SRC = "/@mediapipe/pose/pose.js";
@@ -93,7 +94,9 @@ export default function WorkoutsSession() {
     };
   }, []);
 
-  const { trackerReady, poseDetected, jointAngles } = usePose(videoRef, canvasRef, isCameraOn, scriptLoaded);
+  const { trackerReady, poseDetected, jointAngles, workoutDetections } = usePose(videoRef, canvasRef, isCameraOn, scriptLoaded);
+
+  const workoutDetectionCards = WORKOUT_DETECTION_ORDER.map((exerciseKey) => workoutDetections[exerciseKey]);
 
   return (
     <section className="space-y-6">
@@ -107,9 +110,6 @@ export default function WorkoutsSession() {
             <div className="text-sm font-semibold uppercase tracking-[0.2em] text-muted-foreground">
               Live tracking studio
             </div>
-            <p className="mt-1 text-sm leading-6 text-muted-foreground">
-              The camera stays clean on the left while the current 3D joint angles update on the right in real time.
-            </p>
           </div>
           <div className="w-fit self-start rounded-full border border-black/10 bg-white px-4 py-2 text-sm font-medium text-foreground md:self-auto">
             {!scriptLoaded
@@ -165,7 +165,7 @@ export default function WorkoutsSession() {
           </div>
         </div>
 
-        <div className="hidden lg:grid gap-4 lg:grid-cols-[minmax(180px,0.72fr)_minmax(0,1.3fr)_minmax(180px,0.72fr)] lg:items-start xl:gap-6">
+        <div className="hidden lg:grid gap-4 lg:grid-cols-[minmax(150px,0.58fr)_minmax(0,1.54fr)_minmax(150px,0.58fr)] lg:items-start xl:gap-6">
           <PoseEstimation
             jointAngles={jointAngles}
             trackerReady={trackerReady}
@@ -202,6 +202,33 @@ export default function WorkoutsSession() {
             side="right"
             className="min-w-0"
           />
+        </div>
+
+        <div className="mt-4 rounded-[28px] border border-black/10 bg-white/72 px-4 py-4 shadow-[0_18px_40px_rgba(29,35,43,0.08)] sm:px-5 sm:py-5">
+          <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
+            <div>
+              <div className="text-sm font-semibold uppercase tracking-[0.2em] text-muted-foreground">Hard-coded detections</div>
+              <h3 className="mt-1 text-lg font-semibold tracking-[-0.03em] text-foreground">Ten workout reps tracked from joint angles</h3>
+            </div>
+            <div className="text-sm text-muted-foreground">Counts only update when the pose crosses the rep thresholds.</div>
+          </div>
+
+          <div className="mt-4 grid gap-3 md:grid-cols-2 xl:grid-cols-5">
+            {workoutDetectionCards.map((detection) => (
+              <article key={detection.key} className="rounded-[22px] border border-black/10 bg-background/70 px-4 py-4">
+                <div className="flex items-start justify-between gap-3">
+                  <div>
+                    <div className="text-sm font-semibold tracking-[-0.02em] text-foreground">{detection.label}</div>
+                    <div className="mt-1 text-xs uppercase tracking-[0.14em] text-muted-foreground">{detection.stage}</div>
+                  </div>
+                  <div className="rounded-full bg-slate-950 px-3 py-1 text-xs font-semibold text-white">{String(detection.reps).padStart(2, "0")}</div>
+                </div>
+                <div className="mt-3 text-sm leading-6 text-muted-foreground">
+                  Metric: {detection.metric === null ? "--" : `${detection.metric}°`}
+                </div>
+              </article>
+            ))}
+          </div>
         </div>
       </div>
     </section>
