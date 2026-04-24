@@ -208,9 +208,9 @@ export default function WorkoutsSession() {
           <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
             <div>
               <div className="text-sm font-semibold uppercase tracking-[0.2em] text-muted-foreground">Hard-coded detections</div>
-              <h3 className="mt-1 text-lg font-semibold tracking-[-0.03em] text-foreground">Ten workout reps tracked from joint angles</h3>
+              <h3 className="mt-1 text-lg font-semibold tracking-[-0.03em] text-foreground">Twenty-two workout labels aligned to the dataset taxonomy</h3>
             </div>
-            <div className="text-sm text-muted-foreground">Counts only update when the pose crosses the rep thresholds.</div>
+            <div className="text-sm text-muted-foreground">Only the exercises with hard-coded rules count reps right now; the rest are dataset labels ready for model training.</div>
           </div>
 
           <div className="mt-4 grid gap-3 md:grid-cols-2 xl:grid-cols-5">
@@ -219,7 +219,9 @@ export default function WorkoutsSession() {
                 <div className="flex items-start justify-between gap-3">
                   <div>
                     <div className="text-sm font-semibold tracking-[-0.02em] text-foreground">{detection.label}</div>
-                    <div className="mt-1 text-xs uppercase tracking-[0.14em] text-muted-foreground">{detection.stage}</div>
+                    <div className="mt-1 text-xs uppercase tracking-[0.14em] text-muted-foreground">
+                      {detection.isTracked ? detection.stage : "dataset label"}
+                    </div>
                   </div>
                   <div className="rounded-full bg-slate-950 px-3 py-1 text-xs font-semibold text-white">{String(detection.reps).padStart(2, "0")}</div>
                 </div>

@@ -1,262 +1,199 @@
 import type { JointAngles } from "@/lib/pose";
+import { WORKOUT_EXERCISE_CATALOG, type WorkoutExerciseKey } from "@/lib/workout-taxonomy";
 
-export type WorkoutExerciseKey =
-	| "bicepCurl"
-	| "tricepExtension"
-	| "pushup"
-	| "squat"
-	| "lunge"
-	| "shoulderPress"
-	| "lateralRaise"
-	| "deadlift"
-	| "crunch"
-	| "kneeRaise";
-
-export type WorkoutRepStage = "unknown" | "extended" | "contracted";
+export type WorkoutRepStage = "unknown" | "extended" | "contracted" | "untracked";
 
 export type WorkoutDetectionState = {
-	key: WorkoutExerciseKey;
-	label: string;
-	reps: number;
-	stage: WorkoutRepStage;
-	metric: number | null;
-	lastRepAt: number;
-	initialized: boolean;
+  key: WorkoutExerciseKey;
+  label: string;
+  reps: number;
+  stage: WorkoutRepStage;
+  metric: number | null;
+  lastRepAt: number;
+  initialized: boolean;
+  isTracked: boolean;
 };
 
 export type WorkoutDetections = Record<WorkoutExerciseKey, WorkoutDetectionState>;
 
 type WorkoutDetectionRule = {
-	key: WorkoutExerciseKey;
-	label: string;
-	contractedThreshold: number;
-	extendedThreshold: number;
-	cooldownMs: number;
-	metric: (angles: JointAngles) => number | null;
-	qualify?: (angles: JointAngles) => boolean;
+  key: WorkoutExerciseKey;
+  label: string;
+  contractedThreshold: number;
+  extendedThreshold: number;
+  cooldownMs: number;
+  metric: (angles: JointAngles) => number | null;
+  qualify?: (angles: JointAngles) => boolean;
 };
 
 const DEFAULT_COOLDOWN_MS = 650;
 
 function average(values: Array<number | null | undefined>) {
-	const filteredValues = values.filter((value): value is number => typeof value === "number");
+  const filteredValues = values.filter((value): value is number => typeof value === "number");
 
-	if (!filteredValues.length) {
-		return null;
-	}
+  if (!filteredValues.length) {
+    return null;
+  }
 
-	return filteredValues.reduce((sum, value) => sum + value, 0) / filteredValues.length;
+  return filteredValues.reduce((sum, value) => sum + value, 0) / filteredValues.length;
 }
 
 function minimum(values: Array<number | null | undefined>) {
-	const filteredValues = values.filter((value): value is number => typeof value === "number");
-	if (!filteredValues.length) {
-		return null;
-	}
+  const filteredValues = values.filter((value): value is number => typeof value === "number");
 
-	return Math.min(...filteredValues);
+  if (!filteredValues.length) {
+    return null;
+  }
+
+  return Math.min(...filteredValues);
 }
 
-function maximum(values: Array<number | null | undefined>) {
-	const filteredValues = values.filter((value): value is number => typeof value === "number");
-	if (!filteredValues.length) {
-		return null;
-	}
-
-	return Math.max(...filteredValues);
-}
-
-const WORKOUT_DETECTION_RULES: WorkoutDetectionRule[] = [
-	{
-		key: "bicepCurl",
-		label: "Bicep curl",
-		contractedThreshold: 55,
-		extendedThreshold: 160,
-		cooldownMs: DEFAULT_COOLDOWN_MS,
-		metric: (angles) => minimum([angles.leftElbow, angles.rightElbow]),
-	},
-	{
-		key: "tricepExtension",
-		label: "Tricep extension",
-		contractedThreshold: 70,
-		extendedThreshold: 165,
-		cooldownMs: DEFAULT_COOLDOWN_MS,
-		metric: (angles) => average([angles.leftElbow, angles.rightElbow]),
-		qualify: (angles) => (angles.leftShoulder ?? 180) > 95 || (angles.rightShoulder ?? 180) > 95,
-	},
-	{
-		key: "pushup",
-		label: "Push-up",
-		contractedThreshold: 85,
-		extendedThreshold: 165,
-		cooldownMs: DEFAULT_COOLDOWN_MS,
-		metric: (angles) => average([angles.leftElbow, angles.rightElbow]),
-		qualify: (angles) => average([angles.leftHip, angles.rightHip]) !== null,
-	},
-	{
-		key: "squat",
-		label: "Squat",
-		contractedThreshold: 95,
-		extendedThreshold: 165,
-		cooldownMs: DEFAULT_COOLDOWN_MS,
-		metric: (angles) => average([angles.leftKnee, angles.rightKnee]),
-	},
-	{
-		key: "lunge",
-		label: "Lunge",
-		contractedThreshold: 92,
-		extendedThreshold: 160,
-		cooldownMs: DEFAULT_COOLDOWN_MS,
-		metric: (angles) => minimum([angles.leftKnee, angles.rightKnee]),
-		qualify: (angles) => {
-			const leftKnee = angles.leftKnee;
-			const rightKnee = angles.rightKnee;
-
-			if (leftKnee === null || rightKnee === null) {
-				return false;
-			}
-
-			return Math.abs(leftKnee - rightKnee) >= 18;
-		},
-	},
-	{
-		key: "shoulderPress",
-		label: "Shoulder press",
-		contractedThreshold: 92,
-		extendedThreshold: 165,
-		cooldownMs: DEFAULT_COOLDOWN_MS,
-		metric: (angles) => average([angles.leftShoulder, angles.rightShoulder]),
-	},
-	{
-		key: "lateralRaise",
-		label: "Lateral raise",
-		contractedThreshold: 85,
-		extendedThreshold: 165,
-		cooldownMs: DEFAULT_COOLDOWN_MS,
-		metric: (angles) => average([angles.leftShoulder, angles.rightShoulder]),
-		qualify: (angles) => {
-			const shoulderAverage = average([angles.leftShoulder, angles.rightShoulder]);
-			return shoulderAverage !== null && shoulderAverage < 150;
-		},
-	},
-	{
-		key: "deadlift",
-		label: "Deadlift",
-		contractedThreshold: 120,
-		extendedThreshold: 170,
-		cooldownMs: DEFAULT_COOLDOWN_MS,
-		metric: (angles) => average([angles.leftHip, angles.rightHip]),
-	},
-	{
-		key: "crunch",
-		label: "Crunch",
-		contractedThreshold: 110,
-		extendedThreshold: 165,
-		cooldownMs: DEFAULT_COOLDOWN_MS,
-		metric: (angles) => average([angles.leftHip, angles.rightHip]),
-		qualify: (angles) => {
-			const shoulderAverage = average([angles.leftShoulder, angles.rightShoulder]);
-			return shoulderAverage !== null && shoulderAverage < 145;
-		},
-	},
-	{
-		key: "kneeRaise",
-		label: "Knee raise",
-		contractedThreshold: 95,
-		extendedThreshold: 165,
-		cooldownMs: DEFAULT_COOLDOWN_MS,
-		metric: (angles) => minimum([angles.leftKnee, angles.rightKnee]),
-		qualify: (angles) => average([angles.leftHip, angles.rightHip]) !== null,
-	},
+const TRACKED_RULES: WorkoutDetectionRule[] = [
+  { key: "barbellBicepsCurl", label: "Barbell biceps curl", contractedThreshold: 55, extendedThreshold: 160, cooldownMs: DEFAULT_COOLDOWN_MS, metric: (angles) => minimum([angles.leftElbow, angles.rightElbow]) },
+  { key: "hammerCurl", label: "Hammer curl", contractedThreshold: 55, extendedThreshold: 160, cooldownMs: DEFAULT_COOLDOWN_MS, metric: (angles) => minimum([angles.leftElbow, angles.rightElbow]) },
+  { key: "benchPress", label: "Bench press", contractedThreshold: 85, extendedThreshold: 165, cooldownMs: DEFAULT_COOLDOWN_MS, metric: (angles) => average([angles.leftElbow, angles.rightElbow]) },
+  { key: "inclineBenchPress", label: "Incline bench press", contractedThreshold: 85, extendedThreshold: 165, cooldownMs: DEFAULT_COOLDOWN_MS, metric: (angles) => average([angles.leftElbow, angles.rightElbow]) },
+  { key: "declineBenchPress", label: "Decline bench press", contractedThreshold: 85, extendedThreshold: 165, cooldownMs: DEFAULT_COOLDOWN_MS, metric: (angles) => average([angles.leftElbow, angles.rightElbow]) },
+  { key: "chestFlyMachine", label: "Chest fly machine", contractedThreshold: 75, extendedThreshold: 165, cooldownMs: DEFAULT_COOLDOWN_MS, metric: (angles) => average([angles.leftShoulder, angles.rightShoulder]) },
+  { key: "latPulldown", label: "Lat pulldown", contractedThreshold: 70, extendedThreshold: 165, cooldownMs: DEFAULT_COOLDOWN_MS, metric: (angles) => average([angles.leftElbow, angles.rightElbow]) },
+  {
+    key: "lateralRaise",
+    label: "Lateral raise",
+    contractedThreshold: 85,
+    extendedThreshold: 165,
+    cooldownMs: DEFAULT_COOLDOWN_MS,
+    metric: (angles) => average([angles.leftShoulder, angles.rightShoulder]),
+    qualify: (angles) => {
+      const shoulderAverage = average([angles.leftShoulder, angles.rightShoulder]);
+      return shoulderAverage !== null && shoulderAverage < 150;
+    },
+  },
+  { key: "shoulderPress", label: "Shoulder press", contractedThreshold: 92, extendedThreshold: 165, cooldownMs: DEFAULT_COOLDOWN_MS, metric: (angles) => average([angles.leftShoulder, angles.rightShoulder]) },
+  { key: "tricepPushdown", label: "Tricep pushdown", contractedThreshold: 70, extendedThreshold: 165, cooldownMs: DEFAULT_COOLDOWN_MS, metric: (angles) => average([angles.leftElbow, angles.rightElbow]), qualify: (angles) => (angles.leftShoulder ?? 180) > 95 || (angles.rightShoulder ?? 180) > 95 },
+  { key: "tricepDips", label: "Tricep dips", contractedThreshold: 70, extendedThreshold: 165, cooldownMs: DEFAULT_COOLDOWN_MS, metric: (angles) => average([angles.leftElbow, angles.rightElbow]), qualify: (angles) => (angles.leftShoulder ?? 180) > 95 || (angles.rightShoulder ?? 180) > 95 },
+  { key: "deadlift", label: "Deadlift", contractedThreshold: 120, extendedThreshold: 170, cooldownMs: DEFAULT_COOLDOWN_MS, metric: (angles) => average([angles.leftHip, angles.rightHip]) },
+  { key: "romanianDeadlift", label: "Romanian deadlift", contractedThreshold: 120, extendedThreshold: 170, cooldownMs: DEFAULT_COOLDOWN_MS, metric: (angles) => average([angles.leftHip, angles.rightHip]) },
+  { key: "hipThrust", label: "Hip thrust", contractedThreshold: 110, extendedThreshold: 170, cooldownMs: DEFAULT_COOLDOWN_MS, metric: (angles) => average([angles.leftHip, angles.rightHip]) },
+  { key: "squat", label: "Squat", contractedThreshold: 95, extendedThreshold: 165, cooldownMs: DEFAULT_COOLDOWN_MS, metric: (angles) => average([angles.leftKnee, angles.rightKnee]) },
+  { key: "legExtension", label: "Leg extension", contractedThreshold: 95, extendedThreshold: 165, cooldownMs: DEFAULT_COOLDOWN_MS, metric: (angles) => average([angles.leftKnee, angles.rightKnee]) },
+  { key: "legRaises", label: "Leg raises", contractedThreshold: 95, extendedThreshold: 165, cooldownMs: DEFAULT_COOLDOWN_MS, metric: (angles) => minimum([angles.leftHip, angles.rightHip]) },
+  { key: "pullUp", label: "Pull-up", contractedThreshold: 75, extendedThreshold: 165, cooldownMs: DEFAULT_COOLDOWN_MS, metric: (angles) => average([angles.leftElbow, angles.rightElbow]) },
+  { key: "tBarRow", label: "T-bar row", contractedThreshold: 75, extendedThreshold: 165, cooldownMs: DEFAULT_COOLDOWN_MS, metric: (angles) => average([angles.leftElbow, angles.rightElbow]) },
+  { key: "plank", label: "Plank", contractedThreshold: 150, extendedThreshold: 180, cooldownMs: DEFAULT_COOLDOWN_MS, metric: (angles) => average([angles.leftShoulder, angles.rightShoulder]) },
+  { key: "russianTwist", label: "Russian twist", contractedThreshold: 100, extendedThreshold: 170, cooldownMs: DEFAULT_COOLDOWN_MS, metric: (angles) => average([angles.leftHip, angles.rightHip]) },
 ];
 
-export const WORKOUT_DETECTION_ORDER = WORKOUT_DETECTION_RULES.map((rule) => rule.key);
+const TRACKED_RULE_LOOKUP = new Map<WorkoutExerciseKey, WorkoutDetectionRule>(TRACKED_RULES.map((rule) => [rule.key, rule] as const));
 
-export const WORKOUT_DETECTION_LABELS = WORKOUT_DETECTION_RULES.reduce(
-	(labels, rule) => ({
-		...labels,
-		[rule.key]: rule.label,
-	}),
-	{} as Record<WorkoutExerciseKey, string>,
+export const WORKOUT_DETECTION_ORDER = WORKOUT_EXERCISE_CATALOG.map((exercise) => exercise.key);
+
+export const WORKOUT_DETECTION_LABELS = WORKOUT_EXERCISE_CATALOG.reduce(
+  (labels, exercise) => ({
+    ...labels,
+    [exercise.key]: exercise.label,
+  }),
+  {} as Record<WorkoutExerciseKey, string>,
 );
 
-export function createInitialWorkoutDetections(): WorkoutDetections {
-	return WORKOUT_DETECTION_RULES.reduce((detections, rule) => {
-		detections[rule.key] = {
-			key: rule.key,
-			label: rule.label,
-			reps: 0,
-			stage: "unknown",
-			metric: null,
-			lastRepAt: 0,
-			initialized: false,
-		};
-
-		return detections;
-	}, {} as WorkoutDetections);
+function getRule(key: WorkoutExerciseKey) {
+  return TRACKED_RULE_LOOKUP.get(key) ?? null;
 }
 
 function resolveStage(metric: number, rule: WorkoutDetectionRule): WorkoutRepStage {
-	if (metric <= rule.contractedThreshold) {
-		return "contracted";
-	}
+  if (metric <= rule.contractedThreshold) {
+    return "contracted";
+  }
 
-	if (metric >= rule.extendedThreshold) {
-		return "extended";
-	}
+  if (metric >= rule.extendedThreshold) {
+    return "extended";
+  }
 
-	return "unknown";
+  return "unknown";
+}
+
+export function createInitialWorkoutDetections(): WorkoutDetections {
+  return WORKOUT_EXERCISE_CATALOG.reduce((detections, exercise) => {
+    const rule = getRule(exercise.key);
+
+    detections[exercise.key] = {
+      key: exercise.key,
+      label: exercise.label,
+      reps: 0,
+      stage: rule ? "unknown" : "untracked",
+      metric: null,
+      lastRepAt: 0,
+      initialized: false,
+      isTracked: Boolean(rule),
+    };
+
+    return detections;
+  }, {} as WorkoutDetections);
 }
 
 export function detectWorkoutReps(
-	angles: JointAngles,
-	previousDetections: WorkoutDetections,
-	now = Date.now(),
+  angles: JointAngles,
+  previousDetections: WorkoutDetections,
+  now = Date.now(),
 ): WorkoutDetections {
-	return WORKOUT_DETECTION_RULES.reduce((nextDetections, rule) => {
-		const previousState = previousDetections[rule.key];
-		const metric = rule.metric(angles);
-		const nextState: WorkoutDetectionState = {
-			...previousState,
-			metric,
-		};
+  const nextDetections = createInitialWorkoutDetections();
 
-		if (metric === null || (rule.qualify && !rule.qualify(angles))) {
-			nextDetections[rule.key] = nextState;
-			return nextDetections;
-		}
+  for (const exerciseKey of WORKOUT_DETECTION_ORDER) {
+    const previousState = previousDetections[exerciseKey];
+    const rule = getRule(exerciseKey);
 
-		const stage = resolveStage(metric, rule);
+    if (!rule) {
+      nextDetections[exerciseKey] = {
+        ...previousState,
+        stage: "untracked",
+        metric: null,
+        isTracked: false,
+      };
+      continue;
+    }
 
-		if (!previousState.initialized) {
-			nextDetections[rule.key] = {
-				...nextState,
-				stage,
-				initialized: true,
-			};
-			return nextDetections;
-		}
+    const metric = rule.metric(angles);
+    const nextState: WorkoutDetectionState = {
+      ...previousState,
+      metric,
+      isTracked: true,
+    };
 
-		let reps = previousState.reps;
-		let lastRepAt = previousState.lastRepAt;
+    if (metric === null || (rule.qualify && !rule.qualify(angles))) {
+      nextDetections[exerciseKey] = nextState;
+      continue;
+    }
 
-		if (
-			previousState.stage === "contracted" &&
-			stage === "extended" &&
-			now - previousState.lastRepAt >= rule.cooldownMs
-		) {
-			reps += 1;
-			lastRepAt = now;
-		}
+    const stage = resolveStage(metric, rule);
 
-		nextDetections[rule.key] = {
-			...nextState,
-			reps,
-			stage: stage === "unknown" ? previousState.stage : stage,
-			lastRepAt,
-			initialized: true,
-		};
+    if (!previousState.initialized) {
+      nextDetections[exerciseKey] = {
+        ...nextState,
+        stage,
+        initialized: true,
+      };
+      continue;
+    }
 
-		return nextDetections;
-	}, {} as WorkoutDetections);
+    let reps = previousState.reps;
+    let lastRepAt = previousState.lastRepAt;
+
+    if (
+      previousState.stage === "contracted" &&
+      stage === "extended" &&
+      now - previousState.lastRepAt >= rule.cooldownMs
+    ) {
+      reps += 1;
+      lastRepAt = now;
+    }
+
+    nextDetections[exerciseKey] = {
+      ...nextState,
+      reps,
+      stage: stage === "unknown" ? previousState.stage : stage,
+      lastRepAt,
+      initialized: true,
+    };
+  }
+
+  return nextDetections;
 }
