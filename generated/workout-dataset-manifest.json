@@ -1,0 +1,4792 @@
+{
+  "generatedAt": "2026-04-24T04:00:07.701Z",
+  "datasetRoot": "preprocessedWorkoutVideos",
+  "totalExercises": 22,
+  "totalClips": 652,
+  "exercises": [
+    {
+      "exerciseKey": "barbellBicepsCurl",
+      "label": "Barbell biceps curl",
+      "folderName": "barbell biceps curl",
+      "aliases": [
+        "biceps curl",
+        "barbell curl"
+      ],
+      "clipCount": 62,
+      "clips": [
+        {
+          "fileName": "barbell biceps curl_1.mp4",
+          "relativePath": "preprocessedWorkoutVideos/barbell biceps curl/barbell biceps curl_1.mp4",
+          "extension": ".mp4",
+          "sizeBytes": 485556,
+          "modifiedAt": "2026-04-24T03:43:11.290Z"
+        },
+        {
+          "fileName": "barbell biceps curl_2.mp4",
+          "relativePath": "preprocessedWorkoutVideos/barbell biceps curl/barbell biceps curl_2.mp4",
+          "extension": ".mp4",
+          "sizeBytes": 330716,
+          "modifiedAt": "2026-04-24T03:43:11.799Z"
+        },
+        {
+          "fileName": "barbell biceps curl_3.mp4",
+          "relativePath": "preprocessedWorkoutVideos/barbell biceps curl/barbell biceps curl_3.mp4",
+          "extension": ".mp4",
+          "sizeBytes": 316318,
+          "modifiedAt": "2026-04-24T03:43:12.290Z"
+        },
+        {
+          "fileName": "barbell biceps curl_4.mp4",
+          "relativePath": "preprocessedWorkoutVideos/barbell biceps curl/barbell biceps curl_4.mp4",
+          "extension": ".mp4",
+          "sizeBytes": 230818,
+          "modifiedAt": "2026-04-24T03:43:12.945Z"
+        },
+        {
+          "fileName": "barbell biceps curl_5.mp4",
+          "relativePath": "preprocessedWorkoutVideos/barbell biceps curl/barbell biceps curl_5.mp4",
+          "extension": ".mp4",
+          "sizeBytes": 366436,
+          "modifiedAt": "2026-04-24T03:43:13.754Z"
+        },
+        {
+          "fileName": "barbell biceps curl_6.mp4",
+          "relativePath": "preprocessedWorkoutVideos/barbell biceps curl/barbell biceps curl_6.mp4",
+          "extension": ".mp4",
+          "sizeBytes": 527657,
+          "modifiedAt": "2026-04-24T03:43:14.971Z"
+        },
+        {
+          "fileName": "barbell biceps curl_7.mp4",
+          "relativePath": "preprocessedWorkoutVideos/barbell biceps curl/barbell biceps curl_7.mp4",
+          "extension": ".mp4",
+          "sizeBytes": 587529,
+          "modifiedAt": "2026-04-24T03:43:15.337Z"
+        },
+        {
+          "fileName": "barbell biceps curl_8.mp4",
+          "relativePath": "preprocessedWorkoutVideos/barbell biceps curl/barbell biceps curl_8.mp4",
+          "extension": ".mp4",
+          "sizeBytes": 420483,
+          "modifiedAt": "2026-04-24T03:43:15.396Z"
+        },
+        {
+          "fileName": "barbell biceps curl_9.mp4",
+          "relativePath": "preprocessedWorkoutVideos/barbell biceps curl/barbell biceps curl_9.mp4",
+          "extension": ".mp4",
+          "sizeBytes": 308718,
+          "modifiedAt": "2026-04-24T03:43:15.455Z"
+        },
+        {
+          "fileName": "barbell biceps curl_10.mp4",
+          "relativePath": "preprocessedWorkoutVideos/barbell biceps curl/barbell biceps curl_10.mp4",
+          "extension": ".mp4",
+          "sizeBytes": 404220,
+          "modifiedAt": "2026-04-24T03:43:11.417Z"
+        },
+        {
+          "fileName": "barbell biceps curl_11.mp4",
+          "relativePath": "preprocessedWorkoutVideos/barbell biceps curl/barbell biceps curl_11.mp4",
+          "extension": ".mp4",
+          "sizeBytes": 325062,
+          "modifiedAt": "2026-04-24T03:43:11.459Z"
+        },
+        {
+          "fileName": "barbell biceps curl_12.mp4",
+          "relativePath": "preprocessedWorkoutVideos/barbell biceps curl/barbell biceps curl_12.mp4",
+          "extension": ".mp4",
+          "sizeBytes": 529318,
+          "modifiedAt": "2026-04-24T03:43:11.501Z"
+        },
+        {
+          "fileName": "barbell biceps curl_13.mp4",
+          "relativePath": "preprocessedWorkoutVideos/barbell biceps curl/barbell biceps curl_13.mp4",
+          "extension": ".mp4",
+          "sizeBytes": 525682,
+          "modifiedAt": "2026-04-24T03:43:11.545Z"
+        },
+        {
+          "fileName": "barbell biceps curl_14.mp4",
+          "relativePath": "preprocessedWorkoutVideos/barbell biceps curl/barbell biceps curl_14.mp4",
+          "extension": ".mp4",
+          "sizeBytes": 298082,
+          "modifiedAt": "2026-04-24T03:43:11.583Z"
+        },
+        {
+          "fileName": "barbell biceps curl_15.mp4",
+          "relativePath": "preprocessedWorkoutVideos/barbell biceps curl/barbell biceps curl_15.mp4",
+          "extension": ".mp4",
+          "sizeBytes": 281127,
+          "modifiedAt": "2026-04-24T03:43:11.613Z"
+        },
+        {
+          "fileName": "barbell biceps curl_16.mp4",
+          "relativePath": "preprocessedWorkoutVideos/barbell biceps curl/barbell biceps curl_16.mp4",
+          "extension": ".mp4",
+          "sizeBytes": 273419,
+          "modifiedAt": "2026-04-24T03:43:11.656Z"
+        },
+        {
+          "fileName": "barbell biceps curl_17.mp4",
+          "relativePath": "preprocessedWorkoutVideos/barbell biceps curl/barbell biceps curl_17.mp4",
+          "extension": ".mp4",
+          "sizeBytes": 263586,
+          "modifiedAt": "2026-04-24T03:43:11.694Z"
+        },
+        {
+          "fileName": "barbell biceps curl_18.mp4",
+          "relativePath": "preprocessedWorkoutVideos/barbell biceps curl/barbell biceps curl_18.mp4",
+          "extension": ".mp4",
+          "sizeBytes": 292229,
+          "modifiedAt": "2026-04-24T03:43:11.723Z"
+        },
+        {
+          "fileName": "barbell biceps curl_19.mp4",
+          "relativePath": "preprocessedWorkoutVideos/barbell biceps curl/barbell biceps curl_19.mp4",
+          "extension": ".mp4",
+          "sizeBytes": 260767,
+          "modifiedAt": "2026-04-24T03:43:11.768Z"
+        },
+        {
+          "fileName": "barbell biceps curl_20.mp4",
+          "relativePath": "preprocessedWorkoutVideos/barbell biceps curl/barbell biceps curl_20.mp4",
+          "extension": ".mp4",
+          "sizeBytes": 242452,
+          "modifiedAt": "2026-04-24T03:43:11.844Z"
+        },
+        {
+          "fileName": "barbell biceps curl_21.mp4",
+          "relativePath": "preprocessedWorkoutVideos/barbell biceps curl/barbell biceps curl_21.mp4",
+          "extension": ".mp4",
+          "sizeBytes": 250701,
+          "modifiedAt": "2026-04-24T03:43:11.881Z"
+        },
+        {
+          "fileName": "barbell biceps curl_22.mp4",
+          "relativePath": "preprocessedWorkoutVideos/barbell biceps curl/barbell biceps curl_22.mp4",
+          "extension": ".mp4",
+          "sizeBytes": 247961,
+          "modifiedAt": "2026-04-24T03:43:11.912Z"
+        },
+        {
+          "fileName": "barbell biceps curl_23.mp4",
+          "relativePath": "preprocessedWorkoutVideos/barbell biceps curl/barbell biceps curl_23.mp4",
+          "extension": ".mp4",
+          "sizeBytes": 300620,
+          "modifiedAt": "2026-04-24T03:43:11.942Z"
+        },
+        {
+          "fileName": "barbell biceps curl_24.mp4",
+          "relativePath": "preprocessedWorkoutVideos/barbell biceps curl/barbell biceps curl_24.mp4",
+          "extension": ".mp4",
+          "sizeBytes": 357676,
+          "modifiedAt": "2026-04-24T03:43:11.973Z"
+        },
+        {
+          "fileName": "barbell biceps curl_25.mp4",
+          "relativePath": "preprocessedWorkoutVideos/barbell biceps curl/barbell biceps curl_25.mp4",
+          "extension": ".mp4",
+          "sizeBytes": 332434,
+          "modifiedAt": "2026-04-24T03:43:12.005Z"
+        },
+        {
+          "fileName": "barbell biceps curl_26.mp4",
+          "relativePath": "preprocessedWorkoutVideos/barbell biceps curl/barbell biceps curl_26.mp4",
+          "extension": ".mp4",
+          "sizeBytes": 343086,
+          "modifiedAt": "2026-04-24T03:43:12.053Z"
+        },
+        {
+          "fileName": "barbell biceps curl_27.mp4",
+          "relativePath": "preprocessedWorkoutVideos/barbell biceps curl/barbell biceps curl_27.mp4",
+          "extension": ".mp4",
+          "sizeBytes": 239824,
+          "modifiedAt": "2026-04-24T03:43:12.094Z"
+        },
+        {
+          "fileName": "barbell biceps curl_28.mp4",
+          "relativePath": "preprocessedWorkoutVideos/barbell biceps curl/barbell biceps curl_28.mp4",
+          "extension": ".mp4",
+          "sizeBytes": 264608,
+          "modifiedAt": "2026-04-24T03:43:12.203Z"
+        },
+        {
+          "fileName": "barbell biceps curl_29.mp4",
+          "relativePath": "preprocessedWorkoutVideos/barbell biceps curl/barbell biceps curl_29.mp4",
+          "extension": ".mp4",
+          "sizeBytes": 250252,
+          "modifiedAt": "2026-04-24T03:43:12.257Z"
+        },
+        {
+          "fileName": "barbell biceps curl_30.mp4",
+          "relativePath": "preprocessedWorkoutVideos/barbell biceps curl/barbell biceps curl_30.mp4",
+          "extension": ".mp4",
+          "sizeBytes": 216593,
+          "modifiedAt": "2026-04-24T03:43:12.338Z"
+        },
+        {
+          "fileName": "barbell biceps curl_31.mp4",
+          "relativePath": "preprocessedWorkoutVideos/barbell biceps curl/barbell biceps curl_31.mp4",
+          "extension": ".mp4",
+          "sizeBytes": 281803,
+          "modifiedAt": "2026-04-24T03:43:12.417Z"
+        },
+        {
+          "fileName": "barbell biceps curl_32.mp4",
+          "relativePath": "preprocessedWorkoutVideos/barbell biceps curl/barbell biceps curl_32.mp4",
+          "extension": ".mp4",
+          "sizeBytes": 282077,
+          "modifiedAt": "2026-04-24T03:43:12.499Z"
+        },
+        {
+          "fileName": "barbell biceps curl_33.mp4",
+          "relativePath": "preprocessedWorkoutVideos/barbell biceps curl/barbell biceps curl_33.mp4",
+          "extension": ".mp4",
+          "sizeBytes": 270266,
+          "modifiedAt": "2026-04-24T03:43:12.577Z"
+        },
+        {
+          "fileName": "barbell biceps curl_34.mp4",
+          "relativePath": "preprocessedWorkoutVideos/barbell biceps curl/barbell biceps curl_34.mp4",
+          "extension": ".mp4",
+          "sizeBytes": 275911,
+          "modifiedAt": "2026-04-24T03:43:12.641Z"
+        },
+        {
+          "fileName": "barbell biceps curl_35.mp4",
+          "relativePath": "preprocessedWorkoutVideos/barbell biceps curl/barbell biceps curl_35.mp4",
+          "extension": ".mp4",
+          "sizeBytes": 249092,
+          "modifiedAt": "2026-04-24T03:43:12.704Z"
+        },
+        {
+          "fileName": "barbell biceps curl_36.mp4",
+          "relativePath": "preprocessedWorkoutVideos/barbell biceps curl/barbell biceps curl_36.mp4",
+          "extension": ".mp4",
+          "sizeBytes": 215661,
+          "modifiedAt": "2026-04-24T03:43:12.760Z"
+        },
+        {
+          "fileName": "barbell biceps curl_37.mp4",
+          "relativePath": "preprocessedWorkoutVideos/barbell biceps curl/barbell biceps curl_37.mp4",
+          "extension": ".mp4",
+          "sizeBytes": 251054,
+          "modifiedAt": "2026-04-24T03:43:12.800Z"
+        },
+        {
+          "fileName": "barbell biceps curl_38.mp4",
+          "relativePath": "preprocessedWorkoutVideos/barbell biceps curl/barbell biceps curl_38.mp4",
+          "extension": ".mp4",
+          "sizeBytes": 253508,
+          "modifiedAt": "2026-04-24T03:43:12.850Z"
+        },
+        {
+          "fileName": "barbell biceps curl_39.mp4",
+          "relativePath": "preprocessedWorkoutVideos/barbell biceps curl/barbell biceps curl_39.mp4",
+          "extension": ".mp4",
+          "sizeBytes": 234085,
+          "modifiedAt": "2026-04-24T03:43:12.896Z"
+        },
+        {
+          "fileName": "barbell biceps curl_40.mp4",
+          "relativePath": "preprocessedWorkoutVideos/barbell biceps curl/barbell biceps curl_40.mp4",
+          "extension": ".mp4",
+          "sizeBytes": 4284055,
+          "modifiedAt": "2026-04-24T03:43:13.038Z"
+        },
+        {
+          "fileName": "barbell biceps curl_41.mp4",
+          "relativePath": "preprocessedWorkoutVideos/barbell biceps curl/barbell biceps curl_41.mp4",
+          "extension": ".mp4",
+          "sizeBytes": 4359365,
+          "modifiedAt": "2026-04-24T03:43:13.134Z"
+        },
+        {
+          "fileName": "barbell biceps curl_42.mp4",
+          "relativePath": "preprocessedWorkoutVideos/barbell biceps curl/barbell biceps curl_42.mp4",
+          "extension": ".mp4",
+          "sizeBytes": 1939243,
+          "modifiedAt": "2026-04-24T03:43:13.216Z"
+        },
+        {
+          "fileName": "barbell biceps curl_43.mp4",
+          "relativePath": "preprocessedWorkoutVideos/barbell biceps curl/barbell biceps curl_43.mp4",
+          "extension": ".mp4",
+          "sizeBytes": 2057896,
+          "modifiedAt": "2026-04-24T03:43:13.298Z"
+        },
+        {
+          "fileName": "barbell biceps curl_44.mp4",
+          "relativePath": "preprocessedWorkoutVideos/barbell biceps curl/barbell biceps curl_44.mp4",
+          "extension": ".mp4",
+          "sizeBytes": 3910534,
+          "modifiedAt": "2026-04-24T03:43:13.412Z"
+        },
+        {
+          "fileName": "barbell biceps curl_45.mp4",
+          "relativePath": "preprocessedWorkoutVideos/barbell biceps curl/barbell biceps curl_45.mp4",
+          "extension": ".mp4",
+          "sizeBytes": 925825,
+          "modifiedAt": "2026-04-24T03:43:13.452Z"
+        },
+        {
+          "fileName": "barbell biceps curl_46.mp4",
+          "relativePath": "preprocessedWorkoutVideos/barbell biceps curl/barbell biceps curl_46.mp4",
+          "extension": ".mp4",
+          "sizeBytes": 1752802,
+          "modifiedAt": "2026-04-24T03:43:13.520Z"
+        },
+        {
+          "fileName": "barbell biceps curl_47.mp4",
+          "relativePath": "preprocessedWorkoutVideos/barbell biceps curl/barbell biceps curl_47.mp4",
+          "extension": ".mp4",
+          "sizeBytes": 2418586,
+          "modifiedAt": "2026-04-24T03:43:13.595Z"
+        },
+        {
+          "fileName": "barbell biceps curl_48.mp4",
+          "relativePath": "preprocessedWorkoutVideos/barbell biceps curl/barbell biceps curl_48.mp4",
+          "extension": ".mp4",
+          "sizeBytes": 1276029,
+          "modifiedAt": "2026-04-24T03:43:13.658Z"
+        },
+        {
+          "fileName": "barbell biceps curl_49.mp4",
+          "relativePath": "preprocessedWorkoutVideos/barbell biceps curl/barbell biceps curl_49.mp4",
+          "extension": ".mp4",
+          "sizeBytes": 1210824,
+          "modifiedAt": "2026-04-24T03:43:13.722Z"
+        },
+        {
+          "fileName": "barbell biceps curl_50.mp4",
+          "relativePath": "preprocessedWorkoutVideos/barbell biceps curl/barbell biceps curl_50.mp4",
+          "extension": ".mp4",
+          "sizeBytes": 2407642,
+          "modifiedAt": "2026-04-24T03:43:13.835Z"
+        },
+        {
+          "fileName": "barbell biceps curl_51.mp4",
+          "relativePath": "preprocessedWorkoutVideos/barbell biceps curl/barbell biceps curl_51.mp4",
+          "extension": ".mp4",
+          "sizeBytes": 6163744,
+          "modifiedAt": "2026-04-24T03:43:14.007Z"
+        },
+        {
+          "fileName": "barbell biceps curl_52.mp4",
+          "relativePath": "preprocessedWorkoutVideos/barbell biceps curl/barbell biceps curl_52.mp4",
+          "extension": ".mp4",
+          "sizeBytes": 7943462,
+          "modifiedAt": "2026-04-24T03:43:14.186Z"
+        },
+        {
+          "fileName": "barbell biceps curl_53.mp4",
+          "relativePath": "preprocessedWorkoutVideos/barbell biceps curl/barbell biceps curl_53.mp4",
+          "extension": ".mp4",
+          "sizeBytes": 3750128,
+          "modifiedAt": "2026-04-24T03:43:14.264Z"
+        },
+        {
+          "fileName": "barbell biceps curl_54.mp4",
+          "relativePath": "preprocessedWorkoutVideos/barbell biceps curl/barbell biceps curl_54.mp4",
+          "extension": ".mp4",
+          "sizeBytes": 2681191,
+          "modifiedAt": "2026-04-24T03:43:14.357Z"
+        },
+        {
+          "fileName": "barbell biceps curl_55.mp4",
+          "relativePath": "preprocessedWorkoutVideos/barbell biceps curl/barbell biceps curl_55.mp4",
+          "extension": ".mp4",
+          "sizeBytes": 2653115,
+          "modifiedAt": "2026-04-24T03:43:14.446Z"
+        },
+        {
+          "fileName": "barbell biceps curl_56.mp4",
+          "relativePath": "preprocessedWorkoutVideos/barbell biceps curl/barbell biceps curl_56.mp4",
+          "extension": ".mp4",
+          "sizeBytes": 4644110,
+          "modifiedAt": "2026-04-24T03:43:14.595Z"
+        },
+        {
+          "fileName": "barbell biceps curl_57.mp4",
+          "relativePath": "preprocessedWorkoutVideos/barbell biceps curl/barbell biceps curl_57.mp4",
+          "extension": ".mp4",
+          "sizeBytes": 4272451,
+          "modifiedAt": "2026-04-24T03:43:14.730Z"
+        },
+        {
+          "fileName": "barbell biceps curl_58.mp4",
+          "relativePath": "preprocessedWorkoutVideos/barbell biceps curl/barbell biceps curl_58.mp4",
+          "extension": ".mp4",
+          "sizeBytes": 2706706,
+          "modifiedAt": "2026-04-24T03:43:14.823Z"
+        },
+        {
+          "fileName": "barbell biceps curl_59.mp4",
+          "relativePath": "preprocessedWorkoutVideos/barbell biceps curl/barbell biceps curl_59.mp4",
+          "extension": ".mp4",
+          "sizeBytes": 3829700,
+          "modifiedAt": "2026-04-24T03:43:14.941Z"
+        },
+        {
+          "fileName": "barbell biceps curl_60.mp4",
+          "relativePath": "preprocessedWorkoutVideos/barbell biceps curl/barbell biceps curl_60.mp4",
+          "extension": ".mp4",
+          "sizeBytes": 4807435,
+          "modifiedAt": "2026-04-24T03:43:15.162Z"
+        },
+        {
+          "fileName": "barbell biceps curl_61.mp4",
+          "relativePath": "preprocessedWorkoutVideos/barbell biceps curl/barbell biceps curl_61.mp4",
+          "extension": ".mp4",
+          "sizeBytes": 1874646,
+          "modifiedAt": "2026-04-24T03:43:15.252Z"
+        },
+        {
+          "fileName": "barbell biceps curl_62.mp4",
+          "relativePath": "preprocessedWorkoutVideos/barbell biceps curl/barbell biceps curl_62.mp4",
+          "extension": ".mp4",
+          "sizeBytes": 2584840,
+          "modifiedAt": "2026-04-24T03:43:15.317Z"
+        }
+      ]
+    },
+    {
+      "exerciseKey": "benchPress",
+      "label": "Bench press",
+      "folderName": "bench press",
+      "aliases": [
+        "flat bench press"
+      ],
+      "clipCount": 61,
+      "clips": [
+        {
+          "fileName": "bench press_1.mp4",
+          "relativePath": "preprocessedWorkoutVideos/bench press/bench press_1.mp4",
+          "extension": ".mp4",
+          "sizeBytes": 256873,
+          "modifiedAt": "2026-04-24T03:43:15.536Z"
+        },
+        {
+          "fileName": "bench press_2.mp4",
+          "relativePath": "preprocessedWorkoutVideos/bench press/bench press_2.mp4",
+          "extension": ".mp4",
+          "sizeBytes": 250695,
+          "modifiedAt": "2026-04-24T03:43:15.987Z"
+        },
+        {
+          "fileName": "bench press_3.mp4",
+          "relativePath": "preprocessedWorkoutVideos/bench press/bench press_3.mp4",
+          "extension": ".mp4",
+          "sizeBytes": 368669,
+          "modifiedAt": "2026-04-24T03:43:16.764Z"
+        },
+        {
+          "fileName": "bench press_4.mp4",
+          "relativePath": "preprocessedWorkoutVideos/bench press/bench press_4.mp4",
+          "extension": ".mp4",
+          "sizeBytes": 260965,
+          "modifiedAt": "2026-04-24T03:43:18.625Z"
+        },
+        {
+          "fileName": "bench press_5.mp4",
+          "relativePath": "preprocessedWorkoutVideos/bench press/bench press_5.mp4",
+          "extension": ".mp4",
+          "sizeBytes": 201366,
+          "modifiedAt": "2026-04-24T03:43:19.726Z"
+        },
+        {
+          "fileName": "bench press_6.mp4",
+          "relativePath": "preprocessedWorkoutVideos/bench press/bench press_6.mp4",
+          "extension": ".mp4",
+          "sizeBytes": 275319,
+          "modifiedAt": "2026-04-24T03:43:20.508Z"
+        },
+        {
+          "fileName": "bench press_7.mp4",
+          "relativePath": "preprocessedWorkoutVideos/bench press/bench press_7.mp4",
+          "extension": ".mp4",
+          "sizeBytes": 357676,
+          "modifiedAt": "2026-04-24T03:43:20.752Z"
+        },
+        {
+          "fileName": "bench press_8.mp4",
+          "relativePath": "preprocessedWorkoutVideos/bench press/bench press_8.mp4",
+          "extension": ".mp4",
+          "sizeBytes": 356820,
+          "modifiedAt": "2026-04-24T03:43:20.795Z"
+        },
+        {
+          "fileName": "bench press_9.mp4",
+          "relativePath": "preprocessedWorkoutVideos/bench press/bench press_9.mp4",
+          "extension": ".mp4",
+          "sizeBytes": 207459,
+          "modifiedAt": "2026-04-24T03:43:20.831Z"
+        },
+        {
+          "fileName": "bench press_10.mp4",
+          "relativePath": "preprocessedWorkoutVideos/bench press/bench press_10.mp4",
+          "extension": ".mp4",
+          "sizeBytes": 228887,
+          "modifiedAt": "2026-04-24T03:43:15.569Z"
+        },
+        {
+          "fileName": "bench press_11.mp4",
+          "relativePath": "preprocessedWorkoutVideos/bench press/bench press_11.mp4",
+          "extension": ".mp4",
+          "sizeBytes": 176938,
+          "modifiedAt": "2026-04-24T03:43:15.606Z"
+        },
+        {
+          "fileName": "bench press_12.mp4",
+          "relativePath": "preprocessedWorkoutVideos/bench press/bench press_12.mp4",
+          "extension": ".mp4",
+          "sizeBytes": 644951,
+          "modifiedAt": "2026-04-24T03:43:15.653Z"
+        },
+        {
+          "fileName": "bench press_13.mp4",
+          "relativePath": "preprocessedWorkoutVideos/bench press/bench press_13.mp4",
+          "extension": ".mp4",
+          "sizeBytes": 333437,
+          "modifiedAt": "2026-04-24T03:43:15.699Z"
+        },
+        {
+          "fileName": "bench press_14.mp4",
+          "relativePath": "preprocessedWorkoutVideos/bench press/bench press_14.mp4",
+          "extension": ".mp4",
+          "sizeBytes": 234155,
+          "modifiedAt": "2026-04-24T03:43:15.740Z"
+        },
+        {
+          "fileName": "bench press_15.mp4",
+          "relativePath": "preprocessedWorkoutVideos/bench press/bench press_15.mp4",
+          "extension": ".mp4",
+          "sizeBytes": 427110,
+          "modifiedAt": "2026-04-24T03:43:15.784Z"
+        },
+        {
+          "fileName": "bench press_16.mp4",
+          "relativePath": "preprocessedWorkoutVideos/bench press/bench press_16.mp4",
+          "extension": ".mp4",
+          "sizeBytes": 307610,
+          "modifiedAt": "2026-04-24T03:43:15.812Z"
+        },
+        {
+          "fileName": "bench press_17.mp4",
+          "relativePath": "preprocessedWorkoutVideos/bench press/bench press_17.mp4",
+          "extension": ".mp4",
+          "sizeBytes": 447235,
+          "modifiedAt": "2026-04-24T03:43:15.863Z"
+        },
+        {
+          "fileName": "bench press_18.mp4",
+          "relativePath": "preprocessedWorkoutVideos/bench press/bench press_18.mp4",
+          "extension": ".mp4",
+          "sizeBytes": 348954,
+          "modifiedAt": "2026-04-24T03:43:15.909Z"
+        },
+        {
+          "fileName": "bench press_19.mp4",
+          "relativePath": "preprocessedWorkoutVideos/bench press/bench press_19.mp4",
+          "extension": ".mp4",
+          "sizeBytes": 308971,
+          "modifiedAt": "2026-04-24T03:43:15.949Z"
+        },
+        {
+          "fileName": "bench press_20.mp4",
+          "relativePath": "preprocessedWorkoutVideos/bench press/bench press_20.mp4",
+          "extension": ".mp4",
+          "sizeBytes": 284602,
+          "modifiedAt": "2026-04-24T03:43:16.033Z"
+        },
+        {
+          "fileName": "bench press_21.mp4",
+          "relativePath": "preprocessedWorkoutVideos/bench press/bench press_21.mp4",
+          "extension": ".mp4",
+          "sizeBytes": 351783,
+          "modifiedAt": "2026-04-24T03:43:16.081Z"
+        },
+        {
+          "fileName": "bench press_22.mp4",
+          "relativePath": "preprocessedWorkoutVideos/bench press/bench press_22.mp4",
+          "extension": ".mp4",
+          "sizeBytes": 273989,
+          "modifiedAt": "2026-04-24T03:43:16.128Z"
+        },
+        {
+          "fileName": "bench press_23.mp4",
+          "relativePath": "preprocessedWorkoutVideos/bench press/bench press_23.mp4",
+          "extension": ".mp4",
+          "sizeBytes": 280417,
+          "modifiedAt": "2026-04-24T03:43:16.180Z"
+        },
+        {
+          "fileName": "bench press_24.mp4",
+          "relativePath": "preprocessedWorkoutVideos/bench press/bench press_24.mp4",
+          "extension": ".mp4",
+          "sizeBytes": 303363,
+          "modifiedAt": "2026-04-24T03:43:16.230Z"
+        },
+        {
+          "fileName": "bench press_25.mp4",
+          "relativePath": "preprocessedWorkoutVideos/bench press/bench press_25.mp4",
+          "extension": ".mp4",
+          "sizeBytes": 220795,
+          "modifiedAt": "2026-04-24T03:43:16.283Z"
+        },
+        {
+          "fileName": "bench press_26.mp4",
+          "relativePath": "preprocessedWorkoutVideos/bench press/bench press_26.mp4",
+          "extension": ".mp4",
+          "sizeBytes": 270537,
+          "modifiedAt": "2026-04-24T03:43:16.335Z"
+        },
+        {
+          "fileName": "bench press_27.mp4",
+          "relativePath": "preprocessedWorkoutVideos/bench press/bench press_27.mp4",
+          "extension": ".mp4",
+          "sizeBytes": 270111,
+          "modifiedAt": "2026-04-24T03:43:16.389Z"
+        },
+        {
+          "fileName": "bench press_28.mp4",
+          "relativePath": "preprocessedWorkoutVideos/bench press/bench press_28.mp4",
+          "extension": ".mp4",
+          "sizeBytes": 437024,
+          "modifiedAt": "2026-04-24T03:43:16.445Z"
+        },
+        {
+          "fileName": "bench press_29.mp4",
+          "relativePath": "preprocessedWorkoutVideos/bench press/bench press_29.mp4",
+          "extension": ".mp4",
+          "sizeBytes": 5516322,
+          "modifiedAt": "2026-04-24T03:43:16.691Z"
+        },
+        {
+          "fileName": "bench press_30.mp4",
+          "relativePath": "preprocessedWorkoutVideos/bench press/bench press_30.mp4",
+          "extension": ".mp4",
+          "sizeBytes": 1427201,
+          "modifiedAt": "2026-04-24T03:43:16.868Z"
+        },
+        {
+          "fileName": "bench press_31.mp4",
+          "relativePath": "preprocessedWorkoutVideos/bench press/bench press_31.mp4",
+          "extension": ".mp4",
+          "sizeBytes": 2093446,
+          "modifiedAt": "2026-04-24T03:43:16.991Z"
+        },
+        {
+          "fileName": "bench press_32.mp4",
+          "relativePath": "preprocessedWorkoutVideos/bench press/bench press_32.mp4",
+          "extension": ".mp4",
+          "sizeBytes": 2823952,
+          "modifiedAt": "2026-04-24T03:43:17.130Z"
+        },
+        {
+          "fileName": "bench press_33.mp4",
+          "relativePath": "preprocessedWorkoutVideos/bench press/bench press_33.mp4",
+          "extension": ".mp4",
+          "sizeBytes": 1785386,
+          "modifiedAt": "2026-04-24T03:43:17.225Z"
+        },
+        {
+          "fileName": "bench press_34.mp4",
+          "relativePath": "preprocessedWorkoutVideos/bench press/bench press_34.mp4",
+          "extension": ".mp4",
+          "sizeBytes": 3986518,
+          "modifiedAt": "2026-04-24T03:43:17.354Z"
+        },
+        {
+          "fileName": "bench press_35.mp4",
+          "relativePath": "preprocessedWorkoutVideos/bench press/bench press_35.mp4",
+          "extension": ".mp4",
+          "sizeBytes": 1310278,
+          "modifiedAt": "2026-04-24T03:43:17.392Z"
+        },
+        {
+          "fileName": "bench press_36.mp4",
+          "relativePath": "preprocessedWorkoutVideos/bench press/bench press_36.mp4",
+          "extension": ".mp4",
+          "sizeBytes": 3801567,
+          "modifiedAt": "2026-04-24T03:43:17.497Z"
+        },
+        {
+          "fileName": "bench press_37.mp4",
+          "relativePath": "preprocessedWorkoutVideos/bench press/bench press_37.mp4",
+          "extension": ".mp4",
+          "sizeBytes": 9790222,
+          "modifiedAt": "2026-04-24T03:43:17.798Z"
+        },
+        {
+          "fileName": "bench press_38.mp4",
+          "relativePath": "preprocessedWorkoutVideos/bench press/bench press_38.mp4",
+          "extension": ".mp4",
+          "sizeBytes": 1478493,
+          "modifiedAt": "2026-04-24T03:43:17.830Z"
+        },
+        {
+          "fileName": "bench press_39.mp4",
+          "relativePath": "preprocessedWorkoutVideos/bench press/bench press_39.mp4",
+          "extension": ".mp4",
+          "sizeBytes": 21451651,
+          "modifiedAt": "2026-04-24T03:43:18.603Z"
+        },
+        {
+          "fileName": "bench press_40.mp4",
+          "relativePath": "preprocessedWorkoutVideos/bench press/bench press_40.mp4",
+          "extension": ".mp4",
+          "sizeBytes": 6488628,
+          "modifiedAt": "2026-04-24T03:43:18.796Z"
+        },
+        {
+          "fileName": "bench press_41.mp4",
+          "relativePath": "preprocessedWorkoutVideos/bench press/bench press_41.mp4",
+          "extension": ".mp4",
+          "sizeBytes": 1774506,
+          "modifiedAt": "2026-04-24T03:43:18.857Z"
+        },
+        {
+          "fileName": "bench press_42.mp4",
+          "relativePath": "preprocessedWorkoutVideos/bench press/bench press_42.mp4",
+          "extension": ".mp4",
+          "sizeBytes": 3559305,
+          "modifiedAt": "2026-04-24T03:43:18.992Z"
+        },
+        {
+          "fileName": "bench press_43.mp4",
+          "relativePath": "preprocessedWorkoutVideos/bench press/bench press_43.mp4",
+          "extension": ".mp4",
+          "sizeBytes": 1677019,
+          "modifiedAt": "2026-04-24T03:43:19.081Z"
+        },
+        {
+          "fileName": "bench press_44.mp4",
+          "relativePath": "preprocessedWorkoutVideos/bench press/bench press_44.mp4",
+          "extension": ".mp4",
+          "sizeBytes": 3192719,
+          "modifiedAt": "2026-04-24T03:43:19.263Z"
+        },
+        {
+          "fileName": "bench press_45.mp4",
+          "relativePath": "preprocessedWorkoutVideos/bench press/bench press_45.mp4",
+          "extension": ".mp4",
+          "sizeBytes": 2392075,
+          "modifiedAt": "2026-04-24T03:43:19.341Z"
+        },
+        {
+          "fileName": "bench press_46.mp4",
+          "relativePath": "preprocessedWorkoutVideos/bench press/bench press_46.mp4",
+          "extension": ".mp4",
+          "sizeBytes": 1275153,
+          "modifiedAt": "2026-04-24T03:43:19.390Z"
+        },
+        {
+          "fileName": "bench press_47.mp4",
+          "relativePath": "preprocessedWorkoutVideos/bench press/bench press_47.mp4",
+          "extension": ".mp4",
+          "sizeBytes": 1471857,
+          "modifiedAt": "2026-04-24T03:43:19.442Z"
+        },
+        {
+          "fileName": "bench press_48.mp4",
+          "relativePath": "preprocessedWorkoutVideos/bench press/bench press_48.mp4",
+          "extension": ".mp4",
+          "sizeBytes": 4485010,
+          "modifiedAt": "2026-04-24T03:43:19.588Z"
+        },
+        {
+          "fileName": "bench press_49.mp4",
+          "relativePath": "preprocessedWorkoutVideos/bench press/bench press_49.mp4",
+          "extension": ".mp4",
+          "sizeBytes": 1899138,
+          "modifiedAt": "2026-04-24T03:43:19.695Z"
+        },
+        {
+          "fileName": "bench press_50.mp4",
+          "relativePath": "preprocessedWorkoutVideos/bench press/bench press_50.mp4",
+          "extension": ".mp4",
+          "sizeBytes": 1105995,
+          "modifiedAt": "2026-04-24T03:43:19.778Z"
+        },
+        {
+          "fileName": "bench press_51.mp4",
+          "relativePath": "preprocessedWorkoutVideos/bench press/bench press_51.mp4",
+          "extension": ".mp4",
+          "sizeBytes": 1410314,
+          "modifiedAt": "2026-04-24T03:43:19.852Z"
+        },
+        {
+          "fileName": "bench press_52.mp4",
+          "relativePath": "preprocessedWorkoutVideos/bench press/bench press_52.mp4",
+          "extension": ".mp4",
+          "sizeBytes": 875481,
+          "modifiedAt": "2026-04-24T03:43:19.906Z"
+        },
+        {
+          "fileName": "bench press_53.mp4",
+          "relativePath": "preprocessedWorkoutVideos/bench press/bench press_53.mp4",
+          "extension": ".mp4",
+          "sizeBytes": 1184019,
+          "modifiedAt": "2026-04-24T03:43:19.964Z"
+        },
+        {
+          "fileName": "bench press_54.mp4",
+          "relativePath": "preprocessedWorkoutVideos/bench press/bench press_54.mp4",
+          "extension": ".mp4",
+          "sizeBytes": 2225336,
+          "modifiedAt": "2026-04-24T03:43:20.036Z"
+        },
+        {
+          "fileName": "bench press_55.mp4",
+          "relativePath": "preprocessedWorkoutVideos/bench press/bench press_55.mp4",
+          "extension": ".mp4",
+          "sizeBytes": 696742,
+          "modifiedAt": "2026-04-24T03:43:20.088Z"
+        },
+        {
+          "fileName": "bench press_56.mp4",
+          "relativePath": "preprocessedWorkoutVideos/bench press/bench press_56.mp4",
+          "extension": ".mp4",
+          "sizeBytes": 3104959,
+          "modifiedAt": "2026-04-24T03:43:20.191Z"
+        },
+        {
+          "fileName": "bench press_57.mp4",
+          "relativePath": "preprocessedWorkoutVideos/bench press/bench press_57.mp4",
+          "extension": ".mp4",
+          "sizeBytes": 2616286,
+          "modifiedAt": "2026-04-24T03:43:20.274Z"
+        },
+        {
+          "fileName": "bench press_58.mp4",
+          "relativePath": "preprocessedWorkoutVideos/bench press/bench press_58.mp4",
+          "extension": ".mp4",
+          "sizeBytes": 1264468,
+          "modifiedAt": "2026-04-24T03:43:20.353Z"
+        },
+        {
+          "fileName": "bench press_59.mp4",
+          "relativePath": "preprocessedWorkoutVideos/bench press/bench press_59.mp4",
+          "extension": ".mp4",
+          "sizeBytes": 3486843,
+          "modifiedAt": "2026-04-24T03:43:20.462Z"
+        },
+        {
+          "fileName": "bench press_60.mp4",
+          "relativePath": "preprocessedWorkoutVideos/bench press/bench press_60.mp4",
+          "extension": ".mp4",
+          "sizeBytes": 3474026,
+          "modifiedAt": "2026-04-24T03:43:20.614Z"
+        },
+        {
+          "fileName": "bench press_61.mp4",
+          "relativePath": "preprocessedWorkoutVideos/bench press/bench press_61.mp4",
+          "extension": ".mp4",
+          "sizeBytes": 2510201,
+          "modifiedAt": "2026-04-24T03:43:20.714Z"
+        }
+      ]
+    },
+    {
+      "exerciseKey": "chestFlyMachine",
+      "label": "Chest fly machine",
+      "folderName": "chest fly machine",
+      "aliases": [
+        "machine fly"
+      ],
+      "clipCount": 28,
+      "clips": [
+        {
+          "fileName": "chest fly machine_1.mp4",
+          "relativePath": "preprocessedWorkoutVideos/chest fly machine/chest fly machine_1.mp4",
+          "extension": ".mp4",
+          "sizeBytes": 640732,
+          "modifiedAt": "2026-04-24T03:43:20.903Z"
+        },
+        {
+          "fileName": "chest fly machine_2.mp4",
+          "relativePath": "preprocessedWorkoutVideos/chest fly machine/chest fly machine_2.mp4",
+          "extension": ".mp4",
+          "sizeBytes": 444946,
+          "modifiedAt": "2026-04-24T03:43:21.399Z"
+        },
+        {
+          "fileName": "chest fly machine_3.mp4",
+          "relativePath": "preprocessedWorkoutVideos/chest fly machine/chest fly machine_3.mp4",
+          "extension": ".mp4",
+          "sizeBytes": 343508,
+          "modifiedAt": "2026-04-24T03:43:22.965Z"
+        },
+        {
+          "fileName": "chest fly machine_4.mp4",
+          "relativePath": "preprocessedWorkoutVideos/chest fly machine/chest fly machine_4.mp4",
+          "extension": ".mp4",
+          "sizeBytes": 575872,
+          "modifiedAt": "2026-04-24T03:43:23.011Z"
+        },
+        {
+          "fileName": "chest fly machine_5.mp4",
+          "relativePath": "preprocessedWorkoutVideos/chest fly machine/chest fly machine_5.mp4",
+          "extension": ".mp4",
+          "sizeBytes": 414627,
+          "modifiedAt": "2026-04-24T03:43:23.057Z"
+        },
+        {
+          "fileName": "chest fly machine_6.mp4",
+          "relativePath": "preprocessedWorkoutVideos/chest fly machine/chest fly machine_6.mp4",
+          "extension": ".mp4",
+          "sizeBytes": 551313,
+          "modifiedAt": "2026-04-24T03:43:23.107Z"
+        },
+        {
+          "fileName": "chest fly machine_7.mp4",
+          "relativePath": "preprocessedWorkoutVideos/chest fly machine/chest fly machine_7.mp4",
+          "extension": ".mp4",
+          "sizeBytes": 417274,
+          "modifiedAt": "2026-04-24T03:43:23.145Z"
+        },
+        {
+          "fileName": "chest fly machine_8.mp4",
+          "relativePath": "preprocessedWorkoutVideos/chest fly machine/chest fly machine_8.mp4",
+          "extension": ".mp4",
+          "sizeBytes": 653180,
+          "modifiedAt": "2026-04-24T03:43:23.193Z"
+        },
+        {
+          "fileName": "chest fly machine_9.mp4",
+          "relativePath": "preprocessedWorkoutVideos/chest fly machine/chest fly machine_9.mp4",
+          "extension": ".mp4",
+          "sizeBytes": 653870,
+          "modifiedAt": "2026-04-24T03:43:23.252Z"
+        },
+        {
+          "fileName": "chest fly machine_10.mp4",
+          "relativePath": "preprocessedWorkoutVideos/chest fly machine/chest fly machine_10.mp4",
+          "extension": ".mp4",
+          "sizeBytes": 437356,
+          "modifiedAt": "2026-04-24T03:43:20.952Z"
+        },
+        {
+          "fileName": "chest fly machine_11.mp4",
+          "relativePath": "preprocessedWorkoutVideos/chest fly machine/chest fly machine_11.mp4",
+          "extension": ".mp4",
+          "sizeBytes": 456240,
+          "modifiedAt": "2026-04-24T03:43:20.996Z"
+        },
+        {
+          "fileName": "chest fly machine_12.mp4",
+          "relativePath": "preprocessedWorkoutVideos/chest fly machine/chest fly machine_12.mp4",
+          "extension": ".mp4",
+          "sizeBytes": 452537,
+          "modifiedAt": "2026-04-24T03:43:21.032Z"
+        },
+        {
+          "fileName": "chest fly machine_13.mp4",
+          "relativePath": "preprocessedWorkoutVideos/chest fly machine/chest fly machine_13.mp4",
+          "extension": ".mp4",
+          "sizeBytes": 402620,
+          "modifiedAt": "2026-04-24T03:43:21.076Z"
+        },
+        {
+          "fileName": "chest fly machine_14.mp4",
+          "relativePath": "preprocessedWorkoutVideos/chest fly machine/chest fly machine_14.mp4",
+          "extension": ".mp4",
+          "sizeBytes": 469661,
+          "modifiedAt": "2026-04-24T03:43:21.112Z"
+        },
+        {
+          "fileName": "chest fly machine_15.mp4",
+          "relativePath": "preprocessedWorkoutVideos/chest fly machine/chest fly machine_15.mp4",
+          "extension": ".mp4",
+          "sizeBytes": 627790,
+          "modifiedAt": "2026-04-24T03:43:21.164Z"
+        },
+        {
+          "fileName": "chest fly machine_16.mp4",
+          "relativePath": "preprocessedWorkoutVideos/chest fly machine/chest fly machine_16.mp4",
+          "extension": ".mp4",
+          "sizeBytes": 341587,
+          "modifiedAt": "2026-04-24T03:43:21.203Z"
+        },
+        {
+          "fileName": "chest fly machine_17.mp4",
+          "relativePath": "preprocessedWorkoutVideos/chest fly machine/chest fly machine_17.mp4",
+          "extension": ".mp4",
+          "sizeBytes": 557259,
+          "modifiedAt": "2026-04-24T03:43:21.254Z"
+        },
+        {
+          "fileName": "chest fly machine_18.mp4",
+          "relativePath": "preprocessedWorkoutVideos/chest fly machine/chest fly machine_18.mp4",
+          "extension": ".mp4",
+          "sizeBytes": 562379,
+          "modifiedAt": "2026-04-24T03:43:21.298Z"
+        },
+        {
+          "fileName": "chest fly machine_19.mp4",
+          "relativePath": "preprocessedWorkoutVideos/chest fly machine/chest fly machine_19.mp4",
+          "extension": ".mp4",
+          "sizeBytes": 1316791,
+          "modifiedAt": "2026-04-24T03:43:21.362Z"
+        },
+        {
+          "fileName": "chest fly machine_20.mp4",
+          "relativePath": "preprocessedWorkoutVideos/chest fly machine/chest fly machine_20.mp4",
+          "extension": ".mp4",
+          "sizeBytes": 859116,
+          "modifiedAt": "2026-04-24T03:43:21.455Z"
+        },
+        {
+          "fileName": "chest fly machine_21.mp4",
+          "relativePath": "preprocessedWorkoutVideos/chest fly machine/chest fly machine_21.mp4",
+          "extension": ".mp4",
+          "sizeBytes": 910229,
+          "modifiedAt": "2026-04-24T03:43:21.505Z"
+        },
+        {
+          "fileName": "chest fly machine_22.mp4",
+          "relativePath": "preprocessedWorkoutVideos/chest fly machine/chest fly machine_22.mp4",
+          "extension": ".mp4",
+          "sizeBytes": 2483421,
+          "modifiedAt": "2026-04-24T03:43:21.589Z"
+        },
+        {
+          "fileName": "chest fly machine_23.mp4",
+          "relativePath": "preprocessedWorkoutVideos/chest fly machine/chest fly machine_23.mp4",
+          "extension": ".mp4",
+          "sizeBytes": 9900603,
+          "modifiedAt": "2026-04-24T03:43:21.896Z"
+        },
+        {
+          "fileName": "chest fly machine_24.mp4",
+          "relativePath": "preprocessedWorkoutVideos/chest fly machine/chest fly machine_24.mp4",
+          "extension": ".mp4",
+          "sizeBytes": 3043852,
+          "modifiedAt": "2026-04-24T03:43:21.977Z"
+        },
+        {
+          "fileName": "chest fly machine_25.mp4",
+          "relativePath": "preprocessedWorkoutVideos/chest fly machine/chest fly machine_25.mp4",
+          "extension": ".mp4",
+          "sizeBytes": 6195628,
+          "modifiedAt": "2026-04-24T03:43:22.115Z"
+        },
+        {
+          "fileName": "chest fly machine_26.mp4",
+          "relativePath": "preprocessedWorkoutVideos/chest fly machine/chest fly machine_26.mp4",
+          "extension": ".mp4",
+          "sizeBytes": 22151179,
+          "modifiedAt": "2026-04-24T03:43:22.854Z"
+        },
+        {
+          "fileName": "chest fly machine_27.mp4",
+          "relativePath": "preprocessedWorkoutVideos/chest fly machine/chest fly machine_27.mp4",
+          "extension": ".mp4",
+          "sizeBytes": 1136520,
+          "modifiedAt": "2026-04-24T03:43:22.898Z"
+        },
+        {
+          "fileName": "chest fly machine_28.mp4",
+          "relativePath": "preprocessedWorkoutVideos/chest fly machine/chest fly machine_28.mp4",
+          "extension": ".mp4",
+          "sizeBytes": 991870,
+          "modifiedAt": "2026-04-24T03:43:22.934Z"
+        }
+      ]
+    },
+    {
+      "exerciseKey": "deadlift",
+      "label": "Deadlift",
+      "folderName": "deadlift",
+      "aliases": [],
+      "clipCount": 32,
+      "clips": [
+        {
+          "fileName": "deadlift_1.mp4",
+          "relativePath": "preprocessedWorkoutVideos/deadlift/deadlift_1.mp4",
+          "extension": ".mp4",
+          "sizeBytes": 640524,
+          "modifiedAt": "2026-04-24T03:43:23.342Z"
+        },
+        {
+          "fileName": "deadlift_2.mp4",
+          "relativePath": "preprocessedWorkoutVideos/deadlift/deadlift_2.mp4",
+          "extension": ".mp4",
+          "sizeBytes": 642707,
+          "modifiedAt": "2026-04-24T03:43:24.031Z"
+        },
+        {
+          "fileName": "deadlift_3.mp4",
+          "relativePath": "preprocessedWorkoutVideos/deadlift/deadlift_3.mp4",
+          "extension": ".mp4",
+          "sizeBytes": 641938,
+          "modifiedAt": "2026-04-24T03:43:25.756Z"
+        },
+        {
+          "fileName": "deadlift_4.mp4",
+          "relativePath": "preprocessedWorkoutVideos/deadlift/deadlift_4.mp4",
+          "extension": ".mp4",
+          "sizeBytes": 643341,
+          "modifiedAt": "2026-04-24T03:43:26.284Z"
+        },
+        {
+          "fileName": "deadlift_5.mp4",
+          "relativePath": "preprocessedWorkoutVideos/deadlift/deadlift_5.mp4",
+          "extension": ".mp4",
+          "sizeBytes": 633981,
+          "modifiedAt": "2026-04-24T03:43:26.340Z"
+        },
+        {
+          "fileName": "deadlift_6.mp4",
+          "relativePath": "preprocessedWorkoutVideos/deadlift/deadlift_6.mp4",
+          "extension": ".mp4",
+          "sizeBytes": 643389,
+          "modifiedAt": "2026-04-24T03:43:26.396Z"
+        },
+        {
+          "fileName": "deadlift_7.mp4",
+          "relativePath": "preprocessedWorkoutVideos/deadlift/deadlift_7.mp4",
+          "extension": ".mp4",
+          "sizeBytes": 642432,
+          "modifiedAt": "2026-04-24T03:43:26.449Z"
+        },
+        {
+          "fileName": "deadlift_8.mp4",
+          "relativePath": "preprocessedWorkoutVideos/deadlift/deadlift_8.mp4",
+          "extension": ".mp4",
+          "sizeBytes": 643630,
+          "modifiedAt": "2026-04-24T03:43:26.507Z"
+        },
+        {
+          "fileName": "deadlift_9.mp4",
+          "relativePath": "preprocessedWorkoutVideos/deadlift/deadlift_9.mp4",
+          "extension": ".mp4",
+          "sizeBytes": 635485,
+          "modifiedAt": "2026-04-24T03:43:26.560Z"
+        },
+        {
+          "fileName": "deadlift_10.mp4",
+          "relativePath": "preprocessedWorkoutVideos/deadlift/deadlift_10.mp4",
+          "extension": ".mp4",
+          "sizeBytes": 638180,
+          "modifiedAt": "2026-04-24T03:43:23.415Z"
+        },
+        {
+          "fileName": "deadlift_11.mp4",
+          "relativePath": "preprocessedWorkoutVideos/deadlift/deadlift_11.mp4",
+          "extension": ".mp4",
+          "sizeBytes": 519904,
+          "modifiedAt": "2026-04-24T03:43:23.484Z"
+        },
+        {
+          "fileName": "deadlift_12.mp4",
+          "relativePath": "preprocessedWorkoutVideos/deadlift/deadlift_12.mp4",
+          "extension": ".mp4",
+          "sizeBytes": 405678,
+          "modifiedAt": "2026-04-24T03:43:23.540Z"
+        },
+        {
+          "fileName": "deadlift_13.mp4",
+          "relativePath": "preprocessedWorkoutVideos/deadlift/deadlift_13.mp4",
+          "extension": ".mp4",
+          "sizeBytes": 1114686,
+          "modifiedAt": "2026-04-24T03:43:23.613Z"
+        },
+        {
+          "fileName": "deadlift_14.mp4",
+          "relativePath": "preprocessedWorkoutVideos/deadlift/deadlift_14.mp4",
+          "extension": ".mp4",
+          "sizeBytes": 638999,
+          "modifiedAt": "2026-04-24T03:43:23.679Z"
+        },
+        {
+          "fileName": "deadlift_15.mp4",
+          "relativePath": "preprocessedWorkoutVideos/deadlift/deadlift_15.mp4",
+          "extension": ".mp4",
+          "sizeBytes": 291779,
+          "modifiedAt": "2026-04-24T03:43:23.737Z"
+        },
+        {
+          "fileName": "deadlift_16.mp4",
+          "relativePath": "preprocessedWorkoutVideos/deadlift/deadlift_16.mp4",
+          "extension": ".mp4",
+          "sizeBytes": 464527,
+          "modifiedAt": "2026-04-24T03:43:23.793Z"
+        },
+        {
+          "fileName": "deadlift_17.mp4",
+          "relativePath": "preprocessedWorkoutVideos/deadlift/deadlift_17.mp4",
+          "extension": ".mp4",
+          "sizeBytes": 629164,
+          "modifiedAt": "2026-04-24T03:43:23.857Z"
+        },
+        {
+          "fileName": "deadlift_18.mp4",
+          "relativePath": "preprocessedWorkoutVideos/deadlift/deadlift_18.mp4",
+          "extension": ".mp4",
+          "sizeBytes": 445397,
+          "modifiedAt": "2026-04-24T03:43:23.913Z"
+        },
+        {
+          "fileName": "deadlift_19.mp4",
+          "relativePath": "preprocessedWorkoutVideos/deadlift/deadlift_19.mp4",
+          "extension": ".mp4",
+          "sizeBytes": 269118,
+          "modifiedAt": "2026-04-24T03:43:23.966Z"
+        },
+        {
+          "fileName": "deadlift_20.mp4",
+          "relativePath": "preprocessedWorkoutVideos/deadlift/deadlift_20.mp4",
+          "extension": ".mp4",
+          "sizeBytes": 252756,
+          "modifiedAt": "2026-04-24T03:43:24.077Z"
+        },
+        {
+          "fileName": "deadlift_21.mp4",
+          "relativePath": "preprocessedWorkoutVideos/deadlift/deadlift_21.mp4",
+          "extension": ".mp4",
+          "sizeBytes": 827303,
+          "modifiedAt": "2026-04-24T03:43:24.135Z"
+        },
+        {
+          "fileName": "deadlift_22.mp4",
+          "relativePath": "preprocessedWorkoutVideos/deadlift/deadlift_22.mp4",
+          "extension": ".mp4",
+          "sizeBytes": 309896,
+          "modifiedAt": "2026-04-24T03:43:24.183Z"
+        },
+        {
+          "fileName": "deadlift_23.mp4",
+          "relativePath": "preprocessedWorkoutVideos/deadlift/deadlift_23.mp4",
+          "extension": ".mp4",
+          "sizeBytes": 309351,
+          "modifiedAt": "2026-04-24T03:43:24.254Z"
+        },
+        {
+          "fileName": "deadlift_24.mp4",
+          "relativePath": "preprocessedWorkoutVideos/deadlift/deadlift_24.mp4",
+          "extension": ".mp4",
+          "sizeBytes": 440595,
+          "modifiedAt": "2026-04-24T03:43:24.311Z"
+        },
+        {
+          "fileName": "deadlift_25.mp4",
+          "relativePath": "preprocessedWorkoutVideos/deadlift/deadlift_25.mp4",
+          "extension": ".mp4",
+          "sizeBytes": 26738492,
+          "modifiedAt": "2026-04-24T03:43:24.970Z"
+        },
+        {
+          "fileName": "deadlift_26.mp4",
+          "relativePath": "preprocessedWorkoutVideos/deadlift/deadlift_26.mp4",
+          "extension": ".mp4",
+          "sizeBytes": 4231666,
+          "modifiedAt": "2026-04-24T03:43:25.051Z"
+        },
+        {
+          "fileName": "deadlift_27.mp4",
+          "relativePath": "preprocessedWorkoutVideos/deadlift/deadlift_27.mp4",
+          "extension": ".mp4",
+          "sizeBytes": 4064420,
+          "modifiedAt": "2026-04-24T03:43:25.167Z"
+        },
+        {
+          "fileName": "deadlift_28.mp4",
+          "relativePath": "preprocessedWorkoutVideos/deadlift/deadlift_28.mp4",
+          "extension": ".mp4",
+          "sizeBytes": 5599521,
+          "modifiedAt": "2026-04-24T03:43:25.498Z"
+        },
+        {
+          "fileName": "deadlift_29.mp4",
+          "relativePath": "preprocessedWorkoutVideos/deadlift/deadlift_29.mp4",
+          "extension": ".mp4",
+          "sizeBytes": 2683174,
+          "modifiedAt": "2026-04-24T03:43:25.675Z"
+        },
+        {
+          "fileName": "deadlift_30.mp4",
+          "relativePath": "preprocessedWorkoutVideos/deadlift/deadlift_30.mp4",
+          "extension": ".mp4",
+          "sizeBytes": 5073729,
+          "modifiedAt": "2026-04-24T03:43:25.953Z"
+        },
+        {
+          "fileName": "deadlift_31.mp4",
+          "relativePath": "preprocessedWorkoutVideos/deadlift/deadlift_31.mp4",
+          "extension": ".mp4",
+          "sizeBytes": 4024735,
+          "modifiedAt": "2026-04-24T03:43:26.106Z"
+        },
+        {
+          "fileName": "deadlift_32.mp4",
+          "relativePath": "preprocessedWorkoutVideos/deadlift/deadlift_32.mp4",
+          "extension": ".mp4",
+          "sizeBytes": 2740548,
+          "modifiedAt": "2026-04-24T03:43:26.230Z"
+        }
+      ]
+    },
+    {
+      "exerciseKey": "declineBenchPress",
+      "label": "Decline bench press",
+      "folderName": "decline bench press",
+      "aliases": [
+        "dbp"
+      ],
+      "clipCount": 12,
+      "clips": [
+        {
+          "fileName": "dbp_1.mp4",
+          "relativePath": "preprocessedWorkoutVideos/decline bench press/dbp_1.mp4",
+          "extension": ".mp4",
+          "sizeBytes": 4415084,
+          "modifiedAt": "2026-04-24T03:43:26.761Z"
+        },
+        {
+          "fileName": "dbp_2.MOV",
+          "relativePath": "preprocessedWorkoutVideos/decline bench press/dbp_2.MOV",
+          "extension": ".mov",
+          "sizeBytes": 53775867,
+          "modifiedAt": "2026-04-24T03:43:28.866Z"
+        },
+        {
+          "fileName": "dbp_3.MOV",
+          "relativePath": "preprocessedWorkoutVideos/decline bench press/dbp_3.MOV",
+          "extension": ".mov",
+          "sizeBytes": 25788151,
+          "modifiedAt": "2026-04-24T03:43:29.279Z"
+        },
+        {
+          "fileName": "dbp_4.MOV",
+          "relativePath": "preprocessedWorkoutVideos/decline bench press/dbp_4.MOV",
+          "extension": ".mov",
+          "sizeBytes": 88255235,
+          "modifiedAt": "2026-04-24T03:43:31.084Z"
+        },
+        {
+          "fileName": "dbp_5.MOV",
+          "relativePath": "preprocessedWorkoutVideos/decline bench press/dbp_5.MOV",
+          "extension": ".mov",
+          "sizeBytes": 89265899,
+          "modifiedAt": "2026-04-24T03:43:32.846Z"
+        },
+        {
+          "fileName": "dbp_6.MOV",
+          "relativePath": "preprocessedWorkoutVideos/decline bench press/dbp_6.MOV",
+          "extension": ".mov",
+          "sizeBytes": 83097511,
+          "modifiedAt": "2026-04-24T03:43:34.716Z"
+        },
+        {
+          "fileName": "dbp_7.MOV",
+          "relativePath": "preprocessedWorkoutVideos/decline bench press/dbp_7.MOV",
+          "extension": ".mov",
+          "sizeBytes": 78556563,
+          "modifiedAt": "2026-04-24T03:43:36.244Z"
+        },
+        {
+          "fileName": "dbp_8.mp4",
+          "relativePath": "preprocessedWorkoutVideos/decline bench press/dbp_8.mp4",
+          "extension": ".mp4",
+          "sizeBytes": 2014199,
+          "modifiedAt": "2026-04-24T03:43:36.293Z"
+        },
+        {
+          "fileName": "dbp_9.mp4",
+          "relativePath": "preprocessedWorkoutVideos/decline bench press/dbp_9.mp4",
+          "extension": ".mp4",
+          "sizeBytes": 5518813,
+          "modifiedAt": "2026-04-24T03:43:36.434Z"
+        },
+        {
+          "fileName": "dbp_10.mp4",
+          "relativePath": "preprocessedWorkoutVideos/decline bench press/dbp_10.mp4",
+          "extension": ".mp4",
+          "sizeBytes": 7437901,
+          "modifiedAt": "2026-04-24T03:43:26.972Z"
+        },
+        {
+          "fileName": "dbp_11.mp4",
+          "relativePath": "preprocessedWorkoutVideos/decline bench press/dbp_11.mp4",
+          "extension": ".mp4",
+          "sizeBytes": 7407713,
+          "modifiedAt": "2026-04-24T03:43:27.283Z"
+        },
+        {
+          "fileName": "dbp_12.mp4",
+          "relativePath": "preprocessedWorkoutVideos/decline bench press/dbp_12.mp4",
+          "extension": ".mp4",
+          "sizeBytes": 2593448,
+          "modifiedAt": "2026-04-24T03:43:27.454Z"
+        }
+      ]
+    },
+    {
+      "exerciseKey": "hammerCurl",
+      "label": "Hammer curl",
+      "folderName": "hammer curl",
+      "aliases": [],
+      "clipCount": 19,
+      "clips": [
+        {
+          "fileName": "hammer curl_1.MOV",
+          "relativePath": "preprocessedWorkoutVideos/hammer curl/hammer curl_1.MOV",
+          "extension": ".mov",
+          "sizeBytes": 43480863,
+          "modifiedAt": "2026-04-24T03:43:37.580Z"
+        },
+        {
+          "fileName": "hammer curl_2.MOV",
+          "relativePath": "preprocessedWorkoutVideos/hammer curl/hammer curl_2.MOV",
+          "extension": ".mov",
+          "sizeBytes": 41916666,
+          "modifiedAt": "2026-04-24T03:43:39.842Z"
+        },
+        {
+          "fileName": "hammer curl_3.MOV",
+          "relativePath": "preprocessedWorkoutVideos/hammer curl/hammer curl_3.MOV",
+          "extension": ".mov",
+          "sizeBytes": 54085730,
+          "modifiedAt": "2026-04-24T03:43:41.003Z"
+        },
+        {
+          "fileName": "hammer curl_4.MOV",
+          "relativePath": "preprocessedWorkoutVideos/hammer curl/hammer curl_4.MOV",
+          "extension": ".mov",
+          "sizeBytes": 48448659,
+          "modifiedAt": "2026-04-24T03:43:41.874Z"
+        },
+        {
+          "fileName": "hammer curl_5.MOV",
+          "relativePath": "preprocessedWorkoutVideos/hammer curl/hammer curl_5.MOV",
+          "extension": ".mov",
+          "sizeBytes": 44796747,
+          "modifiedAt": "2026-04-24T03:43:42.640Z"
+        },
+        {
+          "fileName": "hammer curl_6.MOV",
+          "relativePath": "preprocessedWorkoutVideos/hammer curl/hammer curl_6.MOV",
+          "extension": ".mov",
+          "sizeBytes": 39865762,
+          "modifiedAt": "2026-04-24T03:43:43.358Z"
+        },
+        {
+          "fileName": "hammer curl_7.MOV",
+          "relativePath": "preprocessedWorkoutVideos/hammer curl/hammer curl_7.MOV",
+          "extension": ".mov",
+          "sizeBytes": 50261519,
+          "modifiedAt": "2026-04-24T03:43:44.276Z"
+        },
+        {
+          "fileName": "hammer curl_8.mp4",
+          "relativePath": "preprocessedWorkoutVideos/hammer curl/hammer curl_8.mp4",
+          "extension": ".mp4",
+          "sizeBytes": 6449307,
+          "modifiedAt": "2026-04-24T03:43:44.449Z"
+        },
+        {
+          "fileName": "hammer curl_9.mp4",
+          "relativePath": "preprocessedWorkoutVideos/hammer curl/hammer curl_9.mp4",
+          "extension": ".mp4",
+          "sizeBytes": 3446673,
+          "modifiedAt": "2026-04-24T03:43:44.561Z"
+        },
+        {
+          "fileName": "hammer curl_10.mp4",
+          "relativePath": "preprocessedWorkoutVideos/hammer curl/hammer curl_10.mp4",
+          "extension": ".mp4",
+          "sizeBytes": 2240577,
+          "modifiedAt": "2026-04-24T03:43:37.674Z"
+        },
+        {
+          "fileName": "hammer curl_11.mp4",
+          "relativePath": "preprocessedWorkoutVideos/hammer curl/hammer curl_11.mp4",
+          "extension": ".mp4",
+          "sizeBytes": 12417987,
+          "modifiedAt": "2026-04-24T03:43:37.924Z"
+        },
+        {
+          "fileName": "hammer curl_12.mp4",
+          "relativePath": "preprocessedWorkoutVideos/hammer curl/hammer curl_12.mp4",
+          "extension": ".mp4",
+          "sizeBytes": 2300720,
+          "modifiedAt": "2026-04-24T03:43:37.989Z"
+        },
+        {
+          "fileName": "hammer curl_13.mp4",
+          "relativePath": "preprocessedWorkoutVideos/hammer curl/hammer curl_13.mp4",
+          "extension": ".mp4",
+          "sizeBytes": 6966576,
+          "modifiedAt": "2026-04-24T03:43:38.178Z"
+        },
+        {
+          "fileName": "hammer curl_14.mp4",
+          "relativePath": "preprocessedWorkoutVideos/hammer curl/hammer curl_14.mp4",
+          "extension": ".mp4",
+          "sizeBytes": 1187869,
+          "modifiedAt": "2026-04-24T03:43:38.243Z"
+        },
+        {
+          "fileName": "hammer curl_15.mp4",
+          "relativePath": "preprocessedWorkoutVideos/hammer curl/hammer curl_15.mp4",
+          "extension": ".mp4",
+          "sizeBytes": 2831597,
+          "modifiedAt": "2026-04-24T03:43:38.332Z"
+        },
+        {
+          "fileName": "hammer curl_16.mp4",
+          "relativePath": "preprocessedWorkoutVideos/hammer curl/hammer curl_16.mp4",
+          "extension": ".mp4",
+          "sizeBytes": 7225663,
+          "modifiedAt": "2026-04-24T03:43:38.488Z"
+        },
+        {
+          "fileName": "hammer curl_17.mp4",
+          "relativePath": "preprocessedWorkoutVideos/hammer curl/hammer curl_17.mp4",
+          "extension": ".mp4",
+          "sizeBytes": 6359377,
+          "modifiedAt": "2026-04-24T03:43:38.685Z"
+        },
+        {
+          "fileName": "hammer curl_18.mp4",
+          "relativePath": "preprocessedWorkoutVideos/hammer curl/hammer curl_18.mp4",
+          "extension": ".mp4",
+          "sizeBytes": 1674995,
+          "modifiedAt": "2026-04-24T03:43:38.749Z"
+        },
+        {
+          "fileName": "hammer curl_19.mp4",
+          "relativePath": "preprocessedWorkoutVideos/hammer curl/hammer curl_19.mp4",
+          "extension": ".mp4",
+          "sizeBytes": 6413300,
+          "modifiedAt": "2026-04-24T03:43:38.926Z"
+        }
+      ]
+    },
+    {
+      "exerciseKey": "hipThrust",
+      "label": "Hip thrust",
+      "folderName": "hip thrust",
+      "aliases": [],
+      "clipCount": 18,
+      "clips": [
+        {
+          "fileName": "Barbell_Hip_Thrust_Tutorial__gluteworkout_AdobeExpress.mp4",
+          "relativePath": "preprocessedWorkoutVideos/hip thrust/Barbell_Hip_Thrust_Tutorial__gluteworkout_AdobeExpress.mp4",
+          "extension": ".mp4",
+          "sizeBytes": 1669882,
+          "modifiedAt": "2026-04-24T03:43:44.650Z"
+        },
+        {
+          "fileName": "hip thrust_1.MOV",
+          "relativePath": "preprocessedWorkoutVideos/hip thrust/hip thrust_1.MOV",
+          "extension": ".mov",
+          "sizeBytes": 36380179,
+          "modifiedAt": "2026-04-24T03:43:45.393Z"
+        },
+        {
+          "fileName": "hip thrust_2.MOV",
+          "relativePath": "preprocessedWorkoutVideos/hip thrust/hip thrust_2.MOV",
+          "extension": ".mov",
+          "sizeBytes": 43965311,
+          "modifiedAt": "2026-04-24T03:43:47.437Z"
+        },
+        {
+          "fileName": "hip thrust_3.MOV",
+          "relativePath": "preprocessedWorkoutVideos/hip thrust/hip thrust_3.MOV",
+          "extension": ".mov",
+          "sizeBytes": 40922171,
+          "modifiedAt": "2026-04-24T03:43:48.278Z"
+        },
+        {
+          "fileName": "hip thrust_4.MOV",
+          "relativePath": "preprocessedWorkoutVideos/hip thrust/hip thrust_4.MOV",
+          "extension": ".mov",
+          "sizeBytes": 47136022,
+          "modifiedAt": "2026-04-24T03:43:49.140Z"
+        },
+        {
+          "fileName": "hip thrust_5.mp4",
+          "relativePath": "preprocessedWorkoutVideos/hip thrust/hip thrust_5.mp4",
+          "extension": ".mp4",
+          "sizeBytes": 22988957,
+          "modifiedAt": "2026-04-24T03:43:49.659Z"
+        },
+        {
+          "fileName": "hip thrust_6.mp4",
+          "relativePath": "preprocessedWorkoutVideos/hip thrust/hip thrust_6.mp4",
+          "extension": ".mp4",
+          "sizeBytes": 3424041,
+          "modifiedAt": "2026-04-24T03:43:49.756Z"
+        },
+        {
+          "fileName": "hip thrust_7.mp4",
+          "relativePath": "preprocessedWorkoutVideos/hip thrust/hip thrust_7.mp4",
+          "extension": ".mp4",
+          "sizeBytes": 7085660,
+          "modifiedAt": "2026-04-24T03:43:49.914Z"
+        },
+        {
+          "fileName": "hip thrust_8.mp4",
+          "relativePath": "preprocessedWorkoutVideos/hip thrust/hip thrust_8.mp4",
+          "extension": ".mp4",
+          "sizeBytes": 3543263,
+          "modifiedAt": "2026-04-24T03:43:50.024Z"
+        },
+        {
+          "fileName": "hip thrust_9.mp4",
+          "relativePath": "preprocessedWorkoutVideos/hip thrust/hip thrust_9.mp4",
+          "extension": ".mp4",
+          "sizeBytes": 9341906,
+          "modifiedAt": "2026-04-24T03:43:50.272Z"
+        },
+        {
+          "fileName": "hip thrust_10.mp4",
+          "relativePath": "preprocessedWorkoutVideos/hip thrust/hip thrust_10.mp4",
+          "extension": ".mp4",
+          "sizeBytes": 8900781,
+          "modifiedAt": "2026-04-24T03:43:45.562Z"
+        },
+        {
+          "fileName": "hip thrust_11.mp4",
+          "relativePath": "preprocessedWorkoutVideos/hip thrust/hip thrust_11.mp4",
+          "extension": ".mp4",
+          "sizeBytes": 2243453,
+          "modifiedAt": "2026-04-24T03:43:45.673Z"
+        },
+        {
+          "fileName": "hip thrust_12.mp4",
+          "relativePath": "preprocessedWorkoutVideos/hip thrust/hip thrust_12.mp4",
+          "extension": ".mp4",
+          "sizeBytes": 5995378,
+          "modifiedAt": "2026-04-24T03:43:45.864Z"
+        },
+        {
+          "fileName": "hip thrust_13.mp4",
+          "relativePath": "preprocessedWorkoutVideos/hip thrust/hip thrust_13.mp4",
+          "extension": ".mp4",
+          "sizeBytes": 2662023,
+          "modifiedAt": "2026-04-24T03:43:45.943Z"
+        },
+        {
+          "fileName": "hip thrust_14.mp4",
+          "relativePath": "preprocessedWorkoutVideos/hip thrust/hip thrust_14.mp4",
+          "extension": ".mp4",
+          "sizeBytes": 8072550,
+          "modifiedAt": "2026-04-24T03:43:46.070Z"
+        },
+        {
+          "fileName": "hip thrust_15.mp4",
+          "relativePath": "preprocessedWorkoutVideos/hip thrust/hip thrust_15.mp4",
+          "extension": ".mp4",
+          "sizeBytes": 12668764,
+          "modifiedAt": "2026-04-24T03:43:46.356Z"
+        },
+        {
+          "fileName": "hip thrust_16.mp4",
+          "relativePath": "preprocessedWorkoutVideos/hip thrust/hip thrust_16.mp4",
+          "extension": ".mp4",
+          "sizeBytes": 4515370,
+          "modifiedAt": "2026-04-24T03:43:46.492Z"
+        },
+        {
+          "fileName": "hip thrust_17.mp4",
+          "relativePath": "preprocessedWorkoutVideos/hip thrust/hip thrust_17.mp4",
+          "extension": ".mp4",
+          "sizeBytes": 1923253,
+          "modifiedAt": "2026-04-24T03:43:46.563Z"
+        }
+      ]
+    },
+    {
+      "exerciseKey": "inclineBenchPress",
+      "label": "Incline bench press",
+      "folderName": "incline bench press",
+      "aliases": [],
+      "clipCount": 33,
+      "clips": [
+        {
+          "fileName": "incline bench press_1.mp4",
+          "relativePath": "preprocessedWorkoutVideos/incline bench press/incline bench press_1.mp4",
+          "extension": ".mp4",
+          "sizeBytes": 515932,
+          "modifiedAt": "2026-04-24T03:43:50.326Z"
+        },
+        {
+          "fileName": "incline bench press_2.mp4",
+          "relativePath": "preprocessedWorkoutVideos/incline bench press/incline bench press_2.mp4",
+          "extension": ".mp4",
+          "sizeBytes": 272810,
+          "modifiedAt": "2026-04-24T03:43:50.756Z"
+        },
+        {
+          "fileName": "incline bench press_3.mp4",
+          "relativePath": "preprocessedWorkoutVideos/incline bench press/incline bench press_3.mp4",
+          "extension": ".mp4",
+          "sizeBytes": 198444,
+          "modifiedAt": "2026-04-24T03:43:52.560Z"
+        },
+        {
+          "fileName": "incline bench press_4.mp4",
+          "relativePath": "preprocessedWorkoutVideos/incline bench press/incline bench press_4.mp4",
+          "extension": ".mp4",
+          "sizeBytes": 227815,
+          "modifiedAt": "2026-04-24T03:43:54.328Z"
+        },
+        {
+          "fileName": "incline bench press_5.mp4",
+          "relativePath": "preprocessedWorkoutVideos/incline bench press/incline bench press_5.mp4",
+          "extension": ".mp4",
+          "sizeBytes": 175910,
+          "modifiedAt": "2026-04-24T03:43:54.355Z"
+        },
+        {
+          "fileName": "incline bench press_6.mp4",
+          "relativePath": "preprocessedWorkoutVideos/incline bench press/incline bench press_6.mp4",
+          "extension": ".mp4",
+          "sizeBytes": 474622,
+          "modifiedAt": "2026-04-24T03:43:54.402Z"
+        },
+        {
+          "fileName": "incline bench press_7.mp4",
+          "relativePath": "preprocessedWorkoutVideos/incline bench press/incline bench press_7.mp4",
+          "extension": ".mp4",
+          "sizeBytes": 214406,
+          "modifiedAt": "2026-04-24T03:43:54.437Z"
+        },
+        {
+          "fileName": "incline bench press_8.mp4",
+          "relativePath": "preprocessedWorkoutVideos/incline bench press/incline bench press_8.mp4",
+          "extension": ".mp4",
+          "sizeBytes": 225849,
+          "modifiedAt": "2026-04-24T03:43:54.482Z"
+        },
+        {
+          "fileName": "incline bench press_9.mp4",
+          "relativePath": "preprocessedWorkoutVideos/incline bench press/incline bench press_9.mp4",
+          "extension": ".mp4",
+          "sizeBytes": 306477,
+          "modifiedAt": "2026-04-24T03:43:54.522Z"
+        },
+        {
+          "fileName": "incline bench press_10.mp4",
+          "relativePath": "preprocessedWorkoutVideos/incline bench press/incline bench press_10.mp4",
+          "extension": ".mp4",
+          "sizeBytes": 283568,
+          "modifiedAt": "2026-04-24T03:43:50.369Z"
+        },
+        {
+          "fileName": "incline bench press_11.mp4",
+          "relativePath": "preprocessedWorkoutVideos/incline bench press/incline bench press_11.mp4",
+          "extension": ".mp4",
+          "sizeBytes": 226029,
+          "modifiedAt": "2026-04-24T03:43:50.407Z"
+        },
+        {
+          "fileName": "incline bench press_12.mp4",
+          "relativePath": "preprocessedWorkoutVideos/incline bench press/incline bench press_12.mp4",
+          "extension": ".mp4",
+          "sizeBytes": 281932,
+          "modifiedAt": "2026-04-24T03:43:50.443Z"
+        },
+        {
+          "fileName": "incline bench press_13.mp4",
+          "relativePath": "preprocessedWorkoutVideos/incline bench press/incline bench press_13.mp4",
+          "extension": ".mp4",
+          "sizeBytes": 239552,
+          "modifiedAt": "2026-04-24T03:43:50.485Z"
+        },
+        {
+          "fileName": "incline bench press_14.mp4",
+          "relativePath": "preprocessedWorkoutVideos/incline bench press/incline bench press_14.mp4",
+          "extension": ".mp4",
+          "sizeBytes": 320128,
+          "modifiedAt": "2026-04-24T03:43:50.524Z"
+        },
+        {
+          "fileName": "incline bench press_15.mp4",
+          "relativePath": "preprocessedWorkoutVideos/incline bench press/incline bench press_15.mp4",
+          "extension": ".mp4",
+          "sizeBytes": 370317,
+          "modifiedAt": "2026-04-24T03:43:50.549Z"
+        },
+        {
+          "fileName": "incline bench press_16.mp4",
+          "relativePath": "preprocessedWorkoutVideos/incline bench press/incline bench press_16.mp4",
+          "extension": ".mp4",
+          "sizeBytes": 274625,
+          "modifiedAt": "2026-04-24T03:43:50.597Z"
+        },
+        {
+          "fileName": "incline bench press_17.mp4",
+          "relativePath": "preprocessedWorkoutVideos/incline bench press/incline bench press_17.mp4",
+          "extension": ".mp4",
+          "sizeBytes": 325025,
+          "modifiedAt": "2026-04-24T03:43:50.628Z"
+        },
+        {
+          "fileName": "incline bench press_18.mp4",
+          "relativePath": "preprocessedWorkoutVideos/incline bench press/incline bench press_18.mp4",
+          "extension": ".mp4",
+          "sizeBytes": 467215,
+          "modifiedAt": "2026-04-24T03:43:50.677Z"
+        },
+        {
+          "fileName": "incline bench press_19.mp4",
+          "relativePath": "preprocessedWorkoutVideos/incline bench press/incline bench press_19.mp4",
+          "extension": ".mp4",
+          "sizeBytes": 363614,
+          "modifiedAt": "2026-04-24T03:43:50.724Z"
+        },
+        {
+          "fileName": "incline bench press_20.mp4",
+          "relativePath": "preprocessedWorkoutVideos/incline bench press/incline bench press_20.mp4",
+          "extension": ".mp4",
+          "sizeBytes": 402736,
+          "modifiedAt": "2026-04-24T03:43:50.797Z"
+        },
+        {
+          "fileName": "incline bench press_21.mp4",
+          "relativePath": "preprocessedWorkoutVideos/incline bench press/incline bench press_21.mp4",
+          "extension": ".mp4",
+          "sizeBytes": 405992,
+          "modifiedAt": "2026-04-24T03:43:50.841Z"
+        },
+        {
+          "fileName": "incline bench press_22.mp4",
+          "relativePath": "preprocessedWorkoutVideos/incline bench press/incline bench press_22.mp4",
+          "extension": ".mp4",
+          "sizeBytes": 311593,
+          "modifiedAt": "2026-04-24T03:43:50.866Z"
+        },
+        {
+          "fileName": "incline bench press_23.mp4",
+          "relativePath": "preprocessedWorkoutVideos/incline bench press/incline bench press_23.mp4",
+          "extension": ".mp4",
+          "sizeBytes": 425859,
+          "modifiedAt": "2026-04-24T03:43:50.923Z"
+        },
+        {
+          "fileName": "incline bench press_24.mp4",
+          "relativePath": "preprocessedWorkoutVideos/incline bench press/incline bench press_24.mp4",
+          "extension": ".mp4",
+          "sizeBytes": 349675,
+          "modifiedAt": "2026-04-24T03:43:50.976Z"
+        },
+        {
+          "fileName": "incline bench press_25.mp4",
+          "relativePath": "preprocessedWorkoutVideos/incline bench press/incline bench press_25.mp4",
+          "extension": ".mp4",
+          "sizeBytes": 336488,
+          "modifiedAt": "2026-04-24T03:43:51.029Z"
+        },
+        {
+          "fileName": "incline bench press_26.mp4",
+          "relativePath": "preprocessedWorkoutVideos/incline bench press/incline bench press_26.mp4",
+          "extension": ".mp4",
+          "sizeBytes": 23227499,
+          "modifiedAt": "2026-04-24T03:43:51.488Z"
+        },
+        {
+          "fileName": "incline bench press_27.mp4",
+          "relativePath": "preprocessedWorkoutVideos/incline bench press/incline bench press_27.mp4",
+          "extension": ".mp4",
+          "sizeBytes": 20276689,
+          "modifiedAt": "2026-04-24T03:43:51.878Z"
+        },
+        {
+          "fileName": "incline bench press_28.mp4",
+          "relativePath": "preprocessedWorkoutVideos/incline bench press/incline bench press_28.mp4",
+          "extension": ".mp4",
+          "sizeBytes": 20914690,
+          "modifiedAt": "2026-04-24T03:43:52.445Z"
+        },
+        {
+          "fileName": "incline bench press_29.mp4",
+          "relativePath": "preprocessedWorkoutVideos/incline bench press/incline bench press_29.mp4",
+          "extension": ".mp4",
+          "sizeBytes": 3510910,
+          "modifiedAt": "2026-04-24T03:43:52.536Z"
+        },
+        {
+          "fileName": "incline bench press_30.mp4",
+          "relativePath": "preprocessedWorkoutVideos/incline bench press/incline bench press_30.mp4",
+          "extension": ".mp4",
+          "sizeBytes": 24386138,
+          "modifiedAt": "2026-04-24T03:43:53.281Z"
+        },
+        {
+          "fileName": "incline bench press_31.mp4",
+          "relativePath": "preprocessedWorkoutVideos/incline bench press/incline bench press_31.mp4",
+          "extension": ".mp4",
+          "sizeBytes": 19302627,
+          "modifiedAt": "2026-04-24T03:43:53.656Z"
+        },
+        {
+          "fileName": "incline bench press_32.mp4",
+          "relativePath": "preprocessedWorkoutVideos/incline bench press/incline bench press_32.mp4",
+          "extension": ".mp4",
+          "sizeBytes": 25290863,
+          "modifiedAt": "2026-04-24T03:43:54.210Z"
+        },
+        {
+          "fileName": "incline bench press_33.mp4",
+          "relativePath": "preprocessedWorkoutVideos/incline bench press/incline bench press_33.mp4",
+          "extension": ".mp4",
+          "sizeBytes": 2208732,
+          "modifiedAt": "2026-04-24T03:43:54.291Z"
+        }
+      ]
+    },
+    {
+      "exerciseKey": "latPulldown",
+      "label": "Lat pulldown",
+      "folderName": "lat pulldown",
+      "aliases": [],
+      "clipCount": 51,
+      "clips": [
+        {
+          "fileName": "lat pulldown_1.mp4",
+          "relativePath": "preprocessedWorkoutVideos/lat pulldown/lat pulldown_1.mp4",
+          "extension": ".mp4",
+          "sizeBytes": 430864,
+          "modifiedAt": "2026-04-24T03:43:54.580Z"
+        },
+        {
+          "fileName": "lat pulldown_2.mp4",
+          "relativePath": "preprocessedWorkoutVideos/lat pulldown/lat pulldown_2.mp4",
+          "extension": ".mp4",
+          "sizeBytes": 319662,
+          "modifiedAt": "2026-04-24T03:43:55.032Z"
+        },
+        {
+          "fileName": "lat pulldown_3.mp4",
+          "relativePath": "preprocessedWorkoutVideos/lat pulldown/lat pulldown_3.mp4",
+          "extension": ".mp4",
+          "sizeBytes": 300822,
+          "modifiedAt": "2026-04-24T03:43:55.881Z"
+        },
+        {
+          "fileName": "lat pulldown_4.mp4",
+          "relativePath": "preprocessedWorkoutVideos/lat pulldown/lat pulldown_4.mp4",
+          "extension": ".mp4",
+          "sizeBytes": 284275,
+          "modifiedAt": "2026-04-24T03:43:56.963Z"
+        },
+        {
+          "fileName": "lat pulldown_5.mp4",
+          "relativePath": "preprocessedWorkoutVideos/lat pulldown/lat pulldown_5.mp4",
+          "extension": ".mp4",
+          "sizeBytes": 291266,
+          "modifiedAt": "2026-04-24T03:43:58.457Z"
+        },
+        {
+          "fileName": "lat pulldown_6.mp4",
+          "relativePath": "preprocessedWorkoutVideos/lat pulldown/lat pulldown_6.mp4",
+          "extension": ".mp4",
+          "sizeBytes": 429284,
+          "modifiedAt": "2026-04-24T03:43:58.694Z"
+        },
+        {
+          "fileName": "lat pulldown_7.mp4",
+          "relativePath": "preprocessedWorkoutVideos/lat pulldown/lat pulldown_7.mp4",
+          "extension": ".mp4",
+          "sizeBytes": 641704,
+          "modifiedAt": "2026-04-24T03:43:58.743Z"
+        },
+        {
+          "fileName": "lat pulldown_8.mp4",
+          "relativePath": "preprocessedWorkoutVideos/lat pulldown/lat pulldown_8.mp4",
+          "extension": ".mp4",
+          "sizeBytes": 640403,
+          "modifiedAt": "2026-04-24T03:43:58.793Z"
+        },
+        {
+          "fileName": "lat pulldown_9.mp4",
+          "relativePath": "preprocessedWorkoutVideos/lat pulldown/lat pulldown_9.mp4",
+          "extension": ".mp4",
+          "sizeBytes": 444942,
+          "modifiedAt": "2026-04-24T03:43:58.823Z"
+        },
+        {
+          "fileName": "lat pulldown_10.mp4",
+          "relativePath": "preprocessedWorkoutVideos/lat pulldown/lat pulldown_10.mp4",
+          "extension": ".mp4",
+          "sizeBytes": 561328,
+          "modifiedAt": "2026-04-24T03:43:54.628Z"
+        },
+        {
+          "fileName": "lat pulldown_11.mp4",
+          "relativePath": "preprocessedWorkoutVideos/lat pulldown/lat pulldown_11.mp4",
+          "extension": ".mp4",
+          "sizeBytes": 266414,
+          "modifiedAt": "2026-04-24T03:43:54.664Z"
+        },
+        {
+          "fileName": "lat pulldown_12.mp4",
+          "relativePath": "preprocessedWorkoutVideos/lat pulldown/lat pulldown_12.mp4",
+          "extension": ".mp4",
+          "sizeBytes": 682879,
+          "modifiedAt": "2026-04-24T03:43:54.711Z"
+        },
+        {
+          "fileName": "lat pulldown_13.mp4",
+          "relativePath": "preprocessedWorkoutVideos/lat pulldown/lat pulldown_13.mp4",
+          "extension": ".mp4",
+          "sizeBytes": 168768,
+          "modifiedAt": "2026-04-24T03:43:54.747Z"
+        },
+        {
+          "fileName": "lat pulldown_14.mp4",
+          "relativePath": "preprocessedWorkoutVideos/lat pulldown/lat pulldown_14.mp4",
+          "extension": ".mp4",
+          "sizeBytes": 465960,
+          "modifiedAt": "2026-04-24T03:43:54.789Z"
+        },
+        {
+          "fileName": "lat pulldown_15.mp4",
+          "relativePath": "preprocessedWorkoutVideos/lat pulldown/lat pulldown_15.mp4",
+          "extension": ".mp4",
+          "sizeBytes": 641262,
+          "modifiedAt": "2026-04-24T03:43:54.833Z"
+        },
+        {
+          "fileName": "lat pulldown_16.mp4",
+          "relativePath": "preprocessedWorkoutVideos/lat pulldown/lat pulldown_16.mp4",
+          "extension": ".mp4",
+          "sizeBytes": 439941,
+          "modifiedAt": "2026-04-24T03:43:54.874Z"
+        },
+        {
+          "fileName": "lat pulldown_17.mp4",
+          "relativePath": "preprocessedWorkoutVideos/lat pulldown/lat pulldown_17.mp4",
+          "extension": ".mp4",
+          "sizeBytes": 310988,
+          "modifiedAt": "2026-04-24T03:43:54.913Z"
+        },
+        {
+          "fileName": "lat pulldown_18.mp4",
+          "relativePath": "preprocessedWorkoutVideos/lat pulldown/lat pulldown_18.mp4",
+          "extension": ".mp4",
+          "sizeBytes": 306386,
+          "modifiedAt": "2026-04-24T03:43:54.954Z"
+        },
+        {
+          "fileName": "lat pulldown_19.mp4",
+          "relativePath": "preprocessedWorkoutVideos/lat pulldown/lat pulldown_19.mp4",
+          "extension": ".mp4",
+          "sizeBytes": 320002,
+          "modifiedAt": "2026-04-24T03:43:54.991Z"
+        },
+        {
+          "fileName": "lat pulldown_20.mp4",
+          "relativePath": "preprocessedWorkoutVideos/lat pulldown/lat pulldown_20.mp4",
+          "extension": ".mp4",
+          "sizeBytes": 320775,
+          "modifiedAt": "2026-04-24T03:43:55.073Z"
+        },
+        {
+          "fileName": "lat pulldown_21.mp4",
+          "relativePath": "preprocessedWorkoutVideos/lat pulldown/lat pulldown_21.mp4",
+          "extension": ".mp4",
+          "sizeBytes": 263962,
+          "modifiedAt": "2026-04-24T03:43:55.111Z"
+        },
+        {
+          "fileName": "lat pulldown_22.mp4",
+          "relativePath": "preprocessedWorkoutVideos/lat pulldown/lat pulldown_22.mp4",
+          "extension": ".mp4",
+          "sizeBytes": 308994,
+          "modifiedAt": "2026-04-24T03:43:55.150Z"
+        },
+        {
+          "fileName": "lat pulldown_23.mp4",
+          "relativePath": "preprocessedWorkoutVideos/lat pulldown/lat pulldown_23.mp4",
+          "extension": ".mp4",
+          "sizeBytes": 448015,
+          "modifiedAt": "2026-04-24T03:43:55.194Z"
+        },
+        {
+          "fileName": "lat pulldown_24.mp4",
+          "relativePath": "preprocessedWorkoutVideos/lat pulldown/lat pulldown_24.mp4",
+          "extension": ".mp4",
+          "sizeBytes": 315367,
+          "modifiedAt": "2026-04-24T03:43:55.227Z"
+        },
+        {
+          "fileName": "lat pulldown_25.mp4",
+          "relativePath": "preprocessedWorkoutVideos/lat pulldown/lat pulldown_25.mp4",
+          "extension": ".mp4",
+          "sizeBytes": 420051,
+          "modifiedAt": "2026-04-24T03:43:55.276Z"
+        },
+        {
+          "fileName": "lat pulldown_26.mp4",
+          "relativePath": "preprocessedWorkoutVideos/lat pulldown/lat pulldown_26.mp4",
+          "extension": ".mp4",
+          "sizeBytes": 4362664,
+          "modifiedAt": "2026-04-24T03:43:55.388Z"
+        },
+        {
+          "fileName": "lat pulldown_27.mp4",
+          "relativePath": "preprocessedWorkoutVideos/lat pulldown/lat pulldown_27.mp4",
+          "extension": ".mp4",
+          "sizeBytes": 10078056,
+          "modifiedAt": "2026-04-24T03:43:55.644Z"
+        },
+        {
+          "fileName": "lat pulldown_28.mp4",
+          "relativePath": "preprocessedWorkoutVideos/lat pulldown/lat pulldown_28.mp4",
+          "extension": ".mp4",
+          "sizeBytes": 2835092,
+          "modifiedAt": "2026-04-24T03:43:55.740Z"
+        },
+        {
+          "fileName": "lat pulldown_29.mp4",
+          "relativePath": "preprocessedWorkoutVideos/lat pulldown/lat pulldown_29.mp4",
+          "extension": ".mp4",
+          "sizeBytes": 2851329,
+          "modifiedAt": "2026-04-24T03:43:55.849Z"
+        },
+        {
+          "fileName": "lat pulldown_30.mp4",
+          "relativePath": "preprocessedWorkoutVideos/lat pulldown/lat pulldown_30.mp4",
+          "extension": ".mp4",
+          "sizeBytes": 5894109,
+          "modifiedAt": "2026-04-24T03:43:56.054Z"
+        },
+        {
+          "fileName": "lat pulldown_31.mp4",
+          "relativePath": "preprocessedWorkoutVideos/lat pulldown/lat pulldown_31.mp4",
+          "extension": ".mp4",
+          "sizeBytes": 3371058,
+          "modifiedAt": "2026-04-24T03:43:56.152Z"
+        },
+        {
+          "fileName": "lat pulldown_32.mp4",
+          "relativePath": "preprocessedWorkoutVideos/lat pulldown/lat pulldown_32.mp4",
+          "extension": ".mp4",
+          "sizeBytes": 3372398,
+          "modifiedAt": "2026-04-24T03:43:56.264Z"
+        },
+        {
+          "fileName": "lat pulldown_33.mp4",
+          "relativePath": "preprocessedWorkoutVideos/lat pulldown/lat pulldown_33.mp4",
+          "extension": ".mp4",
+          "sizeBytes": 1788819,
+          "modifiedAt": "2026-04-24T03:43:56.353Z"
+        },
+        {
+          "fileName": "lat pulldown_34.mp4",
+          "relativePath": "preprocessedWorkoutVideos/lat pulldown/lat pulldown_34.mp4",
+          "extension": ".mp4",
+          "sizeBytes": 1699281,
+          "modifiedAt": "2026-04-24T03:43:56.461Z"
+        },
+        {
+          "fileName": "lat pulldown_35.mp4",
+          "relativePath": "preprocessedWorkoutVideos/lat pulldown/lat pulldown_35.mp4",
+          "extension": ".mp4",
+          "sizeBytes": 1927119,
+          "modifiedAt": "2026-04-24T03:43:56.557Z"
+        },
+        {
+          "fileName": "lat pulldown_36.mp4",
+          "relativePath": "preprocessedWorkoutVideos/lat pulldown/lat pulldown_36.mp4",
+          "extension": ".mp4",
+          "sizeBytes": 2438145,
+          "modifiedAt": "2026-04-24T03:43:56.659Z"
+        },
+        {
+          "fileName": "lat pulldown_37.mp4",
+          "relativePath": "preprocessedWorkoutVideos/lat pulldown/lat pulldown_37.mp4",
+          "extension": ".mp4",
+          "sizeBytes": 3229091,
+          "modifiedAt": "2026-04-24T03:43:56.761Z"
+        },
+        {
+          "fileName": "lat pulldown_38.mp4",
+          "relativePath": "preprocessedWorkoutVideos/lat pulldown/lat pulldown_38.mp4",
+          "extension": ".mp4",
+          "sizeBytes": 2805568,
+          "modifiedAt": "2026-04-24T03:43:56.853Z"
+        },
+        {
+          "fileName": "lat pulldown_39.mp4",
+          "relativePath": "preprocessedWorkoutVideos/lat pulldown/lat pulldown_39.mp4",
+          "extension": ".mp4",
+          "sizeBytes": 2077093,
+          "modifiedAt": "2026-04-24T03:43:56.922Z"
+        },
+        {
+          "fileName": "lat pulldown_40.mp4",
+          "relativePath": "preprocessedWorkoutVideos/lat pulldown/lat pulldown_40.mp4",
+          "extension": ".mp4",
+          "sizeBytes": 7151061,
+          "modifiedAt": "2026-04-24T03:43:57.155Z"
+        },
+        {
+          "fileName": "lat pulldown_41.mp4",
+          "relativePath": "preprocessedWorkoutVideos/lat pulldown/lat pulldown_41.mp4",
+          "extension": ".mp4",
+          "sizeBytes": 3704653,
+          "modifiedAt": "2026-04-24T03:43:57.266Z"
+        },
+        {
+          "fileName": "lat pulldown_42.mp4",
+          "relativePath": "preprocessedWorkoutVideos/lat pulldown/lat pulldown_42.mp4",
+          "extension": ".mp4",
+          "sizeBytes": 3655050,
+          "modifiedAt": "2026-04-24T03:43:57.387Z"
+        },
+        {
+          "fileName": "lat pulldown_43.mp4",
+          "relativePath": "preprocessedWorkoutVideos/lat pulldown/lat pulldown_43.mp4",
+          "extension": ".mp4",
+          "sizeBytes": 3596420,
+          "modifiedAt": "2026-04-24T03:43:57.474Z"
+        },
+        {
+          "fileName": "lat pulldown_44.mp4",
+          "relativePath": "preprocessedWorkoutVideos/lat pulldown/lat pulldown_44.mp4",
+          "extension": ".mp4",
+          "sizeBytes": 2764348,
+          "modifiedAt": "2026-04-24T03:43:57.538Z"
+        },
+        {
+          "fileName": "lat pulldown_45.mp4",
+          "relativePath": "preprocessedWorkoutVideos/lat pulldown/lat pulldown_45.mp4",
+          "extension": ".mp4",
+          "sizeBytes": 5259313,
+          "modifiedAt": "2026-04-24T03:43:57.664Z"
+        },
+        {
+          "fileName": "lat pulldown_46.mp4",
+          "relativePath": "preprocessedWorkoutVideos/lat pulldown/lat pulldown_46.mp4",
+          "extension": ".mp4",
+          "sizeBytes": 7563013,
+          "modifiedAt": "2026-04-24T03:43:58.020Z"
+        },
+        {
+          "fileName": "lat pulldown_47.mp4",
+          "relativePath": "preprocessedWorkoutVideos/lat pulldown/lat pulldown_47.mp4",
+          "extension": ".mp4",
+          "sizeBytes": 2102888,
+          "modifiedAt": "2026-04-24T03:43:58.091Z"
+        },
+        {
+          "fileName": "lat pulldown_48.mp4",
+          "relativePath": "preprocessedWorkoutVideos/lat pulldown/lat pulldown_48.mp4",
+          "extension": ".mp4",
+          "sizeBytes": 6432398,
+          "modifiedAt": "2026-04-24T03:43:58.234Z"
+        },
+        {
+          "fileName": "lat pulldown_49.mp4",
+          "relativePath": "preprocessedWorkoutVideos/lat pulldown/lat pulldown_49.mp4",
+          "extension": ".mp4",
+          "sizeBytes": 6257861,
+          "modifiedAt": "2026-04-24T03:43:58.429Z"
+        },
+        {
+          "fileName": "lat pulldown_50.mp4",
+          "relativePath": "preprocessedWorkoutVideos/lat pulldown/lat pulldown_50.mp4",
+          "extension": ".mp4",
+          "sizeBytes": 2795489,
+          "modifiedAt": "2026-04-24T03:43:58.567Z"
+        },
+        {
+          "fileName": "lat pulldown_51.mp4",
+          "relativePath": "preprocessedWorkoutVideos/lat pulldown/lat pulldown_51.mp4",
+          "extension": ".mp4",
+          "sizeBytes": 2359564,
+          "modifiedAt": "2026-04-24T03:43:58.661Z"
+        }
+      ]
+    },
+    {
+      "exerciseKey": "lateralRaise",
+      "label": "Lateral raise",
+      "folderName": "lateral raise",
+      "aliases": [],
+      "clipCount": 37,
+      "clips": [
+        {
+          "fileName": "lateral raise_1.MOV",
+          "relativePath": "preprocessedWorkoutVideos/lateral raise/lateral raise_1.MOV",
+          "extension": ".mov",
+          "sizeBytes": 46399669,
+          "modifiedAt": "2026-04-24T03:43:59.835Z"
+        },
+        {
+          "fileName": "lateral raise_2.MOV",
+          "relativePath": "preprocessedWorkoutVideos/lateral raise/lateral raise_2.MOV",
+          "extension": ".mov",
+          "sizeBytes": 44811019,
+          "modifiedAt": "2026-04-24T03:44:01.980Z"
+        },
+        {
+          "fileName": "lateral raise_3.MOV",
+          "relativePath": "preprocessedWorkoutVideos/lateral raise/lateral raise_3.MOV",
+          "extension": ".mov",
+          "sizeBytes": 47699575,
+          "modifiedAt": "2026-04-24T03:44:03.870Z"
+        },
+        {
+          "fileName": "lateral raise_4.MOV",
+          "relativePath": "preprocessedWorkoutVideos/lateral raise/lateral raise_4.MOV",
+          "extension": ".mov",
+          "sizeBytes": 50582655,
+          "modifiedAt": "2026-04-24T03:44:06.385Z"
+        },
+        {
+          "fileName": "lateral raise_5.MOV",
+          "relativePath": "preprocessedWorkoutVideos/lateral raise/lateral raise_5.MOV",
+          "extension": ".mov",
+          "sizeBytes": 64324301,
+          "modifiedAt": "2026-04-24T03:44:07.591Z"
+        },
+        {
+          "fileName": "lateral raise_6.MOV",
+          "relativePath": "preprocessedWorkoutVideos/lateral raise/lateral raise_6.MOV",
+          "extension": ".mov",
+          "sizeBytes": 52227386,
+          "modifiedAt": "2026-04-24T03:44:08.536Z"
+        },
+        {
+          "fileName": "lateral raise_7.mp4",
+          "relativePath": "preprocessedWorkoutVideos/lateral raise/lateral raise_7.mp4",
+          "extension": ".mp4",
+          "sizeBytes": 1666452,
+          "modifiedAt": "2026-04-24T03:44:08.599Z"
+        },
+        {
+          "fileName": "lateral raise_8.mp4",
+          "relativePath": "preprocessedWorkoutVideos/lateral raise/lateral raise_8.mp4",
+          "extension": ".mp4",
+          "sizeBytes": 1568427,
+          "modifiedAt": "2026-04-24T03:44:08.667Z"
+        },
+        {
+          "fileName": "lateral raise_9.mp4",
+          "relativePath": "preprocessedWorkoutVideos/lateral raise/lateral raise_9.mp4",
+          "extension": ".mp4",
+          "sizeBytes": 5090364,
+          "modifiedAt": "2026-04-24T03:44:08.777Z"
+        },
+        {
+          "fileName": "lateral raise_10.mp4",
+          "relativePath": "preprocessedWorkoutVideos/lateral raise/lateral raise_10.mp4",
+          "extension": ".mp4",
+          "sizeBytes": 3175285,
+          "modifiedAt": "2026-04-24T03:43:59.938Z"
+        },
+        {
+          "fileName": "lateral raise_11.mp4",
+          "relativePath": "preprocessedWorkoutVideos/lateral raise/lateral raise_11.mp4",
+          "extension": ".mp4",
+          "sizeBytes": 8274478,
+          "modifiedAt": "2026-04-24T03:44:00.312Z"
+        },
+        {
+          "fileName": "lateral raise_12.mp4",
+          "relativePath": "preprocessedWorkoutVideos/lateral raise/lateral raise_12.mp4",
+          "extension": ".mp4",
+          "sizeBytes": 3011164,
+          "modifiedAt": "2026-04-24T03:44:00.445Z"
+        },
+        {
+          "fileName": "lateral raise_13.mp4",
+          "relativePath": "preprocessedWorkoutVideos/lateral raise/lateral raise_13.mp4",
+          "extension": ".mp4",
+          "sizeBytes": 3095851,
+          "modifiedAt": "2026-04-24T03:44:00.551Z"
+        },
+        {
+          "fileName": "lateral raise_14.mp4",
+          "relativePath": "preprocessedWorkoutVideos/lateral raise/lateral raise_14.mp4",
+          "extension": ".mp4",
+          "sizeBytes": 3497797,
+          "modifiedAt": "2026-04-24T03:44:00.707Z"
+        },
+        {
+          "fileName": "lateral raise_15.mp4",
+          "relativePath": "preprocessedWorkoutVideos/lateral raise/lateral raise_15.mp4",
+          "extension": ".mp4",
+          "sizeBytes": 2304431,
+          "modifiedAt": "2026-04-24T03:44:00.791Z"
+        },
+        {
+          "fileName": "lateral raise_16.mp4",
+          "relativePath": "preprocessedWorkoutVideos/lateral raise/lateral raise_16.mp4",
+          "extension": ".mp4",
+          "sizeBytes": 2374285,
+          "modifiedAt": "2026-04-24T03:44:00.857Z"
+        },
+        {
+          "fileName": "lateral raise_17.mp4",
+          "relativePath": "preprocessedWorkoutVideos/lateral raise/lateral raise_17.mp4",
+          "extension": ".mp4",
+          "sizeBytes": 4693816,
+          "modifiedAt": "2026-04-24T03:44:00.969Z"
+        },
+        {
+          "fileName": "lateral raise_18.mp4",
+          "relativePath": "preprocessedWorkoutVideos/lateral raise/lateral raise_18.mp4",
+          "extension": ".mp4",
+          "sizeBytes": 2301393,
+          "modifiedAt": "2026-04-24T03:44:01.051Z"
+        },
+        {
+          "fileName": "lateral raise_19.mp4",
+          "relativePath": "preprocessedWorkoutVideos/lateral raise/lateral raise_19.mp4",
+          "extension": ".mp4",
+          "sizeBytes": 3043108,
+          "modifiedAt": "2026-04-24T03:44:01.171Z"
+        },
+        {
+          "fileName": "lateral raise_20.mp4",
+          "relativePath": "preprocessedWorkoutVideos/lateral raise/lateral raise_20.mp4",
+          "extension": ".mp4",
+          "sizeBytes": 2715198,
+          "modifiedAt": "2026-04-24T03:44:02.074Z"
+        },
+        {
+          "fileName": "lateral raise_21.mp4",
+          "relativePath": "preprocessedWorkoutVideos/lateral raise/lateral raise_21.mp4",
+          "extension": ".mp4",
+          "sizeBytes": 1764892,
+          "modifiedAt": "2026-04-24T03:44:02.169Z"
+        },
+        {
+          "fileName": "lateral raise_22.mp4",
+          "relativePath": "preprocessedWorkoutVideos/lateral raise/lateral raise_22.mp4",
+          "extension": ".mp4",
+          "sizeBytes": 1847542,
+          "modifiedAt": "2026-04-24T03:44:02.249Z"
+        },
+        {
+          "fileName": "lateral raise_23.mp4",
+          "relativePath": "preprocessedWorkoutVideos/lateral raise/lateral raise_23.mp4",
+          "extension": ".mp4",
+          "sizeBytes": 2414261,
+          "modifiedAt": "2026-04-24T03:44:02.328Z"
+        },
+        {
+          "fileName": "lateral raise_24.mp4",
+          "relativePath": "preprocessedWorkoutVideos/lateral raise/lateral raise_24.mp4",
+          "extension": ".mp4",
+          "sizeBytes": 2596730,
+          "modifiedAt": "2026-04-24T03:44:02.424Z"
+        },
+        {
+          "fileName": "lateral raise_25.mp4",
+          "relativePath": "preprocessedWorkoutVideos/lateral raise/lateral raise_25.mp4",
+          "extension": ".mp4",
+          "sizeBytes": 4394249,
+          "modifiedAt": "2026-04-24T03:44:02.583Z"
+        },
+        {
+          "fileName": "lateral raise_26.mp4",
+          "relativePath": "preprocessedWorkoutVideos/lateral raise/lateral raise_26.mp4",
+          "extension": ".mp4",
+          "sizeBytes": 6727795,
+          "modifiedAt": "2026-04-24T03:44:02.712Z"
+        },
+        {
+          "fileName": "lateral raise_27.mp4",
+          "relativePath": "preprocessedWorkoutVideos/lateral raise/lateral raise_27.mp4",
+          "extension": ".mp4",
+          "sizeBytes": 3195465,
+          "modifiedAt": "2026-04-24T03:44:02.810Z"
+        },
+        {
+          "fileName": "lateral raise_28.mp4",
+          "relativePath": "preprocessedWorkoutVideos/lateral raise/lateral raise_28.mp4",
+          "extension": ".mp4",
+          "sizeBytes": 7496378,
+          "modifiedAt": "2026-04-24T03:44:03.044Z"
+        },
+        {
+          "fileName": "lateral raise_29.mp4",
+          "relativePath": "preprocessedWorkoutVideos/lateral raise/lateral raise_29.mp4",
+          "extension": ".mp4",
+          "sizeBytes": 5596727,
+          "modifiedAt": "2026-04-24T03:44:03.203Z"
+        },
+        {
+          "fileName": "lateral raise_30.mp4",
+          "relativePath": "preprocessedWorkoutVideos/lateral raise/lateral raise_30.mp4",
+          "extension": ".mp4",
+          "sizeBytes": 5825881,
+          "modifiedAt": "2026-04-24T03:44:03.994Z"
+        },
+        {
+          "fileName": "lateral raise_31.mp4",
+          "relativePath": "preprocessedWorkoutVideos/lateral raise/lateral raise_31.mp4",
+          "extension": ".mp4",
+          "sizeBytes": 6925712,
+          "modifiedAt": "2026-04-24T03:44:04.202Z"
+        },
+        {
+          "fileName": "lateral raise_32.mp4",
+          "relativePath": "preprocessedWorkoutVideos/lateral raise/lateral raise_32.mp4",
+          "extension": ".mp4",
+          "sizeBytes": 6940163,
+          "modifiedAt": "2026-04-24T03:44:04.379Z"
+        },
+        {
+          "fileName": "lateral raise_33.mp4",
+          "relativePath": "preprocessedWorkoutVideos/lateral raise/lateral raise_33.mp4",
+          "extension": ".mp4",
+          "sizeBytes": 8743610,
+          "modifiedAt": "2026-04-24T03:44:04.611Z"
+        },
+        {
+          "fileName": "lateral raise_34.mp4",
+          "relativePath": "preprocessedWorkoutVideos/lateral raise/lateral raise_34.mp4",
+          "extension": ".mp4",
+          "sizeBytes": 6141965,
+          "modifiedAt": "2026-04-24T03:44:04.762Z"
+        },
+        {
+          "fileName": "lateral raise_35.mp4",
+          "relativePath": "preprocessedWorkoutVideos/lateral raise/lateral raise_35.mp4",
+          "extension": ".mp4",
+          "sizeBytes": 6548866,
+          "modifiedAt": "2026-04-24T03:44:04.886Z"
+        },
+        {
+          "fileName": "lateral raise_36.mp4",
+          "relativePath": "preprocessedWorkoutVideos/lateral raise/lateral raise_36.mp4",
+          "extension": ".mp4",
+          "sizeBytes": 5236880,
+          "modifiedAt": "2026-04-24T03:44:05.045Z"
+        },
+        {
+          "fileName": "lateral raise_37.mp4",
+          "relativePath": "preprocessedWorkoutVideos/lateral raise/lateral raise_37.mp4",
+          "extension": ".mp4",
+          "sizeBytes": 7984647,
+          "modifiedAt": "2026-04-24T03:44:05.235Z"
+        }
+      ]
+    },
+    {
+      "exerciseKey": "legExtension",
+      "label": "Leg extension",
+      "folderName": "leg extension",
+      "aliases": [],
+      "clipCount": 25,
+      "clips": [
+        {
+          "fileName": "leg extension_1.MOV",
+          "relativePath": "preprocessedWorkoutVideos/leg extension/leg extension_1.MOV",
+          "extension": ".mov",
+          "sizeBytes": 30026035,
+          "modifiedAt": "2026-04-24T03:44:09.363Z"
+        },
+        {
+          "fileName": "leg extension_2.MOV",
+          "relativePath": "preprocessedWorkoutVideos/leg extension/leg extension_2.MOV",
+          "extension": ".mov",
+          "sizeBytes": 21123927,
+          "modifiedAt": "2026-04-24T03:44:11.106Z"
+        },
+        {
+          "fileName": "leg extension_3.MOV",
+          "relativePath": "preprocessedWorkoutVideos/leg extension/leg extension_3.MOV",
+          "extension": ".mov",
+          "sizeBytes": 26817414,
+          "modifiedAt": "2026-04-24T03:44:12.438Z"
+        },
+        {
+          "fileName": "leg extension_4.MOV",
+          "relativePath": "preprocessedWorkoutVideos/leg extension/leg extension_4.MOV",
+          "extension": ".mov",
+          "sizeBytes": 27275003,
+          "modifiedAt": "2026-04-24T03:44:12.929Z"
+        },
+        {
+          "fileName": "leg extension_5.MOV",
+          "relativePath": "preprocessedWorkoutVideos/leg extension/leg extension_5.MOV",
+          "extension": ".mov",
+          "sizeBytes": 27787465,
+          "modifiedAt": "2026-04-24T03:44:13.486Z"
+        },
+        {
+          "fileName": "leg extension_6.MOV",
+          "relativePath": "preprocessedWorkoutVideos/leg extension/leg extension_6.MOV",
+          "extension": ".mov",
+          "sizeBytes": 27338643,
+          "modifiedAt": "2026-04-24T03:44:13.848Z"
+        },
+        {
+          "fileName": "leg extension_7.mp4",
+          "relativePath": "preprocessedWorkoutVideos/leg extension/leg extension_7.mp4",
+          "extension": ".mp4",
+          "sizeBytes": 1941572,
+          "modifiedAt": "2026-04-24T03:44:13.895Z"
+        },
+        {
+          "fileName": "leg extension_8.mp4",
+          "relativePath": "preprocessedWorkoutVideos/leg extension/leg extension_8.mp4",
+          "extension": ".mp4",
+          "sizeBytes": 4277107,
+          "modifiedAt": "2026-04-24T03:44:13.977Z"
+        },
+        {
+          "fileName": "leg extension_9.mp4",
+          "relativePath": "preprocessedWorkoutVideos/leg extension/leg extension_9.mp4",
+          "extension": ".mp4",
+          "sizeBytes": 1601427,
+          "modifiedAt": "2026-04-24T03:44:14.022Z"
+        },
+        {
+          "fileName": "leg extension_10.mp4",
+          "relativePath": "preprocessedWorkoutVideos/leg extension/leg extension_10.mp4",
+          "extension": ".mp4",
+          "sizeBytes": 4915244,
+          "modifiedAt": "2026-04-24T03:44:09.568Z"
+        },
+        {
+          "fileName": "leg extension_11.mp4",
+          "relativePath": "preprocessedWorkoutVideos/leg extension/leg extension_11.mp4",
+          "extension": ".mp4",
+          "sizeBytes": 3257307,
+          "modifiedAt": "2026-04-24T03:44:09.693Z"
+        },
+        {
+          "fileName": "leg extension_12.mp4",
+          "relativePath": "preprocessedWorkoutVideos/leg extension/leg extension_12.mp4",
+          "extension": ".mp4",
+          "sizeBytes": 3012151,
+          "modifiedAt": "2026-04-24T03:44:09.788Z"
+        },
+        {
+          "fileName": "leg extension_13.mp4",
+          "relativePath": "preprocessedWorkoutVideos/leg extension/leg extension_13.mp4",
+          "extension": ".mp4",
+          "sizeBytes": 2984869,
+          "modifiedAt": "2026-04-24T03:44:09.893Z"
+        },
+        {
+          "fileName": "leg extension_14.mp4",
+          "relativePath": "preprocessedWorkoutVideos/leg extension/leg extension_14.mp4",
+          "extension": ".mp4",
+          "sizeBytes": 2576989,
+          "modifiedAt": "2026-04-24T03:44:09.977Z"
+        },
+        {
+          "fileName": "leg extension_15.mp4",
+          "relativePath": "preprocessedWorkoutVideos/leg extension/leg extension_15.mp4",
+          "extension": ".mp4",
+          "sizeBytes": 4557454,
+          "modifiedAt": "2026-04-24T03:44:10.105Z"
+        },
+        {
+          "fileName": "leg extension_16.mp4",
+          "relativePath": "preprocessedWorkoutVideos/leg extension/leg extension_16.mp4",
+          "extension": ".mp4",
+          "sizeBytes": 2946818,
+          "modifiedAt": "2026-04-24T03:44:10.193Z"
+        },
+        {
+          "fileName": "leg extension_17.mp4",
+          "relativePath": "preprocessedWorkoutVideos/leg extension/leg extension_17.mp4",
+          "extension": ".mp4",
+          "sizeBytes": 2950594,
+          "modifiedAt": "2026-04-24T03:44:10.292Z"
+        },
+        {
+          "fileName": "leg extension_18.mp4",
+          "relativePath": "preprocessedWorkoutVideos/leg extension/leg extension_18.mp4",
+          "extension": ".mp4",
+          "sizeBytes": 11474358,
+          "modifiedAt": "2026-04-24T03:44:10.502Z"
+        },
+        {
+          "fileName": "leg extension_19.mp4",
+          "relativePath": "preprocessedWorkoutVideos/leg extension/leg extension_19.mp4",
+          "extension": ".mp4",
+          "sizeBytes": 2292824,
+          "modifiedAt": "2026-04-24T03:44:10.570Z"
+        },
+        {
+          "fileName": "leg extension_20.mp4",
+          "relativePath": "preprocessedWorkoutVideos/leg extension/leg extension_20.mp4",
+          "extension": ".mp4",
+          "sizeBytes": 8746087,
+          "modifiedAt": "2026-04-24T03:44:11.272Z"
+        },
+        {
+          "fileName": "leg extension_21.mp4",
+          "relativePath": "preprocessedWorkoutVideos/leg extension/leg extension_21.mp4",
+          "extension": ".mp4",
+          "sizeBytes": 3275116,
+          "modifiedAt": "2026-04-24T03:44:11.359Z"
+        },
+        {
+          "fileName": "leg extension_22.mp4",
+          "relativePath": "preprocessedWorkoutVideos/leg extension/leg extension_22.mp4",
+          "extension": ".mp4",
+          "sizeBytes": 4469879,
+          "modifiedAt": "2026-04-24T03:44:11.496Z"
+        },
+        {
+          "fileName": "leg extension_23.mp4",
+          "relativePath": "preprocessedWorkoutVideos/leg extension/leg extension_23.mp4",
+          "extension": ".mp4",
+          "sizeBytes": 4109226,
+          "modifiedAt": "2026-04-24T03:44:11.618Z"
+        },
+        {
+          "fileName": "leg extension_24.mp4",
+          "relativePath": "preprocessedWorkoutVideos/leg extension/leg extension_24.mp4",
+          "extension": ".mp4",
+          "sizeBytes": 5280022,
+          "modifiedAt": "2026-04-24T03:44:11.780Z"
+        },
+        {
+          "fileName": "leg extension_25.mp4",
+          "relativePath": "preprocessedWorkoutVideos/leg extension/leg extension_25.mp4",
+          "extension": ".mp4",
+          "sizeBytes": 5027787,
+          "modifiedAt": "2026-04-24T03:44:11.897Z"
+        }
+      ]
+    },
+    {
+      "exerciseKey": "legRaises",
+      "label": "Leg raises",
+      "folderName": "leg raises",
+      "aliases": [],
+      "clipCount": 21,
+      "clips": [
+        {
+          "fileName": "leg raises_1.MOV",
+          "relativePath": "preprocessedWorkoutVideos/leg raises/leg raises_1.MOV",
+          "extension": ".mov",
+          "sizeBytes": 30106923,
+          "modifiedAt": "2026-04-24T03:44:14.521Z"
+        },
+        {
+          "fileName": "leg raises_2.MOV",
+          "relativePath": "preprocessedWorkoutVideos/leg raises/leg raises_2.MOV",
+          "extension": ".mov",
+          "sizeBytes": 32330205,
+          "modifiedAt": "2026-04-24T03:44:16.316Z"
+        },
+        {
+          "fileName": "leg raises_3.MOV",
+          "relativePath": "preprocessedWorkoutVideos/leg raises/leg raises_3.MOV",
+          "extension": ".mov",
+          "sizeBytes": 26435222,
+          "modifiedAt": "2026-04-24T03:44:16.920Z"
+        },
+        {
+          "fileName": "leg raises_4.MOV",
+          "relativePath": "preprocessedWorkoutVideos/leg raises/leg raises_4.MOV",
+          "extension": ".mov",
+          "sizeBytes": 16456409,
+          "modifiedAt": "2026-04-24T03:44:17.264Z"
+        },
+        {
+          "fileName": "leg raises_5.MOV",
+          "relativePath": "preprocessedWorkoutVideos/leg raises/leg raises_5.MOV",
+          "extension": ".mov",
+          "sizeBytes": 34692746,
+          "modifiedAt": "2026-04-24T03:44:17.930Z"
+        },
+        {
+          "fileName": "leg raises_6.MOV",
+          "relativePath": "preprocessedWorkoutVideos/leg raises/leg raises_6.MOV",
+          "extension": ".mov",
+          "sizeBytes": 25738556,
+          "modifiedAt": "2026-04-24T03:44:18.386Z"
+        },
+        {
+          "fileName": "leg raises_7.mp4",
+          "relativePath": "preprocessedWorkoutVideos/leg raises/leg raises_7.mp4",
+          "extension": ".mp4",
+          "sizeBytes": 8329916,
+          "modifiedAt": "2026-04-24T03:44:18.578Z"
+        },
+        {
+          "fileName": "leg raises_8.mp4",
+          "relativePath": "preprocessedWorkoutVideos/leg raises/leg raises_8.mp4",
+          "extension": ".mp4",
+          "sizeBytes": 7083396,
+          "modifiedAt": "2026-04-24T03:44:18.823Z"
+        },
+        {
+          "fileName": "leg raises_9.mp4",
+          "relativePath": "preprocessedWorkoutVideos/leg raises/leg raises_9.mp4",
+          "extension": ".mp4",
+          "sizeBytes": 4398699,
+          "modifiedAt": "2026-04-24T03:44:19.025Z"
+        },
+        {
+          "fileName": "leg raises_10.mp4",
+          "relativePath": "preprocessedWorkoutVideos/leg raises/leg raises_10.mp4",
+          "extension": ".mp4",
+          "sizeBytes": 3232025,
+          "modifiedAt": "2026-04-24T03:44:14.596Z"
+        },
+        {
+          "fileName": "leg raises_11.mp4",
+          "relativePath": "preprocessedWorkoutVideos/leg raises/leg raises_11.mp4",
+          "extension": ".mp4",
+          "sizeBytes": 4990173,
+          "modifiedAt": "2026-04-24T03:44:14.700Z"
+        },
+        {
+          "fileName": "leg raises_12.mp4",
+          "relativePath": "preprocessedWorkoutVideos/leg raises/leg raises_12.mp4",
+          "extension": ".mp4",
+          "sizeBytes": 3595559,
+          "modifiedAt": "2026-04-24T03:44:14.801Z"
+        },
+        {
+          "fileName": "leg raises_13.mp4",
+          "relativePath": "preprocessedWorkoutVideos/leg raises/leg raises_13.mp4",
+          "extension": ".mp4",
+          "sizeBytes": 3720413,
+          "modifiedAt": "2026-04-24T03:44:14.881Z"
+        },
+        {
+          "fileName": "leg raises_14.mp4",
+          "relativePath": "preprocessedWorkoutVideos/leg raises/leg raises_14.mp4",
+          "extension": ".mp4",
+          "sizeBytes": 5546292,
+          "modifiedAt": "2026-04-24T03:44:15.025Z"
+        },
+        {
+          "fileName": "leg raises_15.mp4",
+          "relativePath": "preprocessedWorkoutVideos/leg raises/leg raises_15.mp4",
+          "extension": ".mp4",
+          "sizeBytes": 2897333,
+          "modifiedAt": "2026-04-24T03:44:15.087Z"
+        },
+        {
+          "fileName": "leg raises_16.mp4",
+          "relativePath": "preprocessedWorkoutVideos/leg raises/leg raises_16.mp4",
+          "extension": ".mp4",
+          "sizeBytes": 6609275,
+          "modifiedAt": "2026-04-24T03:44:15.278Z"
+        },
+        {
+          "fileName": "leg raises_17.mp4",
+          "relativePath": "preprocessedWorkoutVideos/leg raises/leg raises_17.mp4",
+          "extension": ".mp4",
+          "sizeBytes": 9331560,
+          "modifiedAt": "2026-04-24T03:44:15.501Z"
+        },
+        {
+          "fileName": "leg raises_18.mp4",
+          "relativePath": "preprocessedWorkoutVideos/leg raises/leg raises_18.mp4",
+          "extension": ".mp4",
+          "sizeBytes": 4280372,
+          "modifiedAt": "2026-04-24T03:44:15.602Z"
+        },
+        {
+          "fileName": "leg raises_19.mp4",
+          "relativePath": "preprocessedWorkoutVideos/leg raises/leg raises_19.mp4",
+          "extension": ".mp4",
+          "sizeBytes": 3184455,
+          "modifiedAt": "2026-04-24T03:44:15.759Z"
+        },
+        {
+          "fileName": "leg raises_20.mp4",
+          "relativePath": "preprocessedWorkoutVideos/leg raises/leg raises_20.mp4",
+          "extension": ".mp4",
+          "sizeBytes": 2025741,
+          "modifiedAt": "2026-04-24T03:44:16.369Z"
+        },
+        {
+          "fileName": "leg raises_21.mp4",
+          "relativePath": "preprocessedWorkoutVideos/leg raises/leg raises_21.mp4",
+          "extension": ".mp4",
+          "sizeBytes": 1864791,
+          "modifiedAt": "2026-04-24T03:44:16.417Z"
+        }
+      ]
+    },
+    {
+      "exerciseKey": "plank",
+      "label": "Plank",
+      "folderName": "plank",
+      "aliases": [],
+      "clipCount": 7,
+      "clips": [
+        {
+          "fileName": "plank_1.MOV",
+          "relativePath": "preprocessedWorkoutVideos/plank/plank_1.MOV",
+          "extension": ".mov",
+          "sizeBytes": 80351876,
+          "modifiedAt": "2026-04-24T03:44:20.548Z"
+        },
+        {
+          "fileName": "plank_2.mp4",
+          "relativePath": "preprocessedWorkoutVideos/plank/plank_2.mp4",
+          "extension": ".mp4",
+          "sizeBytes": 7172213,
+          "modifiedAt": "2026-04-24T03:44:20.703Z"
+        },
+        {
+          "fileName": "plank_3.mp4",
+          "relativePath": "preprocessedWorkoutVideos/plank/plank_3.mp4",
+          "extension": ".mp4",
+          "sizeBytes": 942077,
+          "modifiedAt": "2026-04-24T03:44:20.754Z"
+        },
+        {
+          "fileName": "plank_4.mp4",
+          "relativePath": "preprocessedWorkoutVideos/plank/plank_4.mp4",
+          "extension": ".mp4",
+          "sizeBytes": 1339647,
+          "modifiedAt": "2026-04-24T03:44:20.810Z"
+        },
+        {
+          "fileName": "plank_5.mp4",
+          "relativePath": "preprocessedWorkoutVideos/plank/plank_5.mp4",
+          "extension": ".mp4",
+          "sizeBytes": 10355424,
+          "modifiedAt": "2026-04-24T03:44:21.025Z"
+        },
+        {
+          "fileName": "plank_6.mp4",
+          "relativePath": "preprocessedWorkoutVideos/plank/plank_6.mp4",
+          "extension": ".mp4",
+          "sizeBytes": 12829744,
+          "modifiedAt": "2026-04-24T03:44:21.311Z"
+        },
+        {
+          "fileName": "plank_7.mp4",
+          "relativePath": "preprocessedWorkoutVideos/plank/plank_7.mp4",
+          "extension": ".mp4",
+          "sizeBytes": 58290896,
+          "modifiedAt": "2026-04-24T03:44:22.417Z"
+        }
+      ]
+    },
+    {
+      "exerciseKey": "pullUp",
+      "label": "Pull-up",
+      "folderName": "pull Up",
+      "aliases": [
+        "pull up",
+        "pullup"
+      ],
+      "clipCount": 26,
+      "clips": [
+        {
+          "fileName": "pull up_1.mp4",
+          "relativePath": "preprocessedWorkoutVideos/pull Up/pull up_1.mp4",
+          "extension": ".mp4",
+          "sizeBytes": 16851530,
+          "modifiedAt": "2026-04-24T03:44:22.741Z"
+        },
+        {
+          "fileName": "pull up_2.mp4",
+          "relativePath": "preprocessedWorkoutVideos/pull Up/pull up_2.mp4",
+          "extension": ".mp4",
+          "sizeBytes": 14907894,
+          "modifiedAt": "2026-04-24T03:44:23.935Z"
+        },
+        {
+          "fileName": "pull up_3.mp4",
+          "relativePath": "preprocessedWorkoutVideos/pull Up/pull up_3.mp4",
+          "extension": ".mp4",
+          "sizeBytes": 24373525,
+          "modifiedAt": "2026-04-24T03:44:25.272Z"
+        },
+        {
+          "fileName": "pull up_4.mp4",
+          "relativePath": "preprocessedWorkoutVideos/pull Up/pull up_4.mp4",
+          "extension": ".mp4",
+          "sizeBytes": 24838014,
+          "modifiedAt": "2026-04-24T03:44:25.798Z"
+        },
+        {
+          "fileName": "pull up_5.mp4",
+          "relativePath": "preprocessedWorkoutVideos/pull Up/pull up_5.mp4",
+          "extension": ".mp4",
+          "sizeBytes": 1504351,
+          "modifiedAt": "2026-04-24T03:44:25.884Z"
+        },
+        {
+          "fileName": "pull up_6.mp4",
+          "relativePath": "preprocessedWorkoutVideos/pull Up/pull up_6.mp4",
+          "extension": ".mp4",
+          "sizeBytes": 3009170,
+          "modifiedAt": "2026-04-24T03:44:25.990Z"
+        },
+        {
+          "fileName": "pull up_7.mp4",
+          "relativePath": "preprocessedWorkoutVideos/pull Up/pull up_7.mp4",
+          "extension": ".mp4",
+          "sizeBytes": 2210883,
+          "modifiedAt": "2026-04-24T03:44:26.080Z"
+        },
+        {
+          "fileName": "pull up_8.mp4",
+          "relativePath": "preprocessedWorkoutVideos/pull Up/pull up_8.mp4",
+          "extension": ".mp4",
+          "sizeBytes": 2536297,
+          "modifiedAt": "2026-04-24T03:44:26.185Z"
+        },
+        {
+          "fileName": "pull up_9.mp4",
+          "relativePath": "preprocessedWorkoutVideos/pull Up/pull up_9.mp4",
+          "extension": ".mp4",
+          "sizeBytes": 2759820,
+          "modifiedAt": "2026-04-24T03:44:26.291Z"
+        },
+        {
+          "fileName": "pull up_10.mp4",
+          "relativePath": "preprocessedWorkoutVideos/pull Up/pull up_10.mp4",
+          "extension": ".mp4",
+          "sizeBytes": 2083087,
+          "modifiedAt": "2026-04-24T03:44:22.820Z"
+        },
+        {
+          "fileName": "pull up_11.mp4",
+          "relativePath": "preprocessedWorkoutVideos/pull Up/pull up_11.mp4",
+          "extension": ".mp4",
+          "sizeBytes": 1868404,
+          "modifiedAt": "2026-04-24T03:44:22.889Z"
+        },
+        {
+          "fileName": "pull up_12.mp4",
+          "relativePath": "preprocessedWorkoutVideos/pull Up/pull up_12.mp4",
+          "extension": ".mp4",
+          "sizeBytes": 4423589,
+          "modifiedAt": "2026-04-24T03:44:23.026Z"
+        },
+        {
+          "fileName": "pull up_13.mp4",
+          "relativePath": "preprocessedWorkoutVideos/pull Up/pull up_13.mp4",
+          "extension": ".mp4",
+          "sizeBytes": 3230861,
+          "modifiedAt": "2026-04-24T03:44:23.107Z"
+        },
+        {
+          "fileName": "pull up_14.mp4",
+          "relativePath": "preprocessedWorkoutVideos/pull Up/pull up_14.mp4",
+          "extension": ".mp4",
+          "sizeBytes": 3560250,
+          "modifiedAt": "2026-04-24T03:44:23.219Z"
+        },
+        {
+          "fileName": "pull up_15.mp4",
+          "relativePath": "preprocessedWorkoutVideos/pull Up/pull up_15.mp4",
+          "extension": ".mp4",
+          "sizeBytes": 4981150,
+          "modifiedAt": "2026-04-24T03:44:23.365Z"
+        },
+        {
+          "fileName": "pull up_16.mp4",
+          "relativePath": "preprocessedWorkoutVideos/pull Up/pull up_16.mp4",
+          "extension": ".mp4",
+          "sizeBytes": 1794840,
+          "modifiedAt": "2026-04-24T03:44:23.432Z"
+        },
+        {
+          "fileName": "pull up_17.mp4",
+          "relativePath": "preprocessedWorkoutVideos/pull Up/pull up_17.mp4",
+          "extension": ".mp4",
+          "sizeBytes": 2254495,
+          "modifiedAt": "2026-04-24T03:44:23.496Z"
+        },
+        {
+          "fileName": "pull up_18.mp4",
+          "relativePath": "preprocessedWorkoutVideos/pull Up/pull up_18.mp4",
+          "extension": ".mp4",
+          "sizeBytes": 2756642,
+          "modifiedAt": "2026-04-24T03:44:23.581Z"
+        },
+        {
+          "fileName": "pull up_19.mp4",
+          "relativePath": "preprocessedWorkoutVideos/pull Up/pull up_19.mp4",
+          "extension": ".mp4",
+          "sizeBytes": 1499827,
+          "modifiedAt": "2026-04-24T03:44:23.620Z"
+        },
+        {
+          "fileName": "pull up_20.mp4",
+          "relativePath": "preprocessedWorkoutVideos/pull Up/pull up_20.mp4",
+          "extension": ".mp4",
+          "sizeBytes": 5714299,
+          "modifiedAt": "2026-04-24T03:44:24.147Z"
+        },
+        {
+          "fileName": "pull up_21.mp4",
+          "relativePath": "preprocessedWorkoutVideos/pull Up/pull up_21.mp4",
+          "extension": ".mp4",
+          "sizeBytes": 6128035,
+          "modifiedAt": "2026-04-24T03:44:24.271Z"
+        },
+        {
+          "fileName": "pull up_22.mp4",
+          "relativePath": "preprocessedWorkoutVideos/pull Up/pull up_22.mp4",
+          "extension": ".mp4",
+          "sizeBytes": 4912681,
+          "modifiedAt": "2026-04-24T03:44:24.398Z"
+        },
+        {
+          "fileName": "pull up_23.mp4",
+          "relativePath": "preprocessedWorkoutVideos/pull Up/pull up_23.mp4",
+          "extension": ".mp4",
+          "sizeBytes": 2663173,
+          "modifiedAt": "2026-04-24T03:44:24.478Z"
+        },
+        {
+          "fileName": "pull up_24.mp4",
+          "relativePath": "preprocessedWorkoutVideos/pull Up/pull up_24.mp4",
+          "extension": ".mp4",
+          "sizeBytes": 2269808,
+          "modifiedAt": "2026-04-24T03:44:24.558Z"
+        },
+        {
+          "fileName": "pull up_25.mp4",
+          "relativePath": "preprocessedWorkoutVideos/pull Up/pull up_25.mp4",
+          "extension": ".mp4",
+          "sizeBytes": 2045733,
+          "modifiedAt": "2026-04-24T03:44:24.652Z"
+        },
+        {
+          "fileName": "pull up_26.mp4",
+          "relativePath": "preprocessedWorkoutVideos/pull Up/pull up_26.mp4",
+          "extension": ".mp4",
+          "sizeBytes": 1663906,
+          "modifiedAt": "2026-04-24T03:44:24.715Z"
+        }
+      ]
+    },
+    {
+      "exerciseKey": "pushUp",
+      "label": "Push-up",
+      "folderName": "push-up",
+      "aliases": [
+        "push up"
+      ],
+      "clipCount": 56,
+      "clips": [
+        {
+          "fileName": "push-up_1.mp4",
+          "relativePath": "preprocessedWorkoutVideos/push-up/push-up_1.mp4",
+          "extension": ".mp4",
+          "sizeBytes": 635823,
+          "modifiedAt": "2026-04-24T03:44:26.364Z"
+        },
+        {
+          "fileName": "push-up_2.mp4",
+          "relativePath": "preprocessedWorkoutVideos/push-up/push-up_2.mp4",
+          "extension": ".mp4",
+          "sizeBytes": 642232,
+          "modifiedAt": "2026-04-24T03:44:26.911Z"
+        },
+        {
+          "fileName": "push-up_3.mp4",
+          "relativePath": "preprocessedWorkoutVideos/push-up/push-up_3.mp4",
+          "extension": ".mp4",
+          "sizeBytes": 640915,
+          "modifiedAt": "2026-04-24T03:44:27.666Z"
+        },
+        {
+          "fileName": "push-up_4.mp4",
+          "relativePath": "preprocessedWorkoutVideos/push-up/push-up_4.mp4",
+          "extension": ".mp4",
+          "sizeBytes": 637176,
+          "modifiedAt": "2026-04-24T03:44:28.368Z"
+        },
+        {
+          "fileName": "push-up_5.mp4",
+          "relativePath": "preprocessedWorkoutVideos/push-up/push-up_5.mp4",
+          "extension": ".mp4",
+          "sizeBytes": 637905,
+          "modifiedAt": "2026-04-24T03:44:28.818Z"
+        },
+        {
+          "fileName": "push-up_6.mp4",
+          "relativePath": "preprocessedWorkoutVideos/push-up/push-up_6.mp4",
+          "extension": ".mp4",
+          "sizeBytes": 638874,
+          "modifiedAt": "2026-04-24T03:44:30.076Z"
+        },
+        {
+          "fileName": "push-up_7.mp4",
+          "relativePath": "preprocessedWorkoutVideos/push-up/push-up_7.mp4",
+          "extension": ".mp4",
+          "sizeBytes": 640588,
+          "modifiedAt": "2026-04-24T03:44:30.128Z"
+        },
+        {
+          "fileName": "push-up_8.mp4",
+          "relativePath": "preprocessedWorkoutVideos/push-up/push-up_8.mp4",
+          "extension": ".mp4",
+          "sizeBytes": 639188,
+          "modifiedAt": "2026-04-24T03:44:30.184Z"
+        },
+        {
+          "fileName": "push-up_9.mp4",
+          "relativePath": "preprocessedWorkoutVideos/push-up/push-up_9.mp4",
+          "extension": ".mp4",
+          "sizeBytes": 640432,
+          "modifiedAt": "2026-04-24T03:44:30.234Z"
+        },
+        {
+          "fileName": "push-up_10.mp4",
+          "relativePath": "preprocessedWorkoutVideos/push-up/push-up_10.mp4",
+          "extension": ".mp4",
+          "sizeBytes": 635135,
+          "modifiedAt": "2026-04-24T03:44:26.403Z"
+        },
+        {
+          "fileName": "push-up_11.mp4",
+          "relativePath": "preprocessedWorkoutVideos/push-up/push-up_11.mp4",
+          "extension": ".mp4",
+          "sizeBytes": 636601,
+          "modifiedAt": "2026-04-24T03:44:26.448Z"
+        },
+        {
+          "fileName": "push-up_12.mp4",
+          "relativePath": "preprocessedWorkoutVideos/push-up/push-up_12.mp4",
+          "extension": ".mp4",
+          "sizeBytes": 635087,
+          "modifiedAt": "2026-04-24T03:44:26.507Z"
+        },
+        {
+          "fileName": "push-up_13.mp4",
+          "relativePath": "preprocessedWorkoutVideos/push-up/push-up_13.mp4",
+          "extension": ".mp4",
+          "sizeBytes": 638171,
+          "modifiedAt": "2026-04-24T03:44:26.553Z"
+        },
+        {
+          "fileName": "push-up_14.mp4",
+          "relativePath": "preprocessedWorkoutVideos/push-up/push-up_14.mp4",
+          "extension": ".mp4",
+          "sizeBytes": 636536,
+          "modifiedAt": "2026-04-24T03:44:26.599Z"
+        },
+        {
+          "fileName": "push-up_15.mp4",
+          "relativePath": "preprocessedWorkoutVideos/push-up/push-up_15.mp4",
+          "extension": ".mp4",
+          "sizeBytes": 356157,
+          "modifiedAt": "2026-04-24T03:44:26.644Z"
+        },
+        {
+          "fileName": "push-up_16.mp4",
+          "relativePath": "preprocessedWorkoutVideos/push-up/push-up_16.mp4",
+          "extension": ".mp4",
+          "sizeBytes": 592131,
+          "modifiedAt": "2026-04-24T03:44:26.710Z"
+        },
+        {
+          "fileName": "push-up_17.mp4",
+          "relativePath": "preprocessedWorkoutVideos/push-up/push-up_17.mp4",
+          "extension": ".mp4",
+          "sizeBytes": 388271,
+          "modifiedAt": "2026-04-24T03:44:26.767Z"
+        },
+        {
+          "fileName": "push-up_18.mp4",
+          "relativePath": "preprocessedWorkoutVideos/push-up/push-up_18.mp4",
+          "extension": ".mp4",
+          "sizeBytes": 302221,
+          "modifiedAt": "2026-04-24T03:44:26.811Z"
+        },
+        {
+          "fileName": "push-up_19.mp4",
+          "relativePath": "preprocessedWorkoutVideos/push-up/push-up_19.mp4",
+          "extension": ".mp4",
+          "sizeBytes": 643010,
+          "modifiedAt": "2026-04-24T03:44:26.866Z"
+        },
+        {
+          "fileName": "push-up_20.mp4",
+          "relativePath": "preprocessedWorkoutVideos/push-up/push-up_20.mp4",
+          "extension": ".mp4",
+          "sizeBytes": 637721,
+          "modifiedAt": "2026-04-24T03:44:26.960Z"
+        },
+        {
+          "fileName": "push-up_21.mp4",
+          "relativePath": "preprocessedWorkoutVideos/push-up/push-up_21.mp4",
+          "extension": ".mp4",
+          "sizeBytes": 640096,
+          "modifiedAt": "2026-04-24T03:44:27.016Z"
+        },
+        {
+          "fileName": "push-up_22.mp4",
+          "relativePath": "preprocessedWorkoutVideos/push-up/push-up_22.mp4",
+          "extension": ".mp4",
+          "sizeBytes": 642624,
+          "modifiedAt": "2026-04-24T03:44:27.097Z"
+        },
+        {
+          "fileName": "push-up_23.mp4",
+          "relativePath": "preprocessedWorkoutVideos/push-up/push-up_23.mp4",
+          "extension": ".mp4",
+          "sizeBytes": 488554,
+          "modifiedAt": "2026-04-24T03:44:27.157Z"
+        },
+        {
+          "fileName": "push-up_24.mp4",
+          "relativePath": "preprocessedWorkoutVideos/push-up/push-up_24.mp4",
+          "extension": ".mp4",
+          "sizeBytes": 540764,
+          "modifiedAt": "2026-04-24T03:44:27.230Z"
+        },
+        {
+          "fileName": "push-up_25.mp4",
+          "relativePath": "preprocessedWorkoutVideos/push-up/push-up_25.mp4",
+          "extension": ".mp4",
+          "sizeBytes": 415602,
+          "modifiedAt": "2026-04-24T03:44:27.292Z"
+        },
+        {
+          "fileName": "push-up_26.mp4",
+          "relativePath": "preprocessedWorkoutVideos/push-up/push-up_26.mp4",
+          "extension": ".mp4",
+          "sizeBytes": 639385,
+          "modifiedAt": "2026-04-24T03:44:27.369Z"
+        },
+        {
+          "fileName": "push-up_27.mp4",
+          "relativePath": "preprocessedWorkoutVideos/push-up/push-up_27.mp4",
+          "extension": ".mp4",
+          "sizeBytes": 642652,
+          "modifiedAt": "2026-04-24T03:44:27.443Z"
+        },
+        {
+          "fileName": "push-up_28.mp4",
+          "relativePath": "preprocessedWorkoutVideos/push-up/push-up_28.mp4",
+          "extension": ".mp4",
+          "sizeBytes": 480100,
+          "modifiedAt": "2026-04-24T03:44:27.522Z"
+        },
+        {
+          "fileName": "push-up_29.mp4",
+          "relativePath": "preprocessedWorkoutVideos/push-up/push-up_29.mp4",
+          "extension": ".mp4",
+          "sizeBytes": 643841,
+          "modifiedAt": "2026-04-24T03:44:27.586Z"
+        },
+        {
+          "fileName": "push-up_30.mp4",
+          "relativePath": "preprocessedWorkoutVideos/push-up/push-up_30.mp4",
+          "extension": ".mp4",
+          "sizeBytes": 593331,
+          "modifiedAt": "2026-04-24T03:44:27.734Z"
+        },
+        {
+          "fileName": "push-up_31.mp4",
+          "relativePath": "preprocessedWorkoutVideos/push-up/push-up_31.mp4",
+          "extension": ".mp4",
+          "sizeBytes": 637522,
+          "modifiedAt": "2026-04-24T03:44:27.814Z"
+        },
+        {
+          "fileName": "push-up_32.mp4",
+          "relativePath": "preprocessedWorkoutVideos/push-up/push-up_32.mp4",
+          "extension": ".mp4",
+          "sizeBytes": 679415,
+          "modifiedAt": "2026-04-24T03:44:27.888Z"
+        },
+        {
+          "fileName": "push-up_33.mp4",
+          "relativePath": "preprocessedWorkoutVideos/push-up/push-up_33.mp4",
+          "extension": ".mp4",
+          "sizeBytes": 619597,
+          "modifiedAt": "2026-04-24T03:44:27.953Z"
+        },
+        {
+          "fileName": "push-up_34.mp4",
+          "relativePath": "preprocessedWorkoutVideos/push-up/push-up_34.mp4",
+          "extension": ".mp4",
+          "sizeBytes": 484947,
+          "modifiedAt": "2026-04-24T03:44:28.025Z"
+        },
+        {
+          "fileName": "push-up_35.mp4",
+          "relativePath": "preprocessedWorkoutVideos/push-up/push-up_35.mp4",
+          "extension": ".mp4",
+          "sizeBytes": 644290,
+          "modifiedAt": "2026-04-24T03:44:28.114Z"
+        },
+        {
+          "fileName": "push-up_36.mp4",
+          "relativePath": "preprocessedWorkoutVideos/push-up/push-up_36.mp4",
+          "extension": ".mp4",
+          "sizeBytes": 642771,
+          "modifiedAt": "2026-04-24T03:44:28.183Z"
+        },
+        {
+          "fileName": "push-up_37.mp4",
+          "relativePath": "preprocessedWorkoutVideos/push-up/push-up_37.mp4",
+          "extension": ".mp4",
+          "sizeBytes": 630933,
+          "modifiedAt": "2026-04-24T03:44:28.230Z"
+        },
+        {
+          "fileName": "push-up_38.mp4",
+          "relativePath": "preprocessedWorkoutVideos/push-up/push-up_38.mp4",
+          "extension": ".mp4",
+          "sizeBytes": 636101,
+          "modifiedAt": "2026-04-24T03:44:28.293Z"
+        },
+        {
+          "fileName": "push-up_39.mp4",
+          "relativePath": "preprocessedWorkoutVideos/push-up/push-up_39.mp4",
+          "extension": ".mp4",
+          "sizeBytes": 612547,
+          "modifiedAt": "2026-04-24T03:44:28.328Z"
+        },
+        {
+          "fileName": "push-up_40.mp4",
+          "relativePath": "preprocessedWorkoutVideos/push-up/push-up_40.mp4",
+          "extension": ".mp4",
+          "sizeBytes": 637012,
+          "modifiedAt": "2026-04-24T03:44:28.410Z"
+        },
+        {
+          "fileName": "push-up_41.mp4",
+          "relativePath": "preprocessedWorkoutVideos/push-up/push-up_41.mp4",
+          "extension": ".mp4",
+          "sizeBytes": 457686,
+          "modifiedAt": "2026-04-24T03:44:28.444Z"
+        },
+        {
+          "fileName": "push-up_42.mp4",
+          "relativePath": "preprocessedWorkoutVideos/push-up/push-up_42.mp4",
+          "extension": ".mp4",
+          "sizeBytes": 636961,
+          "modifiedAt": "2026-04-24T03:44:28.490Z"
+        },
+        {
+          "fileName": "push-up_43.mp4",
+          "relativePath": "preprocessedWorkoutVideos/push-up/push-up_43.mp4",
+          "extension": ".mp4",
+          "sizeBytes": 348911,
+          "modifiedAt": "2026-04-24T03:44:28.522Z"
+        },
+        {
+          "fileName": "push-up_44.mp4",
+          "relativePath": "preprocessedWorkoutVideos/push-up/push-up_44.mp4",
+          "extension": ".mp4",
+          "sizeBytes": 477723,
+          "modifiedAt": "2026-04-24T03:44:28.553Z"
+        },
+        {
+          "fileName": "push-up_45.mp4",
+          "relativePath": "preprocessedWorkoutVideos/push-up/push-up_45.mp4",
+          "extension": ".mp4",
+          "sizeBytes": 643042,
+          "modifiedAt": "2026-04-24T03:44:28.595Z"
+        },
+        {
+          "fileName": "push-up_46.mp4",
+          "relativePath": "preprocessedWorkoutVideos/push-up/push-up_46.mp4",
+          "extension": ".mp4",
+          "sizeBytes": 643424,
+          "modifiedAt": "2026-04-24T03:44:28.633Z"
+        },
+        {
+          "fileName": "push-up_47.mp4",
+          "relativePath": "preprocessedWorkoutVideos/push-up/push-up_47.mp4",
+          "extension": ".mp4",
+          "sizeBytes": 450098,
+          "modifiedAt": "2026-04-24T03:44:28.668Z"
+        },
+        {
+          "fileName": "push-up_48.mp4",
+          "relativePath": "preprocessedWorkoutVideos/push-up/push-up_48.mp4",
+          "extension": ".mp4",
+          "sizeBytes": 639501,
+          "modifiedAt": "2026-04-24T03:44:28.714Z"
+        },
+        {
+          "fileName": "push-up_49.mp4",
+          "relativePath": "preprocessedWorkoutVideos/push-up/push-up_49.mp4",
+          "extension": ".mp4",
+          "sizeBytes": 638788,
+          "modifiedAt": "2026-04-24T03:44:28.765Z"
+        },
+        {
+          "fileName": "push-up_50.mp4",
+          "relativePath": "preprocessedWorkoutVideos/push-up/push-up_50.mp4",
+          "extension": ".mp4",
+          "sizeBytes": 643884,
+          "modifiedAt": "2026-04-24T03:44:28.861Z"
+        },
+        {
+          "fileName": "push-up_51.mp4",
+          "relativePath": "preprocessedWorkoutVideos/push-up/push-up_51.mp4",
+          "extension": ".mp4",
+          "sizeBytes": 2075240,
+          "modifiedAt": "2026-04-24T03:44:28.953Z"
+        },
+        {
+          "fileName": "push-up_52.mp4",
+          "relativePath": "preprocessedWorkoutVideos/push-up/push-up_52.mp4",
+          "extension": ".mp4",
+          "sizeBytes": 5422439,
+          "modifiedAt": "2026-04-24T03:44:29.109Z"
+        },
+        {
+          "fileName": "push-up_53.mp4",
+          "relativePath": "preprocessedWorkoutVideos/push-up/push-up_53.mp4",
+          "extension": ".mp4",
+          "sizeBytes": 9038812,
+          "modifiedAt": "2026-04-24T03:44:29.319Z"
+        },
+        {
+          "fileName": "push-up_54.mp4",
+          "relativePath": "preprocessedWorkoutVideos/push-up/push-up_54.mp4",
+          "extension": ".mp4",
+          "sizeBytes": 6003747,
+          "modifiedAt": "2026-04-24T03:44:29.500Z"
+        },
+        {
+          "fileName": "push-up_55.mp4",
+          "relativePath": "preprocessedWorkoutVideos/push-up/push-up_55.mp4",
+          "extension": ".mp4",
+          "sizeBytes": 11683134,
+          "modifiedAt": "2026-04-24T03:44:29.794Z"
+        },
+        {
+          "fileName": "push-up_56.mp4",
+          "relativePath": "preprocessedWorkoutVideos/push-up/push-up_56.mp4",
+          "extension": ".mp4",
+          "sizeBytes": 8358676,
+          "modifiedAt": "2026-04-24T03:44:30.013Z"
+        }
+      ]
+    },
+    {
+      "exerciseKey": "romanianDeadlift",
+      "label": "Romanian deadlift",
+      "folderName": "romanian deadlift",
+      "aliases": [
+        "rdl"
+      ],
+      "clipCount": 14,
+      "clips": [
+        {
+          "fileName": "romanian deadlift_1.mov",
+          "relativePath": "preprocessedWorkoutVideos/romanian deadlift/romanian deadlift_1.mov",
+          "extension": ".mov",
+          "sizeBytes": 30651790,
+          "modifiedAt": "2026-04-24T03:44:31.227Z"
+        },
+        {
+          "fileName": "romanian deadlift_2.MOV",
+          "relativePath": "preprocessedWorkoutVideos/romanian deadlift/romanian deadlift_2.MOV",
+          "extension": ".mov",
+          "sizeBytes": 42564086,
+          "modifiedAt": "2026-04-24T03:44:33.115Z"
+        },
+        {
+          "fileName": "romanian deadlift_3.mov",
+          "relativePath": "preprocessedWorkoutVideos/romanian deadlift/romanian deadlift_3.mov",
+          "extension": ".mov",
+          "sizeBytes": 35587950,
+          "modifiedAt": "2026-04-24T03:44:33.725Z"
+        },
+        {
+          "fileName": "romanian deadlift_4.MOV",
+          "relativePath": "preprocessedWorkoutVideos/romanian deadlift/romanian deadlift_4.MOV",
+          "extension": ".mov",
+          "sizeBytes": 32081214,
+          "modifiedAt": "2026-04-24T03:44:34.332Z"
+        },
+        {
+          "fileName": "romanian deadlift_5.mp4",
+          "relativePath": "preprocessedWorkoutVideos/romanian deadlift/romanian deadlift_5.mp4",
+          "extension": ".mp4",
+          "sizeBytes": 6504239,
+          "modifiedAt": "2026-04-24T03:44:34.516Z"
+        },
+        {
+          "fileName": "romanian deadlift_6.mp4",
+          "relativePath": "preprocessedWorkoutVideos/romanian deadlift/romanian deadlift_6.mp4",
+          "extension": ".mp4",
+          "sizeBytes": 2303804,
+          "modifiedAt": "2026-04-24T03:44:34.593Z"
+        },
+        {
+          "fileName": "romanian deadlift_7.mp4",
+          "relativePath": "preprocessedWorkoutVideos/romanian deadlift/romanian deadlift_7.mp4",
+          "extension": ".mp4",
+          "sizeBytes": 9829715,
+          "modifiedAt": "2026-04-24T03:44:34.812Z"
+        },
+        {
+          "fileName": "romanian deadlift_8.mp4",
+          "relativePath": "preprocessedWorkoutVideos/romanian deadlift/romanian deadlift_8.mp4",
+          "extension": ".mp4",
+          "sizeBytes": 74060055,
+          "modifiedAt": "2026-04-24T03:44:36.756Z"
+        },
+        {
+          "fileName": "romanian deadlift_9.mp4",
+          "relativePath": "preprocessedWorkoutVideos/romanian deadlift/romanian deadlift_9.mp4",
+          "extension": ".mp4",
+          "sizeBytes": 18333248,
+          "modifiedAt": "2026-04-24T03:44:37.185Z"
+        },
+        {
+          "fileName": "romanian deadlift_10.mp4",
+          "relativePath": "preprocessedWorkoutVideos/romanian deadlift/romanian deadlift_10.mp4",
+          "extension": ".mp4",
+          "sizeBytes": 3758362,
+          "modifiedAt": "2026-04-24T03:44:31.439Z"
+        },
+        {
+          "fileName": "romanian deadlift_11.mp4",
+          "relativePath": "preprocessedWorkoutVideos/romanian deadlift/romanian deadlift_11.mp4",
+          "extension": ".mp4",
+          "sizeBytes": 2282852,
+          "modifiedAt": "2026-04-24T03:44:31.603Z"
+        },
+        {
+          "fileName": "romanian deadlift_12.mp4",
+          "relativePath": "preprocessedWorkoutVideos/romanian deadlift/romanian deadlift_12.mp4",
+          "extension": ".mp4",
+          "sizeBytes": 6358629,
+          "modifiedAt": "2026-04-24T03:44:31.771Z"
+        },
+        {
+          "fileName": "romanian deadlift_13.mp4",
+          "relativePath": "preprocessedWorkoutVideos/romanian deadlift/romanian deadlift_13.mp4",
+          "extension": ".mp4",
+          "sizeBytes": 8336896,
+          "modifiedAt": "2026-04-24T03:44:32.032Z"
+        },
+        {
+          "fileName": "romanian deadlift_14.mp4",
+          "relativePath": "preprocessedWorkoutVideos/romanian deadlift/romanian deadlift_14.mp4",
+          "extension": ".mp4",
+          "sizeBytes": 8225271,
+          "modifiedAt": "2026-04-24T03:44:32.203Z"
+        }
+      ]
+    },
+    {
+      "exerciseKey": "russianTwist",
+      "label": "Russian twist",
+      "folderName": "russian twist",
+      "aliases": [],
+      "clipCount": 13,
+      "clips": [
+        {
+          "fileName": "russian twist_1.MOV",
+          "relativePath": "preprocessedWorkoutVideos/russian twist/russian twist_1.MOV",
+          "extension": ".mov",
+          "sizeBytes": 76698261,
+          "modifiedAt": "2026-04-24T03:44:38.787Z"
+        },
+        {
+          "fileName": "russian twist_2.mp4",
+          "relativePath": "preprocessedWorkoutVideos/russian twist/russian twist_2.mp4",
+          "extension": ".mp4",
+          "sizeBytes": 2893660,
+          "modifiedAt": "2026-04-24T03:44:39.196Z"
+        },
+        {
+          "fileName": "russian twist_3.mp4",
+          "relativePath": "preprocessedWorkoutVideos/russian twist/russian twist_3.mp4",
+          "extension": ".mp4",
+          "sizeBytes": 3171948,
+          "modifiedAt": "2026-04-24T03:44:39.287Z"
+        },
+        {
+          "fileName": "russian twist_4.mp4",
+          "relativePath": "preprocessedWorkoutVideos/russian twist/russian twist_4.mp4",
+          "extension": ".mp4",
+          "sizeBytes": 3141711,
+          "modifiedAt": "2026-04-24T03:44:39.365Z"
+        },
+        {
+          "fileName": "russian twist_5.mp4",
+          "relativePath": "preprocessedWorkoutVideos/russian twist/russian twist_5.mp4",
+          "extension": ".mp4",
+          "sizeBytes": 15238129,
+          "modifiedAt": "2026-04-24T03:44:39.649Z"
+        },
+        {
+          "fileName": "russian twist_6.mp4",
+          "relativePath": "preprocessedWorkoutVideos/russian twist/russian twist_6.mp4",
+          "extension": ".mp4",
+          "sizeBytes": 10629218,
+          "modifiedAt": "2026-04-24T03:44:39.914Z"
+        },
+        {
+          "fileName": "russian twist_7.mp4",
+          "relativePath": "preprocessedWorkoutVideos/russian twist/russian twist_7.mp4",
+          "extension": ".mp4",
+          "sizeBytes": 3892787,
+          "modifiedAt": "2026-04-24T03:44:40.021Z"
+        },
+        {
+          "fileName": "russian twist_8.mp4",
+          "relativePath": "preprocessedWorkoutVideos/russian twist/russian twist_8.mp4",
+          "extension": ".mp4",
+          "sizeBytes": 4765352,
+          "modifiedAt": "2026-04-24T03:44:40.162Z"
+        },
+        {
+          "fileName": "russian twist_9.mp4",
+          "relativePath": "preprocessedWorkoutVideos/russian twist/russian twist_9.mp4",
+          "extension": ".mp4",
+          "sizeBytes": 3891271,
+          "modifiedAt": "2026-04-24T03:44:40.284Z"
+        },
+        {
+          "fileName": "russian twist_10.mp4",
+          "relativePath": "preprocessedWorkoutVideos/russian twist/russian twist_10.mp4",
+          "extension": ".mp4",
+          "sizeBytes": 1407044,
+          "modifiedAt": "2026-04-24T03:44:38.839Z"
+        },
+        {
+          "fileName": "russian twist_11.mp4",
+          "relativePath": "preprocessedWorkoutVideos/russian twist/russian twist_11.mp4",
+          "extension": ".mp4",
+          "sizeBytes": 1493816,
+          "modifiedAt": "2026-04-24T03:44:38.937Z"
+        },
+        {
+          "fileName": "russian twist_12.mp4",
+          "relativePath": "preprocessedWorkoutVideos/russian twist/russian twist_12.mp4",
+          "extension": ".mp4",
+          "sizeBytes": 1135229,
+          "modifiedAt": "2026-04-24T03:44:39.019Z"
+        },
+        {
+          "fileName": "russian twist_13.mp4",
+          "relativePath": "preprocessedWorkoutVideos/russian twist/russian twist_13.mp4",
+          "extension": ".mp4",
+          "sizeBytes": 1614499,
+          "modifiedAt": "2026-04-24T03:44:39.097Z"
+        }
+      ]
+    },
+    {
+      "exerciseKey": "shoulderPress",
+      "label": "Shoulder press",
+      "folderName": "shoulder press",
+      "aliases": [],
+      "clipCount": 17,
+      "clips": [
+        {
+          "fileName": "shoulder press_1.MOV",
+          "relativePath": "preprocessedWorkoutVideos/shoulder press/shoulder press_1.MOV",
+          "extension": ".mov",
+          "sizeBytes": 65393361,
+          "modifiedAt": "2026-04-24T03:44:41.334Z"
+        },
+        {
+          "fileName": "shoulder press_2.MOV",
+          "relativePath": "preprocessedWorkoutVideos/shoulder press/shoulder press_2.MOV",
+          "extension": ".mov",
+          "sizeBytes": 74479189,
+          "modifiedAt": "2026-04-24T03:44:43.584Z"
+        },
+        {
+          "fileName": "shoulder press_3.MOV",
+          "relativePath": "preprocessedWorkoutVideos/shoulder press/shoulder press_3.MOV",
+          "extension": ".mov",
+          "sizeBytes": 45937856,
+          "modifiedAt": "2026-04-24T03:44:44.345Z"
+        },
+        {
+          "fileName": "shoulder press_4.MOV",
+          "relativePath": "preprocessedWorkoutVideos/shoulder press/shoulder press_4.MOV",
+          "extension": ".mov",
+          "sizeBytes": 53886217,
+          "modifiedAt": "2026-04-24T03:44:45.266Z"
+        },
+        {
+          "fileName": "shoulder press_5.mp4",
+          "relativePath": "preprocessedWorkoutVideos/shoulder press/shoulder press_5.mp4",
+          "extension": ".mp4",
+          "sizeBytes": 8614244,
+          "modifiedAt": "2026-04-24T03:44:45.447Z"
+        },
+        {
+          "fileName": "shoulder press_6.mp4",
+          "relativePath": "preprocessedWorkoutVideos/shoulder press/shoulder press_6.mp4",
+          "extension": ".mp4",
+          "sizeBytes": 3755079,
+          "modifiedAt": "2026-04-24T03:44:45.572Z"
+        },
+        {
+          "fileName": "shoulder press_7.mp4",
+          "relativePath": "preprocessedWorkoutVideos/shoulder press/shoulder press_7.mp4",
+          "extension": ".mp4",
+          "sizeBytes": 7491881,
+          "modifiedAt": "2026-04-24T03:44:45.757Z"
+        },
+        {
+          "fileName": "shoulder press_8.mp4",
+          "relativePath": "preprocessedWorkoutVideos/shoulder press/shoulder press_8.mp4",
+          "extension": ".mp4",
+          "sizeBytes": 3580142,
+          "modifiedAt": "2026-04-24T03:44:45.884Z"
+        },
+        {
+          "fileName": "shoulder press_9.mp4",
+          "relativePath": "preprocessedWorkoutVideos/shoulder press/shoulder press_9.mp4",
+          "extension": ".mp4",
+          "sizeBytes": 7599356,
+          "modifiedAt": "2026-04-24T03:44:46.035Z"
+        },
+        {
+          "fileName": "shoulder press_10.mp4",
+          "relativePath": "preprocessedWorkoutVideos/shoulder press/shoulder press_10.mp4",
+          "extension": ".mp4",
+          "sizeBytes": 6753325,
+          "modifiedAt": "2026-04-24T03:44:41.511Z"
+        },
+        {
+          "fileName": "shoulder press_11.mp4",
+          "relativePath": "preprocessedWorkoutVideos/shoulder press/shoulder press_11.mp4",
+          "extension": ".mp4",
+          "sizeBytes": 3902993,
+          "modifiedAt": "2026-04-24T03:44:41.643Z"
+        },
+        {
+          "fileName": "shoulder press_12.mp4",
+          "relativePath": "preprocessedWorkoutVideos/shoulder press/shoulder press_12.mp4",
+          "extension": ".mp4",
+          "sizeBytes": 4760451,
+          "modifiedAt": "2026-04-24T03:44:41.765Z"
+        },
+        {
+          "fileName": "shoulder press_13.mp4",
+          "relativePath": "preprocessedWorkoutVideos/shoulder press/shoulder press_13.mp4",
+          "extension": ".mp4",
+          "sizeBytes": 3644697,
+          "modifiedAt": "2026-04-24T03:44:41.866Z"
+        },
+        {
+          "fileName": "shoulder press_14.mp4",
+          "relativePath": "preprocessedWorkoutVideos/shoulder press/shoulder press_14.mp4",
+          "extension": ".mp4",
+          "sizeBytes": 3178175,
+          "modifiedAt": "2026-04-24T03:44:41.978Z"
+        },
+        {
+          "fileName": "shoulder press_15.mp4",
+          "relativePath": "preprocessedWorkoutVideos/shoulder press/shoulder press_15.mp4",
+          "extension": ".mp4",
+          "sizeBytes": 5644624,
+          "modifiedAt": "2026-04-24T03:44:42.090Z"
+        },
+        {
+          "fileName": "shoulder press_16.mp4",
+          "relativePath": "preprocessedWorkoutVideos/shoulder press/shoulder press_16.mp4",
+          "extension": ".mp4",
+          "sizeBytes": 7310146,
+          "modifiedAt": "2026-04-24T03:44:42.234Z"
+        },
+        {
+          "fileName": "shoulder press_17.mp4",
+          "relativePath": "preprocessedWorkoutVideos/shoulder press/shoulder press_17.mp4",
+          "extension": ".mp4",
+          "sizeBytes": 7727134,
+          "modifiedAt": "2026-04-24T03:44:42.392Z"
+        }
+      ]
+    },
+    {
+      "exerciseKey": "squat",
+      "label": "Squat",
+      "folderName": "squat",
+      "aliases": [],
+      "clipCount": 29,
+      "clips": [
+        {
+          "fileName": "squat_1.MOV",
+          "relativePath": "preprocessedWorkoutVideos/squat/squat_1.MOV",
+          "extension": ".mov",
+          "sizeBytes": 64504070,
+          "modifiedAt": "2026-04-24T03:44:47.312Z"
+        },
+        {
+          "fileName": "squat_2.MOV",
+          "relativePath": "preprocessedWorkoutVideos/squat/squat_2.MOV",
+          "extension": ".mov",
+          "sizeBytes": 47479850,
+          "modifiedAt": "2026-04-24T03:44:49.142Z"
+        },
+        {
+          "fileName": "squat_3.MOV",
+          "relativePath": "preprocessedWorkoutVideos/squat/squat_3.MOV",
+          "extension": ".mov",
+          "sizeBytes": 63872296,
+          "modifiedAt": "2026-04-24T03:44:52.047Z"
+        },
+        {
+          "fileName": "squat_4.MOV",
+          "relativePath": "preprocessedWorkoutVideos/squat/squat_4.MOV",
+          "extension": ".mov",
+          "sizeBytes": 65781931,
+          "modifiedAt": "2026-04-24T03:44:53.155Z"
+        },
+        {
+          "fileName": "squat_5.MOV",
+          "relativePath": "preprocessedWorkoutVideos/squat/squat_5.MOV",
+          "extension": ".mov",
+          "sizeBytes": 59539790,
+          "modifiedAt": "2026-04-24T03:44:54.097Z"
+        },
+        {
+          "fileName": "squat_6.MOV",
+          "relativePath": "preprocessedWorkoutVideos/squat/squat_6.MOV",
+          "extension": ".mov",
+          "sizeBytes": 69187980,
+          "modifiedAt": "2026-04-24T03:44:55.472Z"
+        },
+        {
+          "fileName": "squat_7.mp4",
+          "relativePath": "preprocessedWorkoutVideos/squat/squat_7.mp4",
+          "extension": ".mp4",
+          "sizeBytes": 1461108,
+          "modifiedAt": "2026-04-24T03:44:55.537Z"
+        },
+        {
+          "fileName": "squat_8.mp4",
+          "relativePath": "preprocessedWorkoutVideos/squat/squat_8.mp4",
+          "extension": ".mp4",
+          "sizeBytes": 2998318,
+          "modifiedAt": "2026-04-24T03:44:55.636Z"
+        },
+        {
+          "fileName": "squat_9.mp4",
+          "relativePath": "preprocessedWorkoutVideos/squat/squat_9.mp4",
+          "extension": ".mp4",
+          "sizeBytes": 2245707,
+          "modifiedAt": "2026-04-24T03:44:55.702Z"
+        },
+        {
+          "fileName": "squat_10.mp4",
+          "relativePath": "preprocessedWorkoutVideos/squat/squat_10.mp4",
+          "extension": ".mp4",
+          "sizeBytes": 4376853,
+          "modifiedAt": "2026-04-24T03:44:47.464Z"
+        },
+        {
+          "fileName": "squat_11.mp4",
+          "relativePath": "preprocessedWorkoutVideos/squat/squat_11.mp4",
+          "extension": ".mp4",
+          "sizeBytes": 4172352,
+          "modifiedAt": "2026-04-24T03:44:47.649Z"
+        },
+        {
+          "fileName": "squat_12.mp4",
+          "relativePath": "preprocessedWorkoutVideos/squat/squat_12.mp4",
+          "extension": ".mp4",
+          "sizeBytes": 3291481,
+          "modifiedAt": "2026-04-24T03:44:47.776Z"
+        },
+        {
+          "fileName": "squat_13.mp4",
+          "relativePath": "preprocessedWorkoutVideos/squat/squat_13.mp4",
+          "extension": ".mp4",
+          "sizeBytes": 3499401,
+          "modifiedAt": "2026-04-24T03:44:47.871Z"
+        },
+        {
+          "fileName": "squat_14.mp4",
+          "relativePath": "preprocessedWorkoutVideos/squat/squat_14.mp4",
+          "extension": ".mp4",
+          "sizeBytes": 2539162,
+          "modifiedAt": "2026-04-24T03:44:47.967Z"
+        },
+        {
+          "fileName": "squat_15.mp4",
+          "relativePath": "preprocessedWorkoutVideos/squat/squat_15.mp4",
+          "extension": ".mp4",
+          "sizeBytes": 6881795,
+          "modifiedAt": "2026-04-24T03:44:48.156Z"
+        },
+        {
+          "fileName": "squat_16.mp4",
+          "relativePath": "preprocessedWorkoutVideos/squat/squat_16.mp4",
+          "extension": ".mp4",
+          "sizeBytes": 1469564,
+          "modifiedAt": "2026-04-24T03:44:48.210Z"
+        },
+        {
+          "fileName": "squat_17.mp4",
+          "relativePath": "preprocessedWorkoutVideos/squat/squat_17.mp4",
+          "extension": ".mp4",
+          "sizeBytes": 1798770,
+          "modifiedAt": "2026-04-24T03:44:48.283Z"
+        },
+        {
+          "fileName": "squat_18.mp4",
+          "relativePath": "preprocessedWorkoutVideos/squat/squat_18.mp4",
+          "extension": ".mp4",
+          "sizeBytes": 1592216,
+          "modifiedAt": "2026-04-24T03:44:48.346Z"
+        },
+        {
+          "fileName": "squat_19.mp4",
+          "relativePath": "preprocessedWorkoutVideos/squat/squat_19.mp4",
+          "extension": ".mp4",
+          "sizeBytes": 2457925,
+          "modifiedAt": "2026-04-24T03:44:48.426Z"
+        },
+        {
+          "fileName": "squat_20.mp4",
+          "relativePath": "preprocessedWorkoutVideos/squat/squat_20.mp4",
+          "extension": ".mp4",
+          "sizeBytes": 5869719,
+          "modifiedAt": "2026-04-24T03:44:49.283Z"
+        },
+        {
+          "fileName": "squat_21.mp4",
+          "relativePath": "preprocessedWorkoutVideos/squat/squat_21.mp4",
+          "extension": ".mp4",
+          "sizeBytes": 8104471,
+          "modifiedAt": "2026-04-24T03:44:49.442Z"
+        },
+        {
+          "fileName": "squat_22.mp4",
+          "relativePath": "preprocessedWorkoutVideos/squat/squat_22.mp4",
+          "extension": ".mp4",
+          "sizeBytes": 8535441,
+          "modifiedAt": "2026-04-24T03:44:49.606Z"
+        },
+        {
+          "fileName": "squat_23.mp4",
+          "relativePath": "preprocessedWorkoutVideos/squat/squat_23.mp4",
+          "extension": ".mp4",
+          "sizeBytes": 9194204,
+          "modifiedAt": "2026-04-24T03:44:49.855Z"
+        },
+        {
+          "fileName": "squat_24.mp4",
+          "relativePath": "preprocessedWorkoutVideos/squat/squat_24.mp4",
+          "extension": ".mp4",
+          "sizeBytes": 4136613,
+          "modifiedAt": "2026-04-24T03:44:49.974Z"
+        },
+        {
+          "fileName": "squat_25.mp4",
+          "relativePath": "preprocessedWorkoutVideos/squat/squat_25.mp4",
+          "extension": ".mp4",
+          "sizeBytes": 7902485,
+          "modifiedAt": "2026-04-24T03:44:50.174Z"
+        },
+        {
+          "fileName": "squat_26.mp4",
+          "relativePath": "preprocessedWorkoutVideos/squat/squat_26.mp4",
+          "extension": ".mp4",
+          "sizeBytes": 8020440,
+          "modifiedAt": "2026-04-24T03:44:50.338Z"
+        },
+        {
+          "fileName": "squat_27.mp4",
+          "relativePath": "preprocessedWorkoutVideos/squat/squat_27.mp4",
+          "extension": ".mp4",
+          "sizeBytes": 15411486,
+          "modifiedAt": "2026-04-24T03:44:50.670Z"
+        },
+        {
+          "fileName": "squat_28.mp4",
+          "relativePath": "preprocessedWorkoutVideos/squat/squat_28.mp4",
+          "extension": ".mp4",
+          "sizeBytes": 9133127,
+          "modifiedAt": "2026-04-24T03:44:50.889Z"
+        },
+        {
+          "fileName": "squat_29.mp4",
+          "relativePath": "preprocessedWorkoutVideos/squat/squat_29.mp4",
+          "extension": ".mp4",
+          "sizeBytes": 1639227,
+          "modifiedAt": "2026-04-24T03:44:50.949Z"
+        }
+      ]
+    },
+    {
+      "exerciseKey": "tBarRow",
+      "label": "T-bar row",
+      "folderName": "t bar row",
+      "aliases": [
+        "t-bar row"
+      ],
+      "clipCount": 21,
+      "clips": [
+        {
+          "fileName": "t bar row_1.MOV",
+          "relativePath": "preprocessedWorkoutVideos/t bar row/t bar row_1.MOV",
+          "extension": ".mov",
+          "sizeBytes": 24538302,
+          "modifiedAt": "2026-04-24T03:44:56.159Z"
+        },
+        {
+          "fileName": "t bar row_2.MOV",
+          "relativePath": "preprocessedWorkoutVideos/t bar row/t bar row_2.MOV",
+          "extension": ".mov",
+          "sizeBytes": 37862297,
+          "modifiedAt": "2026-04-24T03:44:58.467Z"
+        },
+        {
+          "fileName": "t bar row_3.MOV",
+          "relativePath": "preprocessedWorkoutVideos/t bar row/t bar row_3.MOV",
+          "extension": ".mov",
+          "sizeBytes": 30215710,
+          "modifiedAt": "2026-04-24T03:44:59.591Z"
+        },
+        {
+          "fileName": "t bar row_4.MOV",
+          "relativePath": "preprocessedWorkoutVideos/t bar row/t bar row_4.MOV",
+          "extension": ".mov",
+          "sizeBytes": 32414753,
+          "modifiedAt": "2026-04-24T03:45:00.225Z"
+        },
+        {
+          "fileName": "t bar row_5.MOV",
+          "relativePath": "preprocessedWorkoutVideos/t bar row/t bar row_5.MOV",
+          "extension": ".mov",
+          "sizeBytes": 32305367,
+          "modifiedAt": "2026-04-24T03:45:00.784Z"
+        },
+        {
+          "fileName": "t bar row_6.MOV",
+          "relativePath": "preprocessedWorkoutVideos/t bar row/t bar row_6.MOV",
+          "extension": ".mov",
+          "sizeBytes": 29326035,
+          "modifiedAt": "2026-04-24T03:45:01.245Z"
+        },
+        {
+          "fileName": "t bar row_7.MOV",
+          "relativePath": "preprocessedWorkoutVideos/t bar row/t bar row_7.MOV",
+          "extension": ".mov",
+          "sizeBytes": 36551686,
+          "modifiedAt": "2026-04-24T03:45:01.924Z"
+        },
+        {
+          "fileName": "t bar row_8.mp4",
+          "relativePath": "preprocessedWorkoutVideos/t bar row/t bar row_8.mp4",
+          "extension": ".mp4",
+          "sizeBytes": 4229113,
+          "modifiedAt": "2026-04-24T03:45:02.032Z"
+        },
+        {
+          "fileName": "t bar row_9.mp4",
+          "relativePath": "preprocessedWorkoutVideos/t bar row/t bar row_9.mp4",
+          "extension": ".mp4",
+          "sizeBytes": 5061169,
+          "modifiedAt": "2026-04-24T03:45:02.144Z"
+        },
+        {
+          "fileName": "t bar row_10.mp4",
+          "relativePath": "preprocessedWorkoutVideos/t bar row/t bar row_10.mp4",
+          "extension": ".mp4",
+          "sizeBytes": 3806933,
+          "modifiedAt": "2026-04-24T03:44:56.286Z"
+        },
+        {
+          "fileName": "t bar row_11.mp4",
+          "relativePath": "preprocessedWorkoutVideos/t bar row/t bar row_11.mp4",
+          "extension": ".mp4",
+          "sizeBytes": 3399766,
+          "modifiedAt": "2026-04-24T03:44:56.397Z"
+        },
+        {
+          "fileName": "t bar row_12.mp4",
+          "relativePath": "preprocessedWorkoutVideos/t bar row/t bar row_12.mp4",
+          "extension": ".mp4",
+          "sizeBytes": 6556319,
+          "modifiedAt": "2026-04-24T03:44:56.524Z"
+        },
+        {
+          "fileName": "t bar row_13.mp4",
+          "relativePath": "preprocessedWorkoutVideos/t bar row/t bar row_13.mp4",
+          "extension": ".mp4",
+          "sizeBytes": 2565624,
+          "modifiedAt": "2026-04-24T03:44:56.604Z"
+        },
+        {
+          "fileName": "t bar row_14.mp4",
+          "relativePath": "preprocessedWorkoutVideos/t bar row/t bar row_14.mp4",
+          "extension": ".mp4",
+          "sizeBytes": 4017748,
+          "modifiedAt": "2026-04-24T03:44:56.686Z"
+        },
+        {
+          "fileName": "t bar row_15.mp4",
+          "relativePath": "preprocessedWorkoutVideos/t bar row/t bar row_15.mp4",
+          "extension": ".mp4",
+          "sizeBytes": 4256136,
+          "modifiedAt": "2026-04-24T03:44:56.800Z"
+        },
+        {
+          "fileName": "t bar row_16.mp4",
+          "relativePath": "preprocessedWorkoutVideos/t bar row/t bar row_16.mp4",
+          "extension": ".mp4",
+          "sizeBytes": 11540311,
+          "modifiedAt": "2026-04-24T03:44:57.095Z"
+        },
+        {
+          "fileName": "t bar row_17.mp4",
+          "relativePath": "preprocessedWorkoutVideos/t bar row/t bar row_17.mp4",
+          "extension": ".mp4",
+          "sizeBytes": 8934995,
+          "modifiedAt": "2026-04-24T03:44:57.259Z"
+        },
+        {
+          "fileName": "t bar row_18.mp4",
+          "relativePath": "preprocessedWorkoutVideos/t bar row/t bar row_18.mp4",
+          "extension": ".mp4",
+          "sizeBytes": 9556883,
+          "modifiedAt": "2026-04-24T03:44:57.477Z"
+        },
+        {
+          "fileName": "t bar row_19.mp4",
+          "relativePath": "preprocessedWorkoutVideos/t bar row/t bar row_19.mp4",
+          "extension": ".mp4",
+          "sizeBytes": 13324184,
+          "modifiedAt": "2026-04-24T03:44:57.751Z"
+        },
+        {
+          "fileName": "t bar row_20.mp4",
+          "relativePath": "preprocessedWorkoutVideos/t bar row/t bar row_20.mp4",
+          "extension": ".mp4",
+          "sizeBytes": 17524168,
+          "modifiedAt": "2026-04-24T03:44:58.828Z"
+        },
+        {
+          "fileName": "t bar row_21.mp4",
+          "relativePath": "preprocessedWorkoutVideos/t bar row/t bar row_21.mp4",
+          "extension": ".mp4",
+          "sizeBytes": 10207164,
+          "modifiedAt": "2026-04-24T03:44:59.000Z"
+        }
+      ]
+    },
+    {
+      "exerciseKey": "tricepDips",
+      "label": "Tricep dips",
+      "folderName": "tricep dips",
+      "aliases": [
+        "dips"
+      ],
+      "clipCount": 20,
+      "clips": [
+        {
+          "fileName": "tricep dips_1.MOV",
+          "relativePath": "preprocessedWorkoutVideos/tricep dips/tricep dips_1.MOV",
+          "extension": ".mov",
+          "sizeBytes": 43277473,
+          "modifiedAt": "2026-04-24T03:45:06.427Z"
+        },
+        {
+          "fileName": "tricep dips_2.MOV",
+          "relativePath": "preprocessedWorkoutVideos/tricep dips/tricep dips_2.MOV",
+          "extension": ".mov",
+          "sizeBytes": 58081568,
+          "modifiedAt": "2026-04-24T03:45:09.676Z"
+        },
+        {
+          "fileName": "tricep dips_3.MOV",
+          "relativePath": "preprocessedWorkoutVideos/tricep dips/tricep dips_3.MOV",
+          "extension": ".mov",
+          "sizeBytes": 36212154,
+          "modifiedAt": "2026-04-24T03:45:10.584Z"
+        },
+        {
+          "fileName": "tricep dips_4.MOV",
+          "relativePath": "preprocessedWorkoutVideos/tricep dips/tricep dips_4.MOV",
+          "extension": ".mov",
+          "sizeBytes": 14214670,
+          "modifiedAt": "2026-04-24T03:45:10.881Z"
+        },
+        {
+          "fileName": "tricep dips_5.mp4",
+          "relativePath": "preprocessedWorkoutVideos/tricep dips/tricep dips_5.mp4",
+          "extension": ".mp4",
+          "sizeBytes": 7600375,
+          "modifiedAt": "2026-04-24T03:45:11.037Z"
+        },
+        {
+          "fileName": "tricep dips_6.mp4",
+          "relativePath": "preprocessedWorkoutVideos/tricep dips/tricep dips_6.mp4",
+          "extension": ".mp4",
+          "sizeBytes": 7305804,
+          "modifiedAt": "2026-04-24T03:45:11.220Z"
+        },
+        {
+          "fileName": "tricep dips_7.mp4",
+          "relativePath": "preprocessedWorkoutVideos/tricep dips/tricep dips_7.mp4",
+          "extension": ".mp4",
+          "sizeBytes": 7467478,
+          "modifiedAt": "2026-04-24T03:45:11.363Z"
+        },
+        {
+          "fileName": "tricep dips_8.mp4",
+          "relativePath": "preprocessedWorkoutVideos/tricep dips/tricep dips_8.mp4",
+          "extension": ".mp4",
+          "sizeBytes": 3431877,
+          "modifiedAt": "2026-04-24T03:45:11.461Z"
+        },
+        {
+          "fileName": "tricep dips_9.mp4",
+          "relativePath": "preprocessedWorkoutVideos/tricep dips/tricep dips_9.mp4",
+          "extension": ".mp4",
+          "sizeBytes": 9258648,
+          "modifiedAt": "2026-04-24T03:45:11.680Z"
+        },
+        {
+          "fileName": "tricep dips_10.mp4",
+          "relativePath": "preprocessedWorkoutVideos/tricep dips/tricep dips_10.mp4",
+          "extension": ".mp4",
+          "sizeBytes": 10612620,
+          "modifiedAt": "2026-04-24T03:45:06.680Z"
+        },
+        {
+          "fileName": "tricep dips_11.mp4",
+          "relativePath": "preprocessedWorkoutVideos/tricep dips/tricep dips_11.mp4",
+          "extension": ".mp4",
+          "sizeBytes": 8707260,
+          "modifiedAt": "2026-04-24T03:45:06.949Z"
+        },
+        {
+          "fileName": "tricep dips_12.mp4",
+          "relativePath": "preprocessedWorkoutVideos/tricep dips/tricep dips_12.mp4",
+          "extension": ".mp4",
+          "sizeBytes": 1761398,
+          "modifiedAt": "2026-04-24T03:45:07.015Z"
+        },
+        {
+          "fileName": "tricep dips_13.mp4",
+          "relativePath": "preprocessedWorkoutVideos/tricep dips/tricep dips_13.mp4",
+          "extension": ".mp4",
+          "sizeBytes": 3206026,
+          "modifiedAt": "2026-04-24T03:45:07.111Z"
+        },
+        {
+          "fileName": "tricep dips_14.mp4",
+          "relativePath": "preprocessedWorkoutVideos/tricep dips/tricep dips_14.mp4",
+          "extension": ".mp4",
+          "sizeBytes": 4652912,
+          "modifiedAt": "2026-04-24T03:45:07.234Z"
+        },
+        {
+          "fileName": "tricep dips_15.mp4",
+          "relativePath": "preprocessedWorkoutVideos/tricep dips/tricep dips_15.mp4",
+          "extension": ".mp4",
+          "sizeBytes": 5654468,
+          "modifiedAt": "2026-04-24T03:45:07.457Z"
+        },
+        {
+          "fileName": "tricep dips_16.mp4",
+          "relativePath": "preprocessedWorkoutVideos/tricep dips/tricep dips_16.mp4",
+          "extension": ".mp4",
+          "sizeBytes": 7819550,
+          "modifiedAt": "2026-04-24T03:45:07.664Z"
+        },
+        {
+          "fileName": "tricep dips_17.mp4",
+          "relativePath": "preprocessedWorkoutVideos/tricep dips/tricep dips_17.mp4",
+          "extension": ".mp4",
+          "sizeBytes": 15430114,
+          "modifiedAt": "2026-04-24T03:45:07.955Z"
+        },
+        {
+          "fileName": "tricep dips_18.mp4",
+          "relativePath": "preprocessedWorkoutVideos/tricep dips/tricep dips_18.mp4",
+          "extension": ".mp4",
+          "sizeBytes": 14651581,
+          "modifiedAt": "2026-04-24T03:45:08.329Z"
+        },
+        {
+          "fileName": "tricep dips_19.mp4",
+          "relativePath": "preprocessedWorkoutVideos/tricep dips/tricep dips_19.mp4",
+          "extension": ".mp4",
+          "sizeBytes": 11551285,
+          "modifiedAt": "2026-04-24T03:45:08.726Z"
+        },
+        {
+          "fileName": "tricep dips_20.mp4",
+          "relativePath": "preprocessedWorkoutVideos/tricep dips/tricep dips_20.mp4",
+          "extension": ".mp4",
+          "sizeBytes": 7008812,
+          "modifiedAt": "2026-04-24T03:45:09.802Z"
+        }
+      ]
+    },
+    {
+      "exerciseKey": "tricepPushdown",
+      "label": "Tricep pushdown",
+      "folderName": "tricep Pushdown",
+      "aliases": [
+        "tricep pushdown"
+      ],
+      "clipCount": 50,
+      "clips": [
+        {
+          "fileName": "tricep pushdown_1.mp4",
+          "relativePath": "preprocessedWorkoutVideos/tricep Pushdown/tricep pushdown_1.mp4",
+          "extension": ".mp4",
+          "sizeBytes": 337748,
+          "modifiedAt": "2026-04-24T03:45:02.190Z"
+        },
+        {
+          "fileName": "tricep pushdown_2.mp4",
+          "relativePath": "preprocessedWorkoutVideos/tricep Pushdown/tricep pushdown_2.mp4",
+          "extension": ".mp4",
+          "sizeBytes": 330522,
+          "modifiedAt": "2026-04-24T03:45:02.637Z"
+        },
+        {
+          "fileName": "tricep pushdown_3.mp4",
+          "relativePath": "preprocessedWorkoutVideos/tricep Pushdown/tricep pushdown_3.mp4",
+          "extension": ".mp4",
+          "sizeBytes": 283520,
+          "modifiedAt": "2026-04-24T03:45:03.063Z"
+        },
+        {
+          "fileName": "tricep pushdown_4.mp4",
+          "relativePath": "preprocessedWorkoutVideos/tricep Pushdown/tricep pushdown_4.mp4",
+          "extension": ".mp4",
+          "sizeBytes": 240027,
+          "modifiedAt": "2026-04-24T03:45:03.619Z"
+        },
+        {
+          "fileName": "tricep pushdown_5.mp4",
+          "relativePath": "preprocessedWorkoutVideos/tricep Pushdown/tricep pushdown_5.mp4",
+          "extension": ".mp4",
+          "sizeBytes": 244310,
+          "modifiedAt": "2026-04-24T03:45:05.284Z"
+        },
+        {
+          "fileName": "tricep pushdown_6.mp4",
+          "relativePath": "preprocessedWorkoutVideos/tricep Pushdown/tricep pushdown_6.mp4",
+          "extension": ".mp4",
+          "sizeBytes": 301028,
+          "modifiedAt": "2026-04-24T03:45:05.573Z"
+        },
+        {
+          "fileName": "tricep pushdown_7.mp4",
+          "relativePath": "preprocessedWorkoutVideos/tricep Pushdown/tricep pushdown_7.mp4",
+          "extension": ".mp4",
+          "sizeBytes": 384391,
+          "modifiedAt": "2026-04-24T03:45:05.607Z"
+        },
+        {
+          "fileName": "tricep pushdown_8.mp4",
+          "relativePath": "preprocessedWorkoutVideos/tricep Pushdown/tricep pushdown_8.mp4",
+          "extension": ".mp4",
+          "sizeBytes": 332107,
+          "modifiedAt": "2026-04-24T03:45:05.637Z"
+        },
+        {
+          "fileName": "tricep pushdown_9.mp4",
+          "relativePath": "preprocessedWorkoutVideos/tricep Pushdown/tricep pushdown_9.mp4",
+          "extension": ".mp4",
+          "sizeBytes": 128243,
+          "modifiedAt": "2026-04-24T03:45:05.667Z"
+        },
+        {
+          "fileName": "tricep pushdown_10.mp4",
+          "relativePath": "preprocessedWorkoutVideos/tricep Pushdown/tricep pushdown_10.mp4",
+          "extension": ".mp4",
+          "sizeBytes": 392444,
+          "modifiedAt": "2026-04-24T03:45:02.223Z"
+        },
+        {
+          "fileName": "tricep pushdown_11.mp4",
+          "relativePath": "preprocessedWorkoutVideos/tricep Pushdown/tricep pushdown_11.mp4",
+          "extension": ".mp4",
+          "sizeBytes": 397876,
+          "modifiedAt": "2026-04-24T03:45:02.270Z"
+        },
+        {
+          "fileName": "tricep pushdown_12.mp4",
+          "relativePath": "preprocessedWorkoutVideos/tricep Pushdown/tricep pushdown_12.mp4",
+          "extension": ".mp4",
+          "sizeBytes": 426739,
+          "modifiedAt": "2026-04-24T03:45:02.320Z"
+        },
+        {
+          "fileName": "tricep pushdown_13.mp4",
+          "relativePath": "preprocessedWorkoutVideos/tricep Pushdown/tricep pushdown_13.mp4",
+          "extension": ".mp4",
+          "sizeBytes": 284009,
+          "modifiedAt": "2026-04-24T03:45:02.358Z"
+        },
+        {
+          "fileName": "tricep pushdown_14.mp4",
+          "relativePath": "preprocessedWorkoutVideos/tricep Pushdown/tricep pushdown_14.mp4",
+          "extension": ".mp4",
+          "sizeBytes": 225349,
+          "modifiedAt": "2026-04-24T03:45:02.394Z"
+        },
+        {
+          "fileName": "tricep pushdown_15.mp4",
+          "relativePath": "preprocessedWorkoutVideos/tricep Pushdown/tricep pushdown_15.mp4",
+          "extension": ".mp4",
+          "sizeBytes": 250783,
+          "modifiedAt": "2026-04-24T03:45:02.428Z"
+        },
+        {
+          "fileName": "tricep pushdown_16.mp4",
+          "relativePath": "preprocessedWorkoutVideos/tricep Pushdown/tricep pushdown_16.mp4",
+          "extension": ".mp4",
+          "sizeBytes": 370094,
+          "modifiedAt": "2026-04-24T03:45:02.475Z"
+        },
+        {
+          "fileName": "tricep pushdown_17.mp4",
+          "relativePath": "preprocessedWorkoutVideos/tricep Pushdown/tricep pushdown_17.mp4",
+          "extension": ".mp4",
+          "sizeBytes": 316324,
+          "modifiedAt": "2026-04-24T03:45:02.507Z"
+        },
+        {
+          "fileName": "tricep pushdown_18.mp4",
+          "relativePath": "preprocessedWorkoutVideos/tricep Pushdown/tricep pushdown_18.mp4",
+          "extension": ".mp4",
+          "sizeBytes": 391980,
+          "modifiedAt": "2026-04-24T03:45:02.557Z"
+        },
+        {
+          "fileName": "tricep pushdown_19.mp4",
+          "relativePath": "preprocessedWorkoutVideos/tricep Pushdown/tricep pushdown_19.mp4",
+          "extension": ".mp4",
+          "sizeBytes": 415565,
+          "modifiedAt": "2026-04-24T03:45:02.591Z"
+        },
+        {
+          "fileName": "tricep pushdown_20.mp4",
+          "relativePath": "preprocessedWorkoutVideos/tricep Pushdown/tricep pushdown_20.mp4",
+          "extension": ".mp4",
+          "sizeBytes": 246630,
+          "modifiedAt": "2026-04-24T03:45:02.673Z"
+        },
+        {
+          "fileName": "tricep pushdown_21.mp4",
+          "relativePath": "preprocessedWorkoutVideos/tricep Pushdown/tricep pushdown_21.mp4",
+          "extension": ".mp4",
+          "sizeBytes": 214486,
+          "modifiedAt": "2026-04-24T03:45:02.709Z"
+        },
+        {
+          "fileName": "tricep pushdown_22.mp4",
+          "relativePath": "preprocessedWorkoutVideos/tricep Pushdown/tricep pushdown_22.mp4",
+          "extension": ".mp4",
+          "sizeBytes": 294029,
+          "modifiedAt": "2026-04-24T03:45:02.745Z"
+        },
+        {
+          "fileName": "tricep pushdown_23.mp4",
+          "relativePath": "preprocessedWorkoutVideos/tricep Pushdown/tricep pushdown_23.mp4",
+          "extension": ".mp4",
+          "sizeBytes": 286054,
+          "modifiedAt": "2026-04-24T03:45:02.777Z"
+        },
+        {
+          "fileName": "tricep pushdown_24.mp4",
+          "relativePath": "preprocessedWorkoutVideos/tricep Pushdown/tricep pushdown_24.mp4",
+          "extension": ".mp4",
+          "sizeBytes": 370308,
+          "modifiedAt": "2026-04-24T03:45:02.824Z"
+        },
+        {
+          "fileName": "tricep pushdown_25.mp4",
+          "relativePath": "preprocessedWorkoutVideos/tricep Pushdown/tricep pushdown_25.mp4",
+          "extension": ".mp4",
+          "sizeBytes": 301842,
+          "modifiedAt": "2026-04-24T03:45:02.866Z"
+        },
+        {
+          "fileName": "tricep pushdown_26.mp4",
+          "relativePath": "preprocessedWorkoutVideos/tricep Pushdown/tricep pushdown_26.mp4",
+          "extension": ".mp4",
+          "sizeBytes": 319531,
+          "modifiedAt": "2026-04-24T03:45:02.907Z"
+        },
+        {
+          "fileName": "tricep pushdown_27.mp4",
+          "relativePath": "preprocessedWorkoutVideos/tricep Pushdown/tricep pushdown_27.mp4",
+          "extension": ".mp4",
+          "sizeBytes": 333264,
+          "modifiedAt": "2026-04-24T03:45:02.946Z"
+        },
+        {
+          "fileName": "tricep pushdown_28.mp4",
+          "relativePath": "preprocessedWorkoutVideos/tricep Pushdown/tricep pushdown_28.mp4",
+          "extension": ".mp4",
+          "sizeBytes": 387882,
+          "modifiedAt": "2026-04-24T03:45:02.985Z"
+        },
+        {
+          "fileName": "tricep pushdown_29.mp4",
+          "relativePath": "preprocessedWorkoutVideos/tricep Pushdown/tricep pushdown_29.mp4",
+          "extension": ".mp4",
+          "sizeBytes": 353776,
+          "modifiedAt": "2026-04-24T03:45:03.024Z"
+        },
+        {
+          "fileName": "tricep pushdown_30.mp4",
+          "relativePath": "preprocessedWorkoutVideos/tricep Pushdown/tricep pushdown_30.mp4",
+          "extension": ".mp4",
+          "sizeBytes": 391704,
+          "modifiedAt": "2026-04-24T03:45:03.095Z"
+        },
+        {
+          "fileName": "tricep pushdown_31.mp4",
+          "relativePath": "preprocessedWorkoutVideos/tricep Pushdown/tricep pushdown_31.mp4",
+          "extension": ".mp4",
+          "sizeBytes": 327053,
+          "modifiedAt": "2026-04-24T03:45:03.142Z"
+        },
+        {
+          "fileName": "tricep pushdown_32.mp4",
+          "relativePath": "preprocessedWorkoutVideos/tricep Pushdown/tricep pushdown_32.mp4",
+          "extension": ".mp4",
+          "sizeBytes": 363571,
+          "modifiedAt": "2026-04-24T03:45:03.174Z"
+        },
+        {
+          "fileName": "tricep pushdown_33.mp4",
+          "relativePath": "preprocessedWorkoutVideos/tricep Pushdown/tricep pushdown_33.mp4",
+          "extension": ".mp4",
+          "sizeBytes": 315080,
+          "modifiedAt": "2026-04-24T03:45:03.226Z"
+        },
+        {
+          "fileName": "tricep pushdown_34.mp4",
+          "relativePath": "preprocessedWorkoutVideos/tricep Pushdown/tricep pushdown_34.mp4",
+          "extension": ".mp4",
+          "sizeBytes": 267093,
+          "modifiedAt": "2026-04-24T03:45:03.253Z"
+        },
+        {
+          "fileName": "tricep pushdown_35.mp4",
+          "relativePath": "preprocessedWorkoutVideos/tricep Pushdown/tricep pushdown_35.mp4",
+          "extension": ".mp4",
+          "sizeBytes": 262274,
+          "modifiedAt": "2026-04-24T03:45:03.290Z"
+        },
+        {
+          "fileName": "tricep pushdown_36.mp4",
+          "relativePath": "preprocessedWorkoutVideos/tricep Pushdown/tricep pushdown_36.mp4",
+          "extension": ".mp4",
+          "sizeBytes": 236081,
+          "modifiedAt": "2026-04-24T03:45:03.317Z"
+        },
+        {
+          "fileName": "tricep pushdown_37.mp4",
+          "relativePath": "preprocessedWorkoutVideos/tricep Pushdown/tricep pushdown_37.mp4",
+          "extension": ".mp4",
+          "sizeBytes": 180601,
+          "modifiedAt": "2026-04-24T03:45:03.364Z"
+        },
+        {
+          "fileName": "tricep pushdown_38.mp4",
+          "relativePath": "preprocessedWorkoutVideos/tricep Pushdown/tricep pushdown_38.mp4",
+          "extension": ".mp4",
+          "sizeBytes": 2282448,
+          "modifiedAt": "2026-04-24T03:45:03.445Z"
+        },
+        {
+          "fileName": "tricep pushdown_39.mp4",
+          "relativePath": "preprocessedWorkoutVideos/tricep Pushdown/tricep pushdown_39.mp4",
+          "extension": ".mp4",
+          "sizeBytes": 4507381,
+          "modifiedAt": "2026-04-24T03:45:03.571Z"
+        },
+        {
+          "fileName": "tricep pushdown_40.mp4",
+          "relativePath": "preprocessedWorkoutVideos/tricep Pushdown/tricep pushdown_40.mp4",
+          "extension": ".mp4",
+          "sizeBytes": 9437610,
+          "modifiedAt": "2026-04-24T03:45:03.778Z"
+        },
+        {
+          "fileName": "tricep pushdown_41.mp4",
+          "relativePath": "preprocessedWorkoutVideos/tricep Pushdown/tricep pushdown_41.mp4",
+          "extension": ".mp4",
+          "sizeBytes": 5134592,
+          "modifiedAt": "2026-04-24T03:45:03.953Z"
+        },
+        {
+          "fileName": "tricep pushdown_42.mp4",
+          "relativePath": "preprocessedWorkoutVideos/tricep Pushdown/tricep pushdown_42.mp4",
+          "extension": ".mp4",
+          "sizeBytes": 10890769,
+          "modifiedAt": "2026-04-24T03:45:04.161Z"
+        },
+        {
+          "fileName": "tricep pushdown_43.mp4",
+          "relativePath": "preprocessedWorkoutVideos/tricep Pushdown/tricep pushdown_43.mp4",
+          "extension": ".mp4",
+          "sizeBytes": 6140122,
+          "modifiedAt": "2026-04-24T03:45:04.400Z"
+        },
+        {
+          "fileName": "tricep pushdown_44.mp4",
+          "relativePath": "preprocessedWorkoutVideos/tricep Pushdown/tricep pushdown_44.mp4",
+          "extension": ".mp4",
+          "sizeBytes": 5190306,
+          "modifiedAt": "2026-04-24T03:45:04.548Z"
+        },
+        {
+          "fileName": "tricep pushdown_45.mp4",
+          "relativePath": "preprocessedWorkoutVideos/tricep Pushdown/tricep pushdown_45.mp4",
+          "extension": ".mp4",
+          "sizeBytes": 2581395,
+          "modifiedAt": "2026-04-24T03:45:04.624Z"
+        },
+        {
+          "fileName": "tricep pushdown_46.mp4",
+          "relativePath": "preprocessedWorkoutVideos/tricep Pushdown/tricep pushdown_46.mp4",
+          "extension": ".mp4",
+          "sizeBytes": 5309452,
+          "modifiedAt": "2026-04-24T03:45:04.781Z"
+        },
+        {
+          "fileName": "tricep pushdown_47.mp4",
+          "relativePath": "preprocessedWorkoutVideos/tricep Pushdown/tricep pushdown_47.mp4",
+          "extension": ".mp4",
+          "sizeBytes": 1866137,
+          "modifiedAt": "2026-04-24T03:45:04.864Z"
+        },
+        {
+          "fileName": "tricep pushdown_48.mp4",
+          "relativePath": "preprocessedWorkoutVideos/tricep Pushdown/tricep pushdown_48.mp4",
+          "extension": ".mp4",
+          "sizeBytes": 6143850,
+          "modifiedAt": "2026-04-24T03:45:05.035Z"
+        },
+        {
+          "fileName": "tricep pushdown_49.mp4",
+          "relativePath": "preprocessedWorkoutVideos/tricep Pushdown/tricep pushdown_49.mp4",
+          "extension": ".mp4",
+          "sizeBytes": 10125205,
+          "modifiedAt": "2026-04-24T03:45:05.241Z"
+        },
+        {
+          "fileName": "tricep pushdown_50.mp4",
+          "relativePath": "preprocessedWorkoutVideos/tricep Pushdown/tricep pushdown_50.mp4",
+          "extension": ".mp4",
+          "sizeBytes": 4559930,
+          "modifiedAt": "2026-04-24T03:45:05.540Z"
+        }
+      ]
+    }
+  ]
+}
