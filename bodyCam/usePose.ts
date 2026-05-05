@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 
 import { calculateJointAngles, EMPTY_JOINT_ANGLES, type JointAngles, type PoseLandmark } from "@/lib/pose";
-import { createInitialWorkoutDetections, detectWorkoutReps, type WorkoutDetections } from "@/lib/workout-detections";
+import { classifyActiveWorkout, createInitialWorkoutDetections, detectWorkoutReps, type WorkoutDetections, type WorkoutExerciseReading } from "../lib/workout-detections";
 
 type UserAgentData = {
   mobile?: boolean;
@@ -49,6 +49,7 @@ type PoseTrackerState = {
   poseDetected: boolean;
   jointAngles: JointAngles;
   workoutDetections: WorkoutDetections;
+  activeWorkout: WorkoutExerciseReading | null;
 };
 
 const LANDMARK_VISIBILITY_THRESHOLD = 0.35;
@@ -78,6 +79,7 @@ export function usePose(
   const [poseDetected, setPoseDetected] = useState(false);
   const [jointAngles, setJointAngles] = useState<JointAngles>({ ...EMPTY_JOINT_ANGLES });
   const [workoutDetections, setWorkoutDetections] = useState<WorkoutDetections>(createInitialWorkoutDetections());
+  const [activeWorkout, setActiveWorkout] = useState<WorkoutExerciseReading | null>(null);
 
   useEffect(() => {
     if (!scriptLoaded || !window.Pose || poseRef.current) {
@@ -155,6 +157,7 @@ export function usePose(
       setPoseDetected(false);
       setJointAngles({ ...EMPTY_JOINT_ANGLES });
       setWorkoutDetections(createInitialWorkoutDetections());
+      setActiveWorkout(null);
       lastStableAnglesRef.current = { ...EMPTY_JOINT_ANGLES };
       workoutDetectionsRef.current = createInitialWorkoutDetections();
       missedFramesRef.current = 0;
@@ -248,6 +251,7 @@ export function usePose(
       const mapY = (y: number) => offsetY + y * drawHeight;
 
       context.clearRect(0, 0, width, height);
+      context.drawImage(video, offsetX, offsetY, drawWidth, drawHeight);
       context.lineCap = "round";
       context.lineJoin = "round";
 
@@ -333,12 +337,16 @@ export function usePose(
               nextDetections[key] = {
                 ...currentDetections[key],
                 metric: null,
+                state: "untracked",
+                stateDifference: null,
+                confidence: 0,
               };
             }
 
             workoutDetectionsRef.current = nextDetections;
             return nextDetections;
           });
+          setActiveWorkout(null);
         } else {
           setJointAngles({ ...lastStableAnglesRef.current });
         }
@@ -365,6 +373,7 @@ export function usePose(
       const nextWorkoutDetections = detectWorkoutReps(nextAngles, workoutDetectionsRef.current);
       workoutDetectionsRef.current = nextWorkoutDetections;
       setWorkoutDetections(nextWorkoutDetections);
+      setActiveWorkout(classifyActiveWorkout(nextAngles));
 
       drawPoseOverlay(landmarks);
 
@@ -388,5 +397,6 @@ export function usePose(
     poseDetected,
     jointAngles,
     workoutDetections,
+    activeWorkout,
   };
 }

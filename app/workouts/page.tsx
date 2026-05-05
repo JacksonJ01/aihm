@@ -98,7 +98,7 @@ async function WorkoutsPageContent() {
         <SectionCard
           eyebrow="Before you begin"
           title="Session setup"
-          description="A compact overview of the conditions that keep the live session stable and readable across devices."
+          description=""
         >
           <div className="grid gap-3 lg:grid-cols-3">
             {prepChecklist.map((item) => (
@@ -113,7 +113,7 @@ async function WorkoutsPageContent() {
         <SectionCard
           eyebrow="Live session"
           title="Train from one focused workspace"
-          description="The live workout area keeps controls, feed state, and camera guidance together so the page behaves like a session tool instead of a generic content block."
+          description=""
         >
           <WorkoutsSession />
         </SectionCard>

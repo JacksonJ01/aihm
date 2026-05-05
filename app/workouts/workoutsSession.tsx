@@ -6,7 +6,7 @@ import Controls from "@/components/controls";
 import PoseEstimation from "@/components/pose/poseEstimation";
 import { useCamera } from "@/bodyCam/useCamera";
 import { usePose } from "@/bodyCam/usePose";
-import { WORKOUT_DETECTION_ORDER } from "@/lib/workout-detections";
+import { WORKOUT_DETECTION_ORDER } from "../../lib/workout-detections";
 
 const POSE_SCRIPT_ID = "mediapipe-pose-script";
 const POSE_SCRIPT_SRC = "/@mediapipe/pose/pose.js";
@@ -94,7 +94,7 @@ export default function WorkoutsSession() {
     };
   }, []);
 
-  const { trackerReady, poseDetected, jointAngles, workoutDetections } = usePose(videoRef, canvasRef, isCameraOn, scriptLoaded);
+  const { trackerReady, poseDetected, jointAngles, workoutDetections, activeWorkout } = usePose(videoRef, canvasRef, isCameraOn, scriptLoaded);
 
   const workoutDetectionCards = WORKOUT_DETECTION_ORDER.map((exerciseKey) => workoutDetections[exerciseKey]);
 
@@ -124,58 +124,30 @@ export default function WorkoutsSession() {
           </div>
         </div>
 
-        <div className="space-y-4 lg:hidden">
-          <div className="space-y-4 min-w-0">
-            <Camera videoRef={videoRef} canvasRef={canvasRef} isVisible={isCameraOn} />
-            {scriptError ? (
-              <div className="rounded-2xl border border-dashed border-red-300/70 bg-red-50 px-4 py-4 text-sm leading-6 text-red-700">
-                {scriptError} Check the browser console and verify that /@mediapipe/pose/pose.js is accessible.
-              </div>
-            ) : null}
-            {isCameraOn && !poseDetected ? (
-              <div className="rounded-2xl border border-dashed border-black/10 bg-background/60 px-4 py-4 text-sm leading-6 text-muted-foreground">
-                The camera is running, but the tracker has not found a clear full-body pose yet. Step back slightly, keep your full body in frame, and face the camera.
-              </div>
-            ) : null}
-            {!isCameraOn ? (
-              <div className="rounded-2xl border border-dashed border-black/10 bg-background/60 px-4 py-4 text-sm leading-6 text-muted-foreground">
-                The preview area remains inactive until camera access is enabled for the session.
-              </div>
-            ) : null}
+        {activeWorkout ? (
+          <div className="mb-4 rounded-[22px] border border-black/10 bg-slate-950 px-4 py-3 text-sm text-white shadow-[0_14px_30px_rgba(15,23,42,0.18)]">
+            <div className="text-xs uppercase tracking-[0.18em] text-white/60">Current workout hypothesis</div>
+            <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-sm font-medium">
+              <span>{activeWorkout.label}</span>
+              <span className="text-white/60">{activeWorkout.state}</span>
+              <span className="text-white/60">
+                {activeWorkout.stateDifference === null ? "state difference n/a" : `state difference ${(activeWorkout.stateDifference * 100).toFixed(0)}%`}
+              </span>
+            </div>
           </div>
+        ) : null}
 
-          <div className="grid grid-cols-2 gap-2">
-            <PoseEstimation
-              jointAngles={jointAngles}
-              trackerReady={trackerReady}
-              poseDetected={poseDetected}
-              isCameraOn={isCameraOn}
-              side="left"
-              className="min-w-0"
-            />
-
-            <PoseEstimation
-              jointAngles={jointAngles}
-              trackerReady={trackerReady}
-              poseDetected={poseDetected}
-              isCameraOn={isCameraOn}
-              side="right"
-              className="min-w-0"
-            />
-          </div>
-        </div>
-
-        <div className="hidden lg:grid gap-4 lg:grid-cols-[minmax(150px,0.58fr)_minmax(0,1.54fr)_minmax(150px,0.58fr)] lg:items-start xl:gap-6">
+        <div className="grid gap-4 lg:grid-cols-[minmax(150px,0.58fr)_minmax(0,1.54fr)_minmax(150px,0.58fr)] lg:items-start xl:gap-6">
           <PoseEstimation
             jointAngles={jointAngles}
             trackerReady={trackerReady}
             poseDetected={poseDetected}
             isCameraOn={isCameraOn}
             side="left"
-            className="min-w-0"
+            className="order-1 min-w-0"
           />
 
-          <div className="space-y-4 min-w-0">
+          <div className="order-2 space-y-4 min-w-0 lg:order-none">
             <Camera videoRef={videoRef} canvasRef={canvasRef} isVisible={isCameraOn} />
             {scriptError ? (
               <div className="rounded-2xl border border-dashed border-red-300/70 bg-red-50 px-4 py-4 text-sm leading-6 text-red-700">
@@ -200,7 +172,7 @@ export default function WorkoutsSession() {
             poseDetected={poseDetected}
             isCameraOn={isCameraOn}
             side="right"
-            className="min-w-0"
+            className="order-3 min-w-0"
           />
         </div>
 
@@ -220,13 +192,13 @@ export default function WorkoutsSession() {
                   <div>
                     <div className="text-sm font-semibold tracking-[-0.02em] text-foreground">{detection.label}</div>
                     <div className="mt-1 text-xs uppercase tracking-[0.14em] text-muted-foreground">
-                      {detection.isTracked ? detection.stage : "dataset label"}
+                      {detection.isTracked ? detection.state : "dataset label"}
                     </div>
                   </div>
                   <div className="rounded-full bg-slate-950 px-3 py-1 text-xs font-semibold text-white">{String(detection.reps).padStart(2, "0")}</div>
                 </div>
                 <div className="mt-3 text-sm leading-6 text-muted-foreground">
-                  Metric: {detection.metric === null ? "--" : `${detection.metric}°`}
+                  Metric: {detection.metric === null ? "--" : `${detection.metric}°`} · State delta: {detection.stateDifference === null ? "--" : `${Math.round(detection.stateDifference * 100)}%`}
                 </div>
               </article>
             ))}

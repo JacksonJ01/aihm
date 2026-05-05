@@ -24,13 +24,7 @@ export default function Camera({ videoRef, canvasRef, isVisible }: Props) {
 
         <canvas
           ref={canvasRef}
-          style={{
-            position: "absolute",
-            inset: 0,
-            width: "100%",
-            height: "100%",
-            pointerEvents: "none",
-          }}
+          className="pointer-events-none absolute inset-0 h-full w-full"
         />
       </div>
     </div>
