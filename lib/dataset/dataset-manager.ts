@@ -32,7 +32,7 @@ const CSV_HEADER =
 
 // ─── Internal helpers ─────────────────────────────────────────────────────────
 
-function csvEscape(value: string | number): string {
+function csvEscape(value: string | number | boolean): string {
   const s = String(value);
   return s.includes(",") || s.includes('"') || s.includes("\n")
     ? `"${s.replace(/"/g, '""')}"`
