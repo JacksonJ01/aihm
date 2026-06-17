@@ -4,6 +4,8 @@ import { useEffect, useRef, useState } from "react";
 
 import { calculateJointAngles, EMPTY_JOINT_ANGLES, type JointAngles, type PoseLandmark } from "@/lib/pose";
 import { classifyActiveWorkout, createInitialWorkoutDetections, detectWorkoutReps, type WorkoutDetections, type WorkoutExerciseReading } from "../lib/workout-detections";
+import { computeVelocities, computeAccelerations } from "../lib/angle-dynamics";
+import type { FrameRecord, JointAngleDynamics } from "../lib/session-schema";
 
 type UserAgentData = {
   mobile?: boolean;
@@ -50,6 +52,8 @@ type PoseTrackerState = {
   jointAngles: JointAngles;
   workoutDetections: WorkoutDetections;
   activeWorkout: WorkoutExerciseReading | null;
+  frameBufferRef: React.MutableRefObject<FrameRecord[]>;
+  clearFrameBuffer: () => void;
 };
 
 const LANDMARK_VISIBILITY_THRESHOLD = 0.35;
@@ -75,6 +79,21 @@ export function usePose(
   const lastStableAnglesRef = useRef<JointAngles>({ ...EMPTY_JOINT_ANGLES });
   const workoutDetectionsRef = useRef<WorkoutDetections>(createInitialWorkoutDetections());
   const missedFramesRef = useRef(0);
+  const frameBufferRef = useRef<FrameRecord[]>([]);
+  const sessionStartTimeRef = useRef<number>(performance.now());
+  const frameIndexRef = useRef<number>(0);
+  const prevAnglesRef = useRef<JointAngles | null>(null);
+  const prevTimestampMsRef = useRef<number | null>(null);
+  const prevVelocitiesRef = useRef<JointAngleDynamics | null>(null);
+
+  const clearFrameBuffer = () => {
+    frameBufferRef.current = [];
+    frameIndexRef.current = 0;
+    sessionStartTimeRef.current = performance.now();
+    prevAnglesRef.current = null;
+    prevTimestampMsRef.current = null;
+    prevVelocitiesRef.current = null;
+  };
   const [trackerReady, setTrackerReady] = useState(false);
   const [poseDetected, setPoseDetected] = useState(false);
   const [jointAngles, setJointAngles] = useState<JointAngles>({ ...EMPTY_JOINT_ANGLES });
@@ -375,6 +394,43 @@ export function usePose(
       setWorkoutDetections(nextWorkoutDetections);
       setActiveWorkout(classifyActiveWorkout(nextAngles));
 
+      // --- frame buffer capture ---
+      const nowMs = performance.now() - sessionStartTimeRef.current;
+      const poseScore =
+        landmarks
+          .filter((_, i) => EXERCISE_LANDMARK_INDICES.includes(i))
+          .reduce((sum, p) => sum + (p.visibility ?? 0), 0) /
+        EXERCISE_LANDMARK_INDICES.length;
+
+      const velocities = computeVelocities(
+        nextAngles,
+        prevAnglesRef.current,
+        nowMs,
+        prevTimestampMsRef.current,
+      );
+      const accelerations = computeAccelerations(
+        velocities,
+        prevVelocitiesRef.current,
+        nowMs,
+        prevTimestampMsRef.current,
+      );
+
+      frameBufferRef.current.push({
+        frameIndex: frameIndexRef.current++,
+        timestampMs: nowMs,
+        posePresent: hasVisiblePose,
+        poseScore: Math.round(poseScore * 10000) / 10000,
+        angles: { ...nextAngles },
+        velocities,
+        accelerations,
+        landmarks: [...landmarks],
+      });
+
+      prevAnglesRef.current = { ...nextAngles };
+      prevTimestampMsRef.current = nowMs;
+      prevVelocitiesRef.current = velocities;
+      // --- end frame buffer ---
+
       drawPoseOverlay(landmarks);
 
       animationFrameId = requestAnimationFrame(sendFrame);
@@ -398,5 +454,7 @@ export function usePose(
     jointAngles,
     workoutDetections,
     activeWorkout,
+    frameBufferRef,
+    clearFrameBuffer,
   };
 }

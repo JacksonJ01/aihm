@@ -116,6 +116,56 @@ If you wish to just develop locally and not deploy to Vercel, [follow the steps 
 
 > Check out [the docs for Local Development](https://supabase.com/docs/guides/getting-started/local-development) to also run Supabase locally.
 
+## Workout Pipeline
+
+The workout dataset flow now has a single sequential runner:
+
+```bash
+c:/Users/BB/VSCodeProjects/AiHM/aihm/.venv/Scripts/python.exe main_training.py --input-root preprocessedWorkoutVideos --extracted-root generated/workout-pose-dataset --model-path generated/workout-models/workout-centroid-model.json
+```
+
+You can also choose which angle vectors the trainer uses with `--feature-mode 2d`, `--feature-mode 3d`, or `--feature-mode both`.
+
+If you want a comparison in the saved model artifact, add `--benchmark-feature-mode 2d` and/or `--benchmark-feature-mode 3d` to the same command.
+
+If you want to drive the pipeline from a CSV file that you download and edit on iPhone, use the template at [workout-import-template.csv](workout-import-template.csv) and pass it into the runner:
+
+```bash
+c:/Users/BB/VSCodeProjects/AiHM/aihm/.venv/Scripts/python.exe main_training.py --manifest-csv workout-import-template.csv
+```
+
+The CSV uses `relative_path`, `exercise_key`, and `include` columns so you can keep the file simple and deterministic.
+
+That script runs extraction, training, and prediction in order. The lower-level scripts are still available if you want to run a single stage by itself:
+
+The training report now includes per-split `predictedCounts`, per-class precision/recall/F1, and a confusion matrix so you can see which exercises are being mixed up instead of only looking at one overall accuracy number. The trainer also splits clips in a class-stratified way so rare exercises stay represented in train, validation, and test, and it exposes an optional `--max-windows-per-clip` cap if you want to reduce redundant overlapping windows from long clips. The extracted `clip.json` and `windows.jsonl` records also include `contractionAngleNames`, `contractionScore2d`, `contractionScore3d`, `contractionScore`, and `contractionState` so the model has an exercise-aware contracted/relaxed signal alongside the joint angles.
+
+1. Extract pose features from the workout video folders.
+
+  ```bash
+  c:/Users/BB/VSCodeProjects/AiHM/aihm/.venv/Scripts/python.exe scripts/extract_workout_pose_dataset.py
+  ```
+
+2. Train the baseline exercise classifier from the extracted windows.
+
+  ```bash
+  c:/Users/BB/VSCodeProjects/AiHM/aihm/.venv/Scripts/python.exe scripts/train_workout_classifier.py --windows generated/workout-pose-dataset --output-model generated/workout-models/workout-centroid-model.json
+  ```
+
+3. Predict a workout label from a processed clip.
+
+  ```bash
+  c:/Users/BB/VSCodeProjects/AiHM/aihm/.venv/Scripts/python.exe scripts/predict_workout_exercise.py --model generated/workout-models/workout-centroid-model.json --clip "generated/workout-pose-dataset/barbellBicepsCurl/barbell biceps curl_1.json" --window-family short
+  ```
+
+4. Run the live causal pipeline on a webcam or video file.
+
+  ```bash
+  c:/Users/BB/VSCodeProjects/AiHM/aihm/.venv/Scripts/python.exe scripts/run_live_workout_pipeline.py --video "preprocessedWorkoutVideos/decline bench press/dbp_2.MOV" --max-frames 30
+  ```
+
+The extractor normalizes `.mov` inputs through `imageio-ffmpeg` when needed, so iPhone uploads can run through the same pipeline as `.mp4` files.
+
 ## Feedback and issues
 
 Please file feedback and issues over on the [Supabase GitHub org](https://github.com/supabase/supabase/issues/new/choose).

@@ -2,36 +2,12 @@ import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 import { hasEnvVars, supabasePublishableKey, supabaseUrl } from "../utils";
 
-function isPublicPath(pathname: string) {
-  return (
-    pathname === "/" ||
-    pathname.startsWith("/auth") ||
-    pathname.startsWith("/@mediapipe/")
-  );
-}
-
-function redirectToLogin(request: NextRequest) {
-  const url = request.nextUrl.clone();
-  const nextPath = `${request.nextUrl.pathname}${request.nextUrl.search}`;
-  url.pathname = "/auth/login";
-  url.search = `?next=${encodeURIComponent(nextPath)}`;
-  return NextResponse.redirect(url);
-}
-
 export async function updateSession(request: NextRequest) {
   let supabaseResponse = NextResponse.next({
     request,
   });
 
   if (!hasEnvVars) {
-    if (isPublicPath(request.nextUrl.pathname)) {
-      return supabaseResponse;
-    }
-
-    return redirectToLogin(request);
-  }
-
-  if (isPublicPath(request.nextUrl.pathname)) {
     return supabaseResponse;
   }
 
@@ -64,15 +40,9 @@ export async function updateSession(request: NextRequest) {
   // supabase.auth.getUser(). A simple mistake could make it very hard to debug
   // issues with users being randomly logged out.
 
-  // IMPORTANT: getUser() (not getClaims()) must be used here so that expired
-  // access tokens are refreshed via the refresh token on every request.
-  // getClaims() only reads the JWT locally and does not refresh — users will
-  // be logged out as soon as the 1-hour access token expires.
-  const { data: { user } } = await supabase.auth.getUser();
-
-  if (!user) {
-    return redirectToLogin(request);
-  }
+  // Keep auth optional for now: this refreshes sessions for signed-in users
+  // but does not redirect guests away from any route.
+  await supabase.auth.getUser();
 
   // IMPORTANT: You *must* return the supabaseResponse object as it is.
   // If you're creating a new response object with NextResponse.next() make sure to:

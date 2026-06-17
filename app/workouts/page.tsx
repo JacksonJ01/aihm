@@ -44,6 +44,7 @@ function WorkoutsPageFallback() {
 
 async function WorkoutsPageContent() {
   const sessions = await getWorkoutSessionsData();
+  const canTrainModel = sessions.viewerState === "authenticated";
   const latestSession = sessions.data[0];
   const averageScore = sessions.data.length
     ? Math.round(sessions.data.reduce((sum, session) => sum + session.score, 0) / sessions.data.length)
@@ -115,7 +116,7 @@ async function WorkoutsPageContent() {
           title="Train from one focused workspace"
           description=""
         >
-          <WorkoutsSession />
+          <WorkoutsSession canTrainModel={canTrainModel} />
         </SectionCard>
 
         <SectionCard

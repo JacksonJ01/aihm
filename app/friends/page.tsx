@@ -8,7 +8,7 @@ import {
   SectionCard,
   StatCard,
 } from "@/components/app/page-primitives";
-import { formatLongDate, getFriendsData } from "@/lib/site-data";
+import { formatLongDate, getFriendsData, type UserFriends } from "../../lib/site-data";
 import { Suspense } from "react";
 
 function FriendsPageFallback() {
@@ -31,9 +31,9 @@ function FriendsPageFallback() {
 
 async function FriendsPageContent() {
   const friendships = await getFriendsData();
-  const accepted = friendships.data.filter((friend) => friend.status === "accepted");
-  const pending = friendships.data.filter((friend) => friend.status !== "accepted");
-  const longestSharedStreak = accepted.length ? Math.max(...accepted.map((friend) => friend.sharedStreak)) : 0;
+  const accepted = friendships.data.filter((friend: UserFriends) => friend.status === "accepted");
+  const pending = friendships.data.filter((friend: UserFriends) => friend.status !== "accepted");
+  const longestSharedStreak = accepted.length ? Math.max(...accepted.map((friend: UserFriends) => friend.sharedStreak)) : 0;
 
   return (
     <AppPage>
@@ -76,7 +76,7 @@ async function FriendsPageContent() {
         >
           <div className="space-y-4">
             {accepted.length ? (
-              accepted.map((friend) => (
+              accepted.map((friend: UserFriends) => (
                 <article key={friend.id} className="rounded-[26px] border border-black/10 bg-white/72 px-5 py-5">
                   <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
                     <div>
@@ -114,7 +114,7 @@ async function FriendsPageContent() {
           >
             <div className="space-y-3">
               {pending.length ? (
-                pending.map((friend) => (
+                pending.map((friend: UserFriends) => (
                   <div key={friend.id} className="rounded-[22px] border border-black/10 bg-white/70 px-4 py-4">
                     <div className="text-lg font-semibold tracking-[-0.03em] text-foreground">{friend.friendName}</div>
                     <p className="mt-2 text-sm leading-6 text-muted-foreground">Status: {friend.status}. Shared focus: {friend.focus}.</p>

@@ -8,7 +8,7 @@ import {
   StatCard,
 } from "@/components/app/page-primitives";
 import { NotificationsInbox } from "@/components/app/notifications-inbox";
-import { getNotificationsData } from "@/lib/site-data";
+import { getNotificationsData, type Notifications } from "../../lib/site-data";
 import { Suspense } from "react";
 
 function NotificationsPageFallback() {
@@ -40,7 +40,7 @@ function NotificationsPageFallback() {
 
 async function NotificationsPageContent() {
   const notifications = await getNotificationsData();
-  const unread = notifications.data.filter((notification) => !notification.isRead);
+  const unread = notifications.data.filter((notification: Notifications) => !notification.isRead);
 
   return (
     <AppPage>

@@ -8,7 +8,7 @@ import {
   StatCard,
 } from "@/components/app/page-primitives";
 import { ProgramBrowser } from "@/components/app/program-browser";
-import { getBrowseProgramsData } from "@/lib/site-data";
+import { getBrowseProgramsData, type Programs } from "../../lib/site-data";
 import { Suspense } from "react";
 
 const selectionGuide = [
@@ -45,7 +45,7 @@ function BrowseProgramsPageFallback() {
 
 async function BrowseProgramsPageContent() {
   const programs = await getBrowseProgramsData();
-  const featuredCount = programs.data.filter((program) => program.isActive).length;
+  const featuredCount = programs.data.filter((program: Programs) => program.isActive).length;
 
   return (
     <AppPage>

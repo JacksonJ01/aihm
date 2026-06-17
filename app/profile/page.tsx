@@ -3,13 +3,11 @@ import { BadgeCheck, CircleUserRound, SlidersHorizontal, Target } from "lucide-r
 import {
   AppPage,
   DataSourceNotice,
-  InlineLink,
   PageHero,
-  SectionCard,
   StatCard,
 } from "@/components/app/page-primitives";
-import { ProfileSettingsForm } from "@/components/app/profile-settings-form";
-import { getProfileData } from "@/lib/site-data";
+import { ProfileInlineEditor } from "@/components/app/profile-inline-editor";
+import { getProfileData } from "../../lib/site-data";
 import { Suspense } from "react";
 
 function ProfilePageFallback() {
@@ -32,7 +30,7 @@ function ProfilePageFallback() {
 
 async function ProfilePageContent() {
   const profileData = await getProfileData();
-  const { profile, preferences, email } = profileData.data;
+  const { profile, email } = profileData.data;
   const isProfileEmpty = profileData.source === "empty";
 
   return (
@@ -65,68 +63,7 @@ async function ProfilePageContent() {
         }
       />
 
-      <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-        <StatCard label="Weekly goal" value={isProfileEmpty ? "Not set" : `${profile.weeklyGoal} sessions`} detail="How much training this profile is trying to hold each week." icon={Target} />
-        <StatCard label="Primary focus" value={isProfileEmpty ? "Choose one" : profile.focus} detail="The dominant lens currently shaping programs and workouts." icon={BadgeCheck} />
-        <StatCard label="Experience" value={isProfileEmpty ? "Add level" : profile.expLevel} detail="Useful context for how aggressive plans and cues should feel." icon={CircleUserRound} />
-        <StatCard label="Camera mode" value={isProfileEmpty ? "Not set" : preferences.camEnabled ? "Enabled" : "Off"} detail="Live tracking preferences for workout sessions." icon={SlidersHorizontal} />
-      </section>
-
-      <section className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_340px]">
-        <SectionCard
-          eyebrow="Profile summary"
-          title="Training identity"
-          description="A concise account of what the user is working toward and how the app should frame decisions."
-        >
-          <div className="grid gap-4 lg:grid-cols-2">
-            <div className="rounded-[24px] border border-black/10 bg-white/72 px-5 py-5">
-              <div className="text-sm font-semibold uppercase tracking-[0.18em] text-muted-foreground">Goal</div>
-              <p className="mt-3 text-sm leading-7 text-muted-foreground">
-                {profile.primaryGoal || "Add a training goal to tailor recommendations and keep the rest of the app aligned with this account."}
-              </p>
-            </div>
-            <div className="rounded-[24px] border border-black/10 bg-white/72 px-5 py-5">
-              <div className="text-sm font-semibold uppercase tracking-[0.18em] text-muted-foreground">Bio</div>
-              <p className="mt-3 text-sm leading-7 text-muted-foreground">
-                {profile.bio || "Tell the app a bit about how you train so profile and recovery decisions have some context."}
-              </p>
-            </div>
-            <div className="rounded-[24px] border border-black/10 bg-white/72 px-5 py-5">
-              <div className="text-sm font-semibold uppercase tracking-[0.18em] text-muted-foreground">Location</div>
-              <div className="mt-3 text-xl font-semibold tracking-[-0.03em] text-foreground">{profile.city || "Add city"}</div>
-            </div>
-            <div className="rounded-[24px] border border-black/10 bg-white/72 px-5 py-5">
-              <div className="text-sm font-semibold uppercase tracking-[0.18em] text-muted-foreground">Preferred window</div>
-              <div className="mt-3 text-xl font-semibold tracking-[-0.03em] text-foreground">{preferences.timePref}</div>
-            </div>
-          </div>
-        </SectionCard>
-
-        <div className="grid gap-6">
-          <SectionCard
-            eyebrow="Preferences"
-            title="How this account trains"
-            description="Preferences shape how visible cues and recovery defaults appear throughout the app."
-          >
-            <div className="space-y-3">
-              <div className="rounded-[22px] border border-black/10 bg-white/70 px-4 py-4 text-sm leading-6 text-muted-foreground">
-                Camera tracking: <span className="font-semibold text-foreground">{preferences.camEnabled ? "Enabled" : "Disabled"}</span>
-              </div>
-              <div className="rounded-[22px] border border-black/10 bg-white/70 px-4 py-4 text-sm leading-6 text-muted-foreground">
-                Audio cues: <span className="font-semibold text-foreground">{preferences.audioEnabled ? "Enabled" : "Disabled"}</span>
-              </div>
-              <div className="rounded-[22px] border border-black/10 bg-white/70 px-4 py-4 text-sm leading-6 text-muted-foreground">
-                Recovery day: <span className="font-semibold text-foreground">{preferences.recoveryDay}</span>
-              </div>
-            </div>
-            <div className="mt-5">
-              <InlineLink href="/help">Open help and setup</InlineLink>
-            </div>
-          </SectionCard>
-
-          <ProfileSettingsForm profile={profile} preferences={preferences} />
-        </div>
-      </section>
+      <ProfileInlineEditor profile={profile} />
     </AppPage>
   );
 }

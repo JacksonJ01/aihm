@@ -285,3 +285,132 @@ on public.notifications
 for all
 using (auth.uid() = "userID")
 with check (auth.uid() = "userID");
+
+create or replace function public.handle_new_user()
+returns trigger
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  source_email text := coalesce(new.email, new.id::text || '@placeholder.local');
+  base_user_name text := lower(regexp_replace(coalesce(nullif(split_part(source_email, '@', 1), ''), 'athlete'), '[^a-z0-9_]+', '', 'g'));
+  resolved_user_name text := left(base_user_name || '_' || replace(substr(new.id::text, 1, 8), '-', ''), 40);
+  resolved_display_name text := left(coalesce(nullif(new.raw_user_meta_data ->> 'displayName', ''), nullif(split_part(source_email, '@', 1), ''), 'Athlete'), 60);
+begin
+  perform public.bootstrap_user_profile(
+    new.id,
+    source_email,
+    coalesce(nullif(new.raw_user_meta_data ->> 'userName', ''), resolved_user_name),
+    resolved_display_name
+  );
+
+  return new;
+end;
+$$;
+
+create or replace function public.bootstrap_user_profile(
+  p_user_id uuid,
+  p_email text,
+  p_user_name text,
+  p_display_name text
+)
+returns void
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  source_email text := coalesce(nullif(p_email, ''), p_user_id::text || '@placeholder.local');
+  resolved_user_name text := left(
+    coalesce(
+      nullif(p_user_name, ''),
+      lower(regexp_replace(coalesce(nullif(split_part(source_email, '@', 1), ''), 'athlete'), '[^a-z0-9_]+', '', 'g')) || '_' || replace(substr(p_user_id::text, 1, 8), '-', '')
+    ),
+    40
+  );
+  resolved_display_name text := left(
+    coalesce(nullif(p_display_name, ''), nullif(split_part(source_email, '@', 1), ''), 'Athlete'),
+    60
+  );
+begin
+  insert into public."userProfiles" (
+    "id",
+    "userName",
+    "displayName",
+    "primaryGoal",
+    "weeklyGoal",
+    "focus",
+    "expLevel",
+    "city",
+    "bio",
+    "email"
+  ) values (
+    p_user_id,
+    resolved_user_name,
+    resolved_display_name,
+    '',
+    0,
+    'General',
+    'Beginner',
+    '',
+    '',
+    source_email
+  )
+  on conflict ("id") do update set
+    "userName" = excluded."userName",
+    "displayName" = excluded."displayName",
+    "primaryGoal" = excluded."primaryGoal",
+    "focus" = excluded."focus",
+    "expLevel" = excluded."expLevel",
+    "email" = excluded."email";
+end;
+$$;
+
+drop trigger if exists "on_auth_user_created" on auth.users;
+create trigger "on_auth_user_created"
+after insert on auth.users
+for each row
+execute function public.handle_new_user();
+
+insert into public."userProfiles" (
+  "id",
+  "userName",
+  "displayName",
+  "primaryGoal",
+  "weeklyGoal",
+  "focus",
+  "expLevel",
+  "city",
+  "bio",
+  "email"
+)
+select
+  au.id,
+  left(
+    lower(regexp_replace(coalesce(nullif(split_part(coalesce(au.email, au.id::text || '@placeholder.local'), '@', 1), ''), 'athlete'), '[^a-z0-9_]+', '', 'g'))
+    || '_' || replace(substr(au.id::text, 1, 8), '-', ''),
+    40
+  ),
+  left(
+    coalesce(
+      nullif(au.raw_user_meta_data ->> 'displayName', ''),
+      nullif(split_part(coalesce(au.email, au.id::text || '@placeholder.local'), '@', 1), ''),
+      'Athlete'
+    ),
+    60
+  ),
+  '',
+  0,
+  'General',
+  'Beginner',
+  '',
+  '',
+  coalesce(au.email, au.id::text || '@placeholder.local')
+from auth.users au
+where not exists (
+  select 1
+  from public."userProfiles" up
+  where up."id" = au.id
+)
+on conflict ("id") do nothing;

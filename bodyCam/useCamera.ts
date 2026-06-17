@@ -6,6 +6,7 @@ export function useCamera() {
   const videoRef = useRef<HTMLVideoElement>(null);
   const streamRef = useRef<MediaStream | null>(null);
   const [isCameraOn, setIsCameraOn] = useState(false);
+  const [cameraError, setCameraError] = useState<string | null>(null);
 
   const resetVideoElement = useCallback(() => {
     if (!videoRef.current) {
@@ -32,6 +33,7 @@ export function useCamera() {
   const startCamera = useCallback(async () => {
     try {
       stopCamera();
+      setCameraError(null);
 
       const isMobile = /Mobi|Android|iPhone|iPad|iPod|Windows Phone/.test(navigator.userAgent);
       const videoConstraints: MediaTrackConstraints = isMobile
@@ -60,23 +62,19 @@ export function useCamera() {
 
       setIsCameraOn(true);
     } catch (error) {
-      console.error("Camera error:", error);
+      const message = error instanceof DOMException && error.name === "NotAllowedError"
+        ? "Camera permission was denied. Allow camera access in your browser, then try again."
+        : "Unable to start the camera. Check browser/device camera settings and try again.";
+      setCameraError(message);
+      console.warn("Camera error:", error);
       stopCamera();
     }
   }, [stopCamera]);
 
   useEffect(() => {
-    const handleVisibilityChange = () => {
-      if (document.hidden) {
-        stopCamera();
-      }
-    };
-
     window.addEventListener("pagehide", stopCamera);
-    document.addEventListener("visibilitychange", handleVisibilityChange);
 
     return () => {
-      document.removeEventListener("visibilitychange", handleVisibilityChange);
       window.removeEventListener("pagehide", stopCamera);
       stopCamera();
     };
@@ -85,6 +83,7 @@ export function useCamera() {
   return {
     videoRef,
     isCameraOn,
+    cameraError,
     startCamera,
     stopCamera,
   };

@@ -1,4 +1,5 @@
 import { updateProfileAction } from "@/app/profile/actions";
+import { initialAuthActionState } from "@/lib/auth-form";
 import type { UserProfiles, WorkoutPref } from "@/lib/site-data";
 
 type ProfileSettingsFormProps = {
@@ -7,8 +8,12 @@ type ProfileSettingsFormProps = {
 };
 
 export function ProfileSettingsForm({ profile, preferences }: ProfileSettingsFormProps) {
+  async function submitProfileSettings(formData: FormData) {
+    await updateProfileAction(initialAuthActionState, formData);
+  }
+
   return (
-    <form action={updateProfileAction} className="space-y-5 rounded-[28px] border border-black/10 bg-white/72 px-5 py-5">
+    <form action={submitProfileSettings} className="space-y-5 rounded-[28px] border border-black/10 bg-white/72 px-5 py-5">
       <div>
         <div className="text-sm font-semibold uppercase tracking-[0.18em] text-muted-foreground">Edit settings</div>
         <p className="mt-2 text-sm leading-6 text-muted-foreground">

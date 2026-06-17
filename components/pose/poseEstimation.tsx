@@ -9,6 +9,7 @@ type Props = {
   isCameraOn: boolean;
   side?: "left" | "right" | "all";
   className?: string;
+  showTrackerStatus?: boolean;
 };
 
 function formatAngle(angle: number | null) {
@@ -17,14 +18,22 @@ function formatAngle(angle: number | null) {
 
 function AngleRow({ label, angle }: { label: string; angle: number | null }) {
   return (
-    <div className="rounded-xl border border-black/10 bg-white/70 px-2.5 py-2 shadow-[0_10px_22px_rgba(29,35,43,0.05)]">
-      <div className="text-[8px] font-semibold uppercase tracking-[0.12em] text-muted-foreground sm:text-[9px]">{label}</div>
-      <div className="mt-0.5 text-sm font-semibold tracking-[-0.03em] text-foreground sm:text-[0.95rem]">{formatAngle(angle)}</div>
+    <div className="min-h-[72px] rounded-xl border border-black/10 bg-white/70 px-2.5 pb-4 pt-2.5 shadow-[0_10px_22px_rgba(29,35,43,0.05)] sm:min-h-[76px]">
+      <div className="text-[9px] font-semibold uppercase tracking-[0.12em] text-muted-foreground sm:text-[10px]">{label}</div>
+      <div className="mt-0.5 text-[0.95rem] font-semibold tracking-[-0.03em] text-foreground sm:text-base">{formatAngle(angle)}</div>
     </div>
   );
 }
 
-export default function PoseEstimation({ jointAngles, side = "all", className }: Props) {
+export default function PoseEstimation({
+  jointAngles,
+  trackerReady,
+  poseDetected,
+  isCameraOn,
+  side = "all",
+  className,
+  showTrackerStatus = false,
+}: Props) {
 
   const visibleDefinitions = JOINT_ANGLE_DEFINITIONS.filter((definition) => {
     if (side === "left") {
@@ -39,18 +48,29 @@ export default function PoseEstimation({ jointAngles, side = "all", className }:
   });
 
   const titleLabel = side === "left" ? "Left-side joint angles" : side === "right" ? "Right-side joint angles" : "Joint angles";
-  const subtitleLabel = side === "left" ? "" : side === "right" ? "" : "Live 3D body metrics";
+
+  const trackerStatusLabel = isCameraOn
+    ? poseDetected
+      ? "Tracking"
+      : "Finding pose"
+    : trackerReady
+      ? "Loaded"
+      : "Loading";
 
   return (
-    <aside className={`flex h-full min-h-[220px] w-full flex-col overflow-hidden rounded-[28px] border border-black/10 bg-white/80 px-2.5 py-2.5 shadow-[0_18px_40px_rgba(29,35,43,0.08)] sm:min-h-[240px] sm:px-4 sm:py-4 lg:min-h-[380px] lg:px-3 lg:py-3 ${className ?? ""}`}>
+    <aside className={`flex h-full min-h-[240px] w-full flex-col overflow-hidden rounded-[28px] border border-black/10 bg-white/80 px-2.5 py-2.5 shadow-[0_18px_40px_rgba(29,35,43,0.08)] sm:min-h-[260px] sm:px-4 sm:py-4 lg:min-h-[280px] lg:px-3 lg:py-3 ${className ?? ""}`}>
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0">
           <div className="text-[9px] font-semibold uppercase tracking-[0.14em] text-muted-foreground sm:text-[10px]">{titleLabel}</div>
-          <h3 className="mt-1 text-[0.8rem] font-semibold tracking-[-0.03em] text-foreground sm:text-[0.95rem]">{subtitleLabel}</h3>
         </div>
+        {showTrackerStatus ? (
+          <div className="shrink-0 rounded-full border border-black/10 bg-white px-2.5 py-0.5 text-[9px] font-medium text-foreground sm:text-[10px]">
+            {trackerStatusLabel}
+          </div>
+        ) : null}
       </div>
 
-      <div className="mt-2.5 flex flex-1 flex-col gap-1.5 sm:mt-3 sm:gap-2">
+      <div className="mt-2.5 flex flex-1 flex-col justify-between gap-2.5 sm:mt-3">
         {visibleDefinitions.map((definition) => (
           <AngleRow key={definition.key} label={definition.label} angle={jointAngles[definition.key]} />
         ))}

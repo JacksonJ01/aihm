@@ -113,7 +113,11 @@ function sanitizeText(value: FormDataEntryValue | string | null | undefined, fal
 }
 
 function sanitizeUserName(value: FormDataEntryValue | string | null | undefined, fallback: string) {
-  const normalized = sanitizeText(value, fallback, 40).replace(/\s+/g, "_");
+  const normalized = sanitizeText(value, fallback, 40)
+    .replace(/\s+/g, "_")
+    .replace(/[^A-Za-z0-9_]/g, "_")
+    .replace(/_+/g, "_")
+    .replace(/^_+|_+$/g, "");
 
   if (!/^[A-Za-z0-9_]+$/.test(normalized)) {
     throw new Error("Username can contain only letters, numbers, and underscores.");
@@ -129,6 +133,26 @@ function sanitizeDisplayName(value: FormDataEntryValue | string | null | undefin
 async function isUserNameTaken(supabase: BootstrapClient, userName: string): Promise<boolean> {
   const { data } = await supabase.from("userProfiles").select("userName").eq("userName", userName).limit(1);
   return (data?.length ?? 0) > 0;
+}
+
+async function reserveAvailableUserName(supabase: BootstrapClient, requestedUserName: string): Promise<string> {
+  const baseUserName = sanitizeUserName(requestedUserName, "athlete").slice(0, 40);
+
+  if (!(await isUserNameTaken(supabase, baseUserName))) {
+    return baseUserName;
+  }
+
+  for (let attempt = 1; attempt <= 50; attempt += 1) {
+    const suffix = `_${attempt}`;
+    const trimmedBase = baseUserName.slice(0, Math.max(1, 40 - suffix.length));
+    const candidate = `${trimmedBase}${suffix}`;
+
+    if (!(await isUserNameTaken(supabase, candidate))) {
+      return candidate;
+    }
+  }
+
+  throw new Error("Unable to reserve a unique username right now. Please try again.");
 }
 
 function getSignupProfileSeedFromForm(formData: FormData, email: string): SignupProfileSeed {
@@ -153,41 +177,12 @@ async function bootstrapUserData(
   email: string,
   profileSeed: SignupProfileSeed,
 ): Promise<void> {
-  const profilePayload = {
-    id: userId,
-    userName: profileSeed.userName,
-    displayName: profileSeed.displayName,
-    primaryGoal: "",
-    expLevel: "Beginner",
-    weeklyGoal: 0,
-    city: "",
-    bio: "",
-    focus: "General",
-    email,
-  };
-
-  const { data: existingProfile, error: existingProfileError } = await supabase
-    .from("userProfiles")
-    .select("id, userName")
-    .eq("id", userId)
-    .limit(1)
-    .maybeSingle();
-
-  if (existingProfileError) {
-    console.error("[auth] Failed checking existing user profile", {
-      email,
-      error: existingProfileError,
-    });
-    throw existingProfileError;
-  }
-
-  if (existingProfile) {
-    return;
-  }
-
-  const { error: profileError } = await supabase
-    .from("userProfiles")
-    .upsert(profilePayload, { onConflict: "id" });
+  const { error: profileError } = await supabase.rpc("bootstrap_user_profile", {
+    p_user_id: userId,
+    p_email: email,
+    p_user_name: profileSeed.userName,
+    p_display_name: profileSeed.displayName,
+  });
 
   if (profileError) {
     console.error("[auth] Failed creating user profile", {
@@ -352,12 +347,12 @@ export async function signUpAction(
 
   const supabase = await createClient();
 
-  // Validate username uniqueness before proceeding (checked against existing userProfiles).
-  const userNameTaken = await isUserNameTaken(supabase, profileSeed.userName);
-  if (userNameTaken) {
+  try {
+    profileSeed.userName = await reserveAvailableUserName(supabase, profileSeed.userName);
+  } catch (error) {
     return {
       status: "error",
-      message: `Username "${profileSeed.userName}" is already taken. Try another.`,
+      message: error instanceof Error ? error.message : "Unable to prepare your account details.",
     };
   }
 

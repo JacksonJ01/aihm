@@ -32,34 +32,13 @@ export function SignUpForm({
       <Card>
         <CardHeader>
           <CardTitle className="text-2xl">Sign up</CardTitle>
-          <CardDescription>Create your account. You can finish profile setup later.</CardDescription>
+          <CardDescription>
+            Enter your email and password below to create your account.
+          </CardDescription>
         </CardHeader>
         <CardContent>
           <form action={formAction}>
             <div className="flex flex-col gap-6">
-              <div className="grid gap-2">
-                <Label htmlFor="user-name">Username</Label>
-                <Input
-                  id="user-name"
-                  name="userName"
-                  placeholder="your_username"
-                  required
-                  maxLength={40}
-                  autoComplete="username"
-                />
-              </div>
-
-              <div className="grid gap-2">
-                <Label htmlFor="display-name">Display Name</Label>
-                <Input
-                  id="display-name"
-                  name="displayName"
-                  placeholder="Your Display Name"
-                  required
-                  maxLength={60}
-                />
-              </div>
-
               <div className="grid gap-2">
                 <Label htmlFor="email">Email</Label>
                 <Input

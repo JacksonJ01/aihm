@@ -8,7 +8,12 @@ import {
   SectionCard,
   StatCard,
 } from "@/components/app/page-primitives";
-import { formatShortDate, getCommunityData } from "@/lib/site-data";
+import {
+  formatShortDate,
+  getCommunityData,
+  type CommunityChallenges,
+  type CommunityPosts,
+} from "../../lib/site-data";
 import { Suspense } from "react";
 
 function CommunityPageFallback() {
@@ -31,7 +36,7 @@ function CommunityPageFallback() {
 
 async function CommunityPageContent() {
   const community = await getCommunityData();
-  const pinnedCount = community.data.posts.filter((post) => post.isPinned).length;
+  const pinnedCount = community.data.posts.filter((post: CommunityPosts) => post.isPinned).length;
 
   return (
     <AppPage>
@@ -65,7 +70,7 @@ async function CommunityPageContent() {
         <StatCard label="Open challenges" value={String(community.data.challenges.length).padStart(2, "0")} detail="Short accountability cycles that are easy to join mid-week." icon={Trophy} />
         <StatCard label="Recent discussions" value={String(community.data.posts.length).padStart(2, "0")} detail="Focused posts instead of an unstructured wall of noise." icon={MessageSquareMore} />
         <StatCard label="Pinned topics" value={String(pinnedCount).padStart(2, "0")} detail="High-value prompts that deserve to stay visible longer." icon={Flag} />
-        <StatCard label="Participation" value={`${community.data.challenges.reduce((sum, challenge) => sum + challenge.participants, 0)}`} detail="Active challenge enrollment across the latest community events." icon={Users2} />
+        <StatCard label="Participation" value={`${community.data.challenges.reduce((sum: number, challenge: CommunityChallenges) => sum + challenge.participants, 0)}`} detail="Active challenge enrollment across the latest community events." icon={Users2} />
       </section>
 
       <section className="grid gap-6 xl:grid-cols-[360px_minmax(0,1fr)]">
@@ -76,7 +81,7 @@ async function CommunityPageContent() {
         >
           <div className="space-y-4">
             {community.data.challenges.length ? (
-              community.data.challenges.map((challenge) => (
+              community.data.challenges.map((challenge: CommunityChallenges) => (
                 <article key={challenge.id} className="rounded-[24px] border border-black/10 bg-white/72 px-5 py-5">
                   <div className="rounded-full bg-primary/10 px-3 py-1 text-xs font-semibold uppercase tracking-[0.16em] text-primary w-fit">
                     {challenge.cadence}
@@ -104,7 +109,7 @@ async function CommunityPageContent() {
         >
           <div className="space-y-4">
             {community.data.posts.length ? (
-              community.data.posts.map((post) => (
+              community.data.posts.map((post: CommunityPosts) => (
                 <article key={post.id} className="rounded-[26px] border border-black/10 bg-white/72 px-5 py-5">
                   <div className="flex flex-wrap items-center gap-2">
                     <span className="rounded-full bg-accent px-3 py-1 text-xs font-semibold uppercase tracking-[0.16em] text-accent-foreground">

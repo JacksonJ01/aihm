@@ -46,40 +46,12 @@ async function bootstrapConfirmedUser(supabase: Awaited<ReturnType<typeof create
   const userName = sanitizeUserName(metadata.userName, fallbackUserName);
   const displayName = sanitizeDisplayName(metadata.displayName, fallbackUserName);
 
-  const { data: existingProfile, error: existingProfileError } = await supabase
-    .from("userProfiles")
-    .select("id, userName")
-    .eq("id", user.id)
-    .limit(1)
-    .maybeSingle();
-
-  if (existingProfileError) {
-    console.error("[auth-confirm] Failed checking existing user profile", {
-      email: user.email,
-      error: existingProfileError,
-    });
-    throw existingProfileError;
-  }
-
-  if (existingProfile) {
-    return;
-  }
-
-  const { error: profileError } = await supabase.from("userProfiles").upsert(
-    {
-      id: user.id,
-      userName,
-      displayName,
-      primaryGoal: "",
-      expLevel: "Beginner",
-      weeklyGoal: 0,
-      city: "",
-      bio: "",
-      focus: "General",
-      email: user.email,
-    },
-    { onConflict: "id" },
-  );
+  const { error: profileError } = await supabase.rpc("bootstrap_user_profile", {
+    p_user_id: user.id,
+    p_email: user.email,
+    p_user_name: userName,
+    p_display_name: displayName,
+  });
 
   if (profileError) {
     console.error("[auth-confirm] Failed creating user profile", {

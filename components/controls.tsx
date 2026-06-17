@@ -8,28 +8,49 @@ type ControlsProps = {
   isCameraOn: boolean;
   startCamera: () => void;
   stopCamera: () => void;
+  canTrainModel: boolean;
+  onTrainModelClick?: () => void;
+  isTrainModelActive?: boolean;
 };
 
-export default function Controls({ isCameraOn, startCamera, stopCamera }: ControlsProps) {
+export default function Controls({ isCameraOn, startCamera, stopCamera, canTrainModel, onTrainModelClick, isTrainModelActive = false }: ControlsProps) {
+  const handleTrainModel = () => {
+    onTrainModelClick?.();
+  };
+
   return (
     <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between sm:gap-4">
       <div className="min-w-0">
         <div className="text-sm font-semibold uppercase tracking-[0.2em] text-muted-foreground">
           Camera controls
         </div>
-        <p className="mt-1 max-w-xl text-sm leading-6 text-muted-foreground">
-          Camera access, feed visibility, and cleanup behavior are managed here within the live session.
-        </p>
       </div>
-      {!isCameraOn ? (
-        <Button onClick={startCamera} className="w-full sm:w-auto sm:shrink-0">
-          Start Camera
-        </Button>
-      ) : (
-        <Button onClick={stopCamera} variant="outline" className="w-full sm:w-auto sm:shrink-0">
-          Stop Camera
-        </Button>
-      )}
+      <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row sm:items-center">
+        {!isCameraOn ? (
+          <Button onClick={startCamera} className="w-full sm:w-auto sm:shrink-0">
+            Start Camera
+          </Button>
+        ) : (
+          <Button onClick={stopCamera} variant="outline" className="w-full sm:w-auto sm:shrink-0">
+            Stop Camera
+          </Button>
+        )}
+        {canTrainModel ? (
+          <Button
+            onClick={handleTrainModel}
+            variant={isTrainModelActive ? "default" : "secondary"}
+            className="w-full sm:w-auto sm:shrink-0"
+            aria-pressed={isTrainModelActive}
+          >
+            {isTrainModelActive ? "Saving Exercise" : "Save Exercise Data"}
+          </Button>
+        ) : null}
+      </div>
+      {!canTrainModel ? (
+        <p className="w-full text-xs leading-5 text-muted-foreground sm:order-3">
+          Sign in to access model training.
+        </p>
+      ) : null}
     </div>
   );
 }
