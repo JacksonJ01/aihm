@@ -1,13 +1,13 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, type ChangeEvent } from "react";
 import Camera from "@/components/camera/camera";
 import Controls from "@/components/controls";
 import PoseEstimation from "@/components/pose/poseEstimation";
 import { Button } from "@/components/ui/button";
 import { useCamera } from "@/bodyCam/useCamera";
 import { usePose } from "@/bodyCam/usePose";
-import { WORKOUT_DETECTION_ORDER } from "../../lib/workout-detections";
+import type { WorkoutExerciseKey } from "@/lib/workout-taxonomy";
 import { WORKOUT_EXERCISE_CATALOG } from "../../lib/workout-taxonomy";
 import { buildSessionDocument, downloadSessionJSON } from "../../lib/session-export";
 import { saveToDataset } from "../../lib/dataset/client";
@@ -15,28 +15,13 @@ import { saveToDataset } from "../../lib/dataset/client";
 const POSE_SCRIPT_ID = "mediapipe-pose-script";
 const POSE_SCRIPT_SRC = "/@mediapipe/pose/pose.js";
 
-function hardenMediapipeModuleAccess() {
-  if (typeof window === "undefined") {
-    return;
-  }
-
-  const moduleRef = (window as Window & { createMediapipeSolutionsWasm?: Record<string, unknown> }).createMediapipeSolutionsWasm;
-  if (!moduleRef) {
-    return;
-  }
-
-  // MediaPipe's Emscripten bundle can install a trap getter for Module.arguments
-  // in dev/assert builds. Some runtimes touch that property and trigger abort().
-  try {
-    Object.defineProperty(moduleRef, "arguments", {
-      value: undefined,
-      writable: true,
-      configurable: true,
-      enumerable: false,
-    });
-  } catch {
-    // Non-fatal: if this cannot be redefined, proceed with normal init.
-  }
+// Patch Module.arguments before MediaPipe loads to prevent Emscripten WASM errors
+// MediaPipe's WASM binary tries to access deprecated Module.arguments property
+if (typeof window !== "undefined" && typeof (window as any).Module === "undefined") {
+  (window as any).Module = {
+    arguments: [],
+    onRuntimeInitialized: () => {}
+  };
 }
 
 type WorkoutsSessionProps = {
@@ -46,6 +31,7 @@ type WorkoutsSessionProps = {
 type LoggedWorkoutParams = {
   exerciseName: string;
   customExerciseName: string;
+  uploadVideoMode: "no" | "yes" | "yes-preview";
   cameraViewpoint: string;
   movementSpeed: string;
   formQuality: string;
@@ -58,6 +44,7 @@ type LoggedWorkoutParams = {
 const DEFAULT_LOGGED_WORKOUT_PARAMS: LoggedWorkoutParams = {
   exerciseName: "--Select--",
   customExerciseName: "",
+  uploadVideoMode: "no",
   cameraViewpoint: "center-mid",
   movementSpeed: "normal",
   formQuality: "good",
@@ -81,6 +68,10 @@ export default function WorkoutsSession({ canTrainModel = false }: WorkoutsSessi
   const [lastExportedName, setLastExportedName] = useState<string | null>(null);
   const [isSavingToDataset, setIsSavingToDataset] = useState(false);
   const [datasetSaveMessage, setDatasetSaveMessage] = useState<string | null>(null);
+  const [customVideoFile, setCustomVideoFile] = useState<File | null>(null);
+  const [uploadedVideoUrl, setUploadedVideoUrl] = useState<string | null>(null);
+  const [isUploadedVideoReady, setIsUploadedVideoReady] = useState(false);
+  const loadedUploadSourceRef = useRef<string | null>(null);
   const [frozenTelemetry, setFrozenTelemetry] = useState<{
     elapsed: string;
     fps: string;
@@ -90,7 +81,25 @@ export default function WorkoutsSession({ canTrainModel = false }: WorkoutsSessi
     status: string;
   } | null>(null);
 
+  const isUploadedVideoModeEnabled = loggedWorkoutParams.uploadVideoMode !== "no";
+  const isUploadedVideoPreviewMode = loggedWorkoutParams.uploadVideoMode === "yes-preview";
+  const isPoseSourceActive = isCameraOn || (isUploadedVideoModeEnabled && isUploadedVideoReady);
+  const showVideoPreview = isCameraOn || (isUploadedVideoPreviewMode && isUploadedVideoReady);
+
   const handleStartCamera = async () => {
+    setLoggedWorkoutParams((current) => ({
+      ...current,
+      uploadVideoMode: "no",
+    }));
+    setCustomVideoFile(null);
+    setUploadedVideoUrl((currentUrl) => {
+      if (currentUrl) {
+        URL.revokeObjectURL(currentUrl);
+      }
+
+      return null;
+    });
+    setIsUploadedVideoReady(false);
     setFrozenTelemetry(null);
     clearFrameBuffer();
     setIsRecording(false);
@@ -129,12 +138,30 @@ export default function WorkoutsSession({ canTrainModel = false }: WorkoutsSessi
 
     let isMounted = true;
 
+    // Ensure Module object exists and prevent WASM abort on arguments access
+    if (!(window as any).Module) {
+      (window as any).Module = {
+        arguments: [],
+        onRuntimeInitialized: () => {},
+        preloadedWasm: {}
+      };
+    }
+
+    // Override arguments property to prevent Emscripten abort
+    try {
+      Object.defineProperty((window as any).Module, "arguments", {
+        value: [],
+        writable: true,
+        configurable: true,
+      });
+    } catch {
+      // Silent fail if property can't be defined
+    }
+
     const onScriptLoad = () => {
       if (!isMounted) {
         return;
       }
-
-      hardenMediapipeModuleAccess();
 
       setScriptLoaded(true);
       setScriptError(null);
@@ -150,7 +177,6 @@ export default function WorkoutsSession({ canTrainModel = false }: WorkoutsSessi
     };
 
     if (typeof window.Pose !== "undefined") {
-      hardenMediapipeModuleAccess();
       setScriptLoaded(true);
       setScriptError(null);
       return () => {
@@ -187,9 +213,23 @@ export default function WorkoutsSession({ canTrainModel = false }: WorkoutsSessi
     };
   }, [shouldLoadPose]);
 
-  const { trackerReady, poseDetected, jointAngles, workoutDetections, activeWorkout, frameBufferRef, clearFrameBuffer } = usePose(videoRef, canvasRef, isCameraOn, scriptLoaded);
+  const { trackerReady, poseDetected, jointAngles, workoutDetections, activeWorkout, frameBufferRef, clearFrameBuffer } = usePose(videoRef, canvasRef, isPoseSourceActive, scriptLoaded);
 
-  const workoutDetectionCards = WORKOUT_DETECTION_ORDER.map((exerciseKey) => workoutDetections[exerciseKey]);
+  // Display only 4 selected exercises (not computing, just showing as dataset labels)
+  const DISPLAY_EXERCISES = ["barbellBicepsCurl", "squat", "shoulderPress", "pullUp"] as const;
+  const workoutDetectionCards = DISPLAY_EXERCISES.map(
+    (exerciseKey) => {
+      const detection = workoutDetections[exerciseKey as WorkoutExerciseKey];
+      // Return static version (not tracked/updating)
+      return {
+        ...detection,
+        isTracked: false,
+        state: "untracked" as const,
+        metric: null,
+        stateDifference: null,
+      };
+    }
+  );
 
   const handleTrainModelPanelOpen = () => {
     setIsSavingExercise((current) => {
@@ -198,6 +238,15 @@ export default function WorkoutsSession({ canTrainModel = false }: WorkoutsSessi
       }
 
       setLoggedWorkoutParams(DEFAULT_LOGGED_WORKOUT_PARAMS);
+      setCustomVideoFile(null);
+      setUploadedVideoUrl((currentUrl) => {
+        if (currentUrl) {
+          URL.revokeObjectURL(currentUrl);
+        }
+
+        return null;
+      });
+      setIsUploadedVideoReady(false);
       setIsPanelExpanded(true);
       return true;
     });
@@ -206,6 +255,14 @@ export default function WorkoutsSession({ canTrainModel = false }: WorkoutsSessi
   const handleStartRecording = () => {
     clearFrameBuffer();
     setLastExportedName(null);
+
+    if (!isCameraOn && isUploadedVideoModeEnabled && isUploadedVideoReady && videoRef.current) {
+      videoRef.current.currentTime = 0;
+      void videoRef.current.play().catch(() => {
+        setDatasetSaveMessage("Unable to play uploaded video. Re-select the file and try again.");
+      });
+    }
+
     setIsRecording(true);
   };
 
@@ -213,7 +270,7 @@ export default function WorkoutsSession({ canTrainModel = false }: WorkoutsSessi
     setIsRecording(false);
     const frames = frameBufferRef.current;
     if (frames.length === 0) {
-      setLastExportedName("No frames captured — start the camera before recording.");
+      setLastExportedName("No frames captured — start the camera or upload a video before recording.");
       return;
     }
     const selectedExercise =
@@ -245,7 +302,7 @@ export default function WorkoutsSession({ canTrainModel = false }: WorkoutsSessi
   const handleSaveToDataset = async () => {
     const frames = frameBufferRef.current;
     if (frames.length === 0) {
-      setDatasetSaveMessage("No frames captured — start the camera and record first.");
+      setDatasetSaveMessage("No frames captured — start the camera or upload a video and record first.");
       return;
     }
 
@@ -313,6 +370,114 @@ export default function WorkoutsSession({ canTrainModel = false }: WorkoutsSessi
     }));
   };
 
+  const handleExerciseNameChange = (exerciseName: string) => {
+    updateLoggedWorkoutParams("exerciseName", exerciseName);
+  };
+
+  const handleUploadVideoModeChange = (mode: LoggedWorkoutParams["uploadVideoMode"]) => {
+    updateLoggedWorkoutParams("uploadVideoMode", mode);
+    setShouldLoadPose(true);
+
+    if (mode === "no") {
+      if (videoRef.current && !isCameraOn) {
+        videoRef.current.pause();
+        videoRef.current.removeAttribute("src");
+        videoRef.current.load();
+      }
+      loadedUploadSourceRef.current = null;
+
+      setCustomVideoFile(null);
+      setUploadedVideoUrl((currentUrl) => {
+        if (currentUrl) {
+          URL.revokeObjectURL(currentUrl);
+        }
+
+        return null;
+      });
+      setIsUploadedVideoReady(false);
+      setFrozenTelemetry(null);
+      clearFrameBuffer();
+      setIsRecording(false);
+    }
+  };
+
+  const handleUploadedVideoFileChange = (event: ChangeEvent<HTMLInputElement>) => {
+    const selectedFile = event.target.files && event.target.files.length > 0
+      ? event.target.files[0]
+      : null;
+
+    setCustomVideoFile(selectedFile);
+    setShouldLoadPose(true);
+    setIsUploadedVideoReady(false);
+    setFrozenTelemetry(null);
+    clearFrameBuffer();
+    setIsRecording(false);
+
+    setUploadedVideoUrl((currentUrl) => {
+      if (currentUrl) {
+        URL.revokeObjectURL(currentUrl);
+      }
+
+      return selectedFile ? URL.createObjectURL(selectedFile) : null;
+    });
+  };
+
+  useEffect(() => {
+    const videoEl = videoRef.current;
+
+    if (!videoEl || !isUploadedVideoModeEnabled) {
+      return;
+    }
+
+    const handleLoadedMetadata = () => {
+      setIsUploadedVideoReady(true);
+      setFrozenTelemetry(null);
+      void videoEl.play().catch(() => {
+        setDatasetSaveMessage("Unable to autoplay uploaded video preview. Click Start Recording to begin.");
+      });
+    };
+
+    const handleEnded = () => {
+      setFrozenTelemetry(null);
+      clearFrameBuffer();
+
+      videoEl.currentTime = 0;
+      void videoEl.play().catch(() => {
+        setDatasetSaveMessage("Unable to continue video loop preview.");
+      });
+    };
+
+    videoEl.loop = false;
+    videoEl.muted = true;
+    videoEl.playsInline = true;
+
+    if (uploadedVideoUrl && loadedUploadSourceRef.current !== uploadedVideoUrl) {
+      videoEl.srcObject = null;
+      videoEl.src = uploadedVideoUrl;
+      videoEl.load();
+      loadedUploadSourceRef.current = uploadedVideoUrl;
+    }
+
+    videoEl.addEventListener("loadedmetadata", handleLoadedMetadata);
+    videoEl.addEventListener("ended", handleEnded);
+
+    return () => {
+      videoEl.removeEventListener("loadedmetadata", handleLoadedMetadata);
+      videoEl.removeEventListener("ended", handleEnded);
+    };
+  }, [uploadedVideoUrl, isUploadedVideoModeEnabled, clearFrameBuffer]);
+
+  // Check if any recording has frames (for Stop & Export button)
+  const hasFrames = frameBufferRef.current.length > 0;
+
+  useEffect(() => {
+    return () => {
+      if (uploadedVideoUrl) {
+        URL.revokeObjectURL(uploadedVideoUrl);
+      }
+    };
+  }, [uploadedVideoUrl]);
+
   const isCustomExerciseSelected = loggedWorkoutParams.exerciseName === "custom";
 
   const capturedFrames = frameBufferRef.current.length;
@@ -372,7 +537,7 @@ export default function WorkoutsSession({ canTrainModel = false }: WorkoutsSessi
               <span className="text-xs font-semibold tracking-[0.04em] text-muted-foreground whitespace-nowrap">Exercise name:</span>
               <select
                 value={loggedWorkoutParams.exerciseName}
-                onChange={(event) => updateLoggedWorkoutParams("exerciseName", event.target.value)}
+                onChange={(event) => handleExerciseNameChange(event.target.value)}
                 className="h-10 rounded-xl border border-black/10 bg-white px-3 text-sm text-foreground"
               >
                 <option value="--Select--">--Select--</option>
@@ -393,6 +558,34 @@ export default function WorkoutsSession({ canTrainModel = false }: WorkoutsSessi
                   className="h-10 rounded-xl border border-black/10 bg-white px-3 text-sm text-foreground"
                   placeholder="Type custom exercise"
                 />
+              </label>
+            ) : null}
+
+            <label className="flex flex-col gap-2">
+              <span className="text-xs font-semibold tracking-[0.04em] text-muted-foreground whitespace-nowrap">Upload video</span>
+              <select
+                value={loggedWorkoutParams.uploadVideoMode}
+                onChange={(event) => handleUploadVideoModeChange(event.target.value as LoggedWorkoutParams["uploadVideoMode"])}
+                className="h-10 rounded-xl border border-black/10 bg-white px-3 text-sm text-foreground"
+              >
+                <option value="no">No</option>
+                <option value="yes">Yes</option>
+                <option value="yes-preview">Yes - Preview</option>
+              </select>
+            </label>
+
+            {isUploadedVideoModeEnabled ? (
+              <label className="flex flex-col gap-2">
+                <span className="text-xs font-semibold tracking-[0.04em] text-muted-foreground whitespace-nowrap">Video file</span>
+                <input
+                  type="file"
+                  accept="video/*,.mp4,.mov,.m4v,.webm,.avi,.mkv"
+                  onChange={handleUploadedVideoFileChange}
+                  className="h-10 rounded-xl border border-black/10 bg-white px-3 py-1 text-sm text-foreground file:mr-3 file:rounded-lg file:border-0 file:bg-slate-950 file:px-3 file:py-1.5 file:text-xs file:font-medium file:text-white"
+                />
+                {customVideoFile ? (
+                  <span className="text-xs text-muted-foreground">Selected: {customVideoFile.name}</span>
+                ) : null}
               </label>
             ) : null}
 
@@ -495,22 +688,22 @@ export default function WorkoutsSession({ canTrainModel = false }: WorkoutsSessi
             <div className="flex flex-wrap gap-2">
               <Button
                 onClick={handleStartRecording}
-                disabled={isRecording || !isCameraOn}
+                disabled={isRecording || !isPoseSourceActive}
                 className="w-full sm:w-auto"
               >
                 {isRecording ? "Recording…" : "Start Recording"}
               </Button>
               <Button
                 onClick={handleStopAndExport}
-                disabled={!isRecording}
+                disabled={!isRecording && !hasFrames && !isPoseSourceActive}
                 variant="secondary"
                 className="w-full sm:w-auto"
               >
-                Stop &amp; Export JSON
+                {isRecording ? "Stop & Export JSON" : "Export JSON"}
               </Button>
               <Button
                 onClick={() => { void handleSaveToDataset(); }}
-                disabled={isRecording || isSavingToDataset || frameBufferRef.current.length === 0}
+                disabled={isRecording || isSavingToDataset || (!isPoseSourceActive && frameBufferRef.current.length === 0)}
                 variant="outline"
                 className="w-full sm:w-auto"
               >
@@ -523,8 +716,8 @@ export default function WorkoutsSession({ canTrainModel = false }: WorkoutsSessi
               ) : null}
               {datasetSaveMessage ? (
                 <p className="text-sm leading-5 text-muted-foreground">{datasetSaveMessage}</p>
-              ) : !isCameraOn ? (
-                <p className="text-sm leading-5 text-muted-foreground">Start the camera first, then begin recording.</p>
+              ) : !isPoseSourceActive ? (
+                <p className="text-sm leading-5 text-muted-foreground">Start the camera or choose an uploaded video source first, then begin recording.</p>
               ) : null}
             </div>
           </div>
@@ -543,10 +736,10 @@ export default function WorkoutsSession({ canTrainModel = false }: WorkoutsSessi
           <div className="w-fit self-start rounded-full border border-black/10 bg-white px-4 py-2 text-sm font-medium text-foreground md:self-auto">
             {!scriptLoaded
               ? "Loading tracker"
-              : isCameraOn
+              : isPoseSourceActive
                 ? poseDetected
                   ? "Tracking active"
-                  : "Camera live, finding pose"
+                  : "Source live, finding pose"
                 : trackerReady
                   ? "Tracker ready"
                   : "Warming tracker"}
@@ -572,7 +765,7 @@ export default function WorkoutsSession({ canTrainModel = false }: WorkoutsSessi
               jointAngles={jointAngles}
               trackerReady={trackerReady}
               poseDetected={poseDetected}
-              isCameraOn={isCameraOn}
+              isCameraOn={isPoseSourceActive}
               side="left"
               className="md:h-[392px] lg:h-[432px]"
             />
@@ -580,7 +773,7 @@ export default function WorkoutsSession({ canTrainModel = false }: WorkoutsSessi
 
           <div className="order-2 flex min-w-0 md:order-2 md:col-start-2 md:h-full md:items-start md:justify-start">
             <div className="flex w-full flex-col gap-4">
-              <Camera videoRef={videoRef} canvasRef={canvasRef} isVisible={isCameraOn} />
+              <Camera videoRef={videoRef} canvasRef={canvasRef} isVisible={showVideoPreview} />
 
               <div className="rounded-[22px] border border-black/10 bg-white/78 px-4 py-3 shadow-[0_10px_22px_rgba(29,35,43,0.06)]">
                 <div className="flex items-start justify-between gap-3">
@@ -603,8 +796,8 @@ export default function WorkoutsSession({ canTrainModel = false }: WorkoutsSessi
                     <div className="mt-1 text-sm font-semibold text-foreground">
                       {frozenTelemetry
                         ? frozenTelemetry.status
-                        : isCameraOn
-                          ? isRecording ? "Recording" : "Camera active"
+                        : isPoseSourceActive
+                          ? isRecording ? "Recording" : "Source active"
                           : "Idle"}
                     </div>
                   </div>
@@ -649,7 +842,7 @@ export default function WorkoutsSession({ canTrainModel = false }: WorkoutsSessi
               jointAngles={jointAngles}
               trackerReady={trackerReady}
               poseDetected={poseDetected}
-              isCameraOn={isCameraOn}
+              isCameraOn={isPoseSourceActive}
               side="right"
               className="md:h-[392px] lg:h-[432px]"
             />
@@ -659,26 +852,19 @@ export default function WorkoutsSession({ canTrainModel = false }: WorkoutsSessi
         <div className="mt-4 rounded-[28px] border border-black/10 bg-white/72 px-4 py-4 shadow-[0_18px_40px_rgba(29,35,43,0.08)] sm:px-5 sm:py-5">
           <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
             <div>
-              <div className="text-sm font-semibold uppercase tracking-[0.2em] text-muted-foreground">Hard-coded detections</div>
-              <h3 className="mt-1 text-lg font-semibold tracking-[-0.03em] text-foreground">Twenty-two workout labels aligned to the dataset taxonomy</h3>
+              <div className="text-sm font-semibold uppercase tracking-[0.2em] text-muted-foreground">Exercise reference</div>
+              <h3 className="mt-1 text-lg font-semibold tracking-[-0.03em] text-foreground">Selected exercise labels (display only)</h3>
             </div>
-            <div className="text-sm text-muted-foreground">Work in progress</div>
           </div>
 
-          <div className="mt-4 grid gap-3 md:grid-cols-2 xl:grid-cols-5">
+          <div className="mt-4 grid gap-3 md:grid-cols-2 xl:grid-cols-4">
             {workoutDetectionCards.map((detection) => (
               <article key={detection.key} className="rounded-[22px] border border-black/10 bg-background/70 px-4 py-4">
                 <div className="flex items-start justify-between gap-3">
                   <div>
                     <div className="text-sm font-semibold tracking-[-0.02em] text-foreground">{detection.label}</div>
-                    <div className="mt-1 text-xs uppercase tracking-[0.14em] text-muted-foreground">
-                      {detection.isTracked ? detection.state : "dataset label"}
-                    </div>
+                    <div className="mt-1 text-xs uppercase tracking-[0.14em] text-muted-foreground">dataset label</div>
                   </div>
-                  <div className="rounded-full bg-slate-950 px-3 py-1 text-xs font-semibold text-white">{String(detection.reps).padStart(2, "0")}</div>
-                </div>
-                <div className="mt-3 text-sm leading-6 text-muted-foreground">
-                  Metric: {detection.metric === null ? "--" : `${detection.metric}°`} · State delta: {detection.stateDifference === null ? "--" : `${Math.round(detection.stateDifference * 100)}%`}
                 </div>
               </article>
             ))}

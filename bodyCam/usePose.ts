@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 
 import { calculateJointAngles, EMPTY_JOINT_ANGLES, type JointAngles, type PoseLandmark } from "@/lib/pose";
 import { classifyActiveWorkout, createInitialWorkoutDetections, detectWorkoutReps, type WorkoutDetections, type WorkoutExerciseReading } from "../lib/workout-detections";
@@ -86,14 +86,14 @@ export function usePose(
   const prevTimestampMsRef = useRef<number | null>(null);
   const prevVelocitiesRef = useRef<JointAngleDynamics | null>(null);
 
-  const clearFrameBuffer = () => {
+  const clearFrameBuffer = useCallback(() => {
     frameBufferRef.current = [];
     frameIndexRef.current = 0;
     sessionStartTimeRef.current = performance.now();
     prevAnglesRef.current = null;
     prevTimestampMsRef.current = null;
     prevVelocitiesRef.current = null;
-  };
+  }, []);
   const [trackerReady, setTrackerReady] = useState(false);
   const [poseDetected, setPoseDetected] = useState(false);
   const [jointAngles, setJointAngles] = useState<JointAngles>({ ...EMPTY_JOINT_ANGLES });
@@ -145,8 +145,8 @@ export function usePose(
           }
         : {
             modelComplexity: 1,
-            smoothLandmarks: true,
-            minDetectionConfidence: 0.6,
+              smoothLandmarks: true,
+              minDetectionConfidence: 0.5,
             minTrackingConfidence: 0.6,
           },
     );
