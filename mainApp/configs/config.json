@@ -1,0 +1,333 @@
+{
+  "project": {
+    "name": "AIHuMo",
+    "version": "0.5.0",
+    "dataset_version": "0.2.0",
+    "processing_version": "3.0.0",
+    "annotation_schema_version": "1.2"
+  },
+  "video": {
+    "target_fps": null
+  },
+  "pose": {
+    "model_path": "full_model/pose_landmarker_full.task",
+    "num_poses": 1,
+    "min_pose_detection_confidence": 0.5,
+    "min_pose_presence_confidence": 0.5,
+    "min_tracking_confidence": 0.5
+  },
+  "processing": {
+    "checkpoint_interval_frames": 300,
+    "resume_enabled": true,
+    "keep_checkpoints_on_success": false
+  },
+  "graphs": {
+    "enabled": true,
+    "export_images": true
+  },
+  "quality": {
+    "min_pose_present_fraction": 0.8
+  },
+  "features": {
+    "use_raw_xyz": true,
+    "use_world_xyz": true,
+    "normalize_landmarks": true,
+    "normalization_center": "torso_center",
+    "normalization_scale": "combined_shoulder_hip_width",
+    "use_angles": true,
+    "use_distances": true,
+    "distance_space": "normalized",
+    "use_velocity": true,
+    "velocity_columns": [
+      "x",
+      "y",
+      "z"
+    ],
+    "use_acceleration": true,
+    "use_symmetry": false,
+    "use_normalized_xyz": true,
+    "anatomical_centers": {
+      "enabled": true,
+      "head": false
+    },
+    "body_axes": {
+      "enabled": true
+    },
+    "normalization": {
+      "enabled": true,
+      "representations": {
+        "torso_combined_width": true,
+        "hip_centered": false,
+        "shoulder_centered": false,
+        "torso_length": false,
+        "body_aligned": false
+      },
+      "baseline_alias_n": true
+    },
+    "model_input_spaces": [
+      "torso_combined_width"
+    ],
+    "temporal": {
+      "spaces": [
+        "torso_combined_width"
+      ]
+    },
+    "include_anatomical_centers": true,
+    "include_body_geometry": true,
+    "include_body_axes": true
+  },
+  "angles": {
+    "targets": {
+      "left_elbow": [
+        11,
+        13,
+        15
+      ],
+      "right_elbow": [
+        12,
+        14,
+        16
+      ],
+      "left_shoulder": [
+        13,
+        11,
+        23
+      ],
+      "right_shoulder": [
+        14,
+        12,
+        24
+      ],
+      "left_hip": [
+        11,
+        23,
+        25
+      ],
+      "right_hip": [
+        12,
+        24,
+        26
+      ],
+      "left_knee": [
+        23,
+        25,
+        27
+      ],
+      "right_knee": [
+        24,
+        26,
+        28
+      ],
+      "left_wrist": [
+        13,
+        15,
+        19
+      ],
+      "right_wrist": [
+        14,
+        16,
+        20
+      ],
+      "left_ankle": [
+        25,
+        27,
+        31
+      ],
+      "right_ankle": [
+        26,
+        28,
+        32
+      ],
+      "torso_nose_shoulder_hip": [
+        0,
+        11,
+        23
+      ],
+      "torso_vertical": [
+        11,
+        23,
+        23
+      ]
+    }
+  },
+  "distances": {
+    "targets": {
+      "shoulders": [
+        11,
+        12
+      ],
+      "left_hand_right_hand": [
+        15,
+        16
+      ],
+      "left_foot_right_foot": [
+        27,
+        28
+      ],
+      "left_hip_left_knee": [
+        23,
+        25
+      ],
+      "right_hip_right_knee": [
+        24,
+        26
+      ]
+    }
+  },
+  "windows": {
+    "seconds": 5.0,
+    "stride_seconds": 1.0,
+    "min_valid_pose_fraction": 0.8,
+    "model_fps": 30.0
+  },
+  "dataset": {
+    "experiment_name": "experiment_001",
+    "targets": {
+      "activity_state": {
+        "enabled": true,
+        "trainable": true,
+        "evaluation_role": "primary",
+        "task": "sequence_classification",
+        "frame_column": "activity_state_label",
+        "min_known_fraction": 0.9,
+        "require_known": true,
+        "weight": 1.0
+      },
+      "exercise": {
+        "enabled": true,
+        "trainable": true,
+        "evaluation_role": "primary",
+        "task": "classification",
+        "frame_column": "exercise_label",
+        "min_known_fraction": 0.8,
+        "require_known": true,
+        "weight": 1.5,
+        "min_consistency": 0.9
+      },
+      "phase": {
+        "enabled": true,
+        "trainable": true,
+        "evaluation_role": "primary",
+        "task": "sequence_classification",
+        "frame_column": "phase_label",
+        "min_known_fraction": 0.8,
+        "require_known": false,
+        "weight": 1.0
+      },
+      "rep_boundary": {
+        "enabled": true,
+        "trainable": true,
+        "evaluation_role": "primary",
+        "task": "sequence_binary",
+        "frame_column": "rep_boundary_label",
+        "min_known_fraction": 0.0,
+        "require_known": false,
+        "weight": 1.0,
+        "boundary_radius_frames": 2
+      },
+      "rep_id": {
+        "enabled": true,
+        "trainable": false,
+        "evaluation_role": "grouping_only",
+        "task": "identity",
+        "frame_column": "rep_id_target"
+      },
+      "set_id": {
+        "enabled": true,
+        "trainable": false,
+        "evaluation_role": "grouping_only",
+        "task": "identity",
+        "frame_column": "set_id_target"
+      },
+      "form_label": {
+        "enabled": true,
+        "trainable": true,
+        "evaluation_role": "primary",
+        "task": "classification",
+        "frame_column": "form_label",
+        "min_known_fraction": 0.5,
+        "require_known": false,
+        "weight": 0.75
+      },
+      "form_score": {
+        "enabled": true,
+        "trainable": true,
+        "evaluation_role": "primary",
+        "task": "regression",
+        "frame_column": "form_score_target",
+        "min_known_fraction": 0.5,
+        "require_known": false,
+        "weight": 0.75
+      }
+    },
+    "require_completed_annotations": true,
+    "rep_boundary_radius_frames": 2
+  },
+  "splits": {
+    "train": 0.7,
+    "val": 0.15,
+    "test": 0.15,
+    "seed": 42
+  },
+  "model": {
+    "channels": [
+      64,
+      128
+    ],
+    "kernels": [
+      7,
+      5
+    ],
+    "dropout": 0.2
+  },
+  "training": {
+    "seed": 42,
+    "batch_size": 32,
+    "num_workers": 0,
+    "learning_rate": 0.001,
+    "weight_decay": 0.0001,
+    "epochs": 30,
+    "patience": 5,
+    "grad_clip_norm": 1.0
+  },
+  "rep_detection": {
+    "window_seconds": 5.0,
+    "min_rep_seconds": 0.75,
+    "max_rep_seconds": 8.0,
+    "smoothing_seconds": 0.15,
+    "min_amplitude": 0.08,
+    "min_prominence": 0.04,
+    "signal_candidates": [
+      "angle_left_knee",
+      "angle_right_knee",
+      "angle_left_elbow",
+      "angle_right_elbow",
+      "distance_left_hip_left_knee",
+      "distance_right_hip_right_knee"
+    ],
+    "window_stride_seconds": 1.0,
+    "min_confidence": 0.45
+  },
+  "tracking": {
+    "enabled": false,
+    "mode": "single_pose",
+    "max_poses": 3,
+    "max_tracks": 8,
+    "warmup_frames": 15,
+    "max_missed_frames": 45,
+    "reacquire_max_missed_frames": 90,
+    "min_match_score": 0.42,
+    "reacquire_match_score": 0.55,
+    "min_selection_score": 0.4,
+    "ambiguity_margin": 0.08,
+    "allow_ambiguous_auto_selection": true,
+    "use_appearance": true,
+    "matching_weights": {
+      "iou": 0.3,
+      "center": 0.25,
+      "scale": 0.1,
+      "pose": 0.2,
+      "appearance": 0.15
+    }
+  }
+}

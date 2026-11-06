@@ -1,0 +1,21 @@
+__pycache__/
+*.pyc
+.venv/
+.pytest_cache/
+.aihumo/
+
+# Local recordings, generated features, annotations, and exports
+data/
+reports/
+full_model/
+
+# Model and media artifacts
+*.task
+*.pt
+*.tflite
+*.mp4
+*.mov
+*.avi
+*.mkv
+*.parquet
+reports/*.png
