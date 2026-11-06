@@ -1,0 +1,228 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta name="theme-color" content="#102a43" />
+    <meta name="description" content="AIHuMo mobile annotation studio" />
+    <link rel="manifest" href="manifest.webmanifest" />
+    <link rel="stylesheet" href="styles.css" />
+    <title>AIHuMo Mobile Annotation Studio</title>
+  </head>
+  <body>
+    <header class="app-header">
+      <div>
+        <p class="eyebrow">AIHuMo</p>
+        <h1>Mobile Annotation Studio</h1>
+        <p class="subtitle">Load a custom video, review frames, and save annotation versions.</p>
+      </div>
+      <div class="header-actions">
+        <span id="saveState" class="status-pill">Not saved</span>
+        <button id="installButton" class="secondary-button hidden" type="button">Install app</button>
+      </div>
+    </header>
+
+    <main class="page-shell">
+      <section class="card import-card">
+        <div class="section-heading">
+          <div>
+            <h2>Open work</h2>
+            <p>Choose a video directly from your phone. A session or annotation JSON is optional.</p>
+          </div>
+          <button id="resetWorkspaceButton" class="ghost-button" type="button">Reset workspace</button>
+        </div>
+        <div class="import-grid">
+          <label class="file-field">
+            <span>Custom video</span>
+            <input id="videoInput" type="file" accept="video/*" />
+          </label>
+          <label class="file-field">
+            <span>Session or feature JSON <em>(optional)</em></span>
+            <input id="sessionInput" type="file" accept=".json,application/json" />
+          </label>
+          <label class="file-field">
+            <span>Existing annotations JSON <em>(optional)</em></span>
+            <input id="annotationInput" type="file" accept=".json,application/json" />
+          </label>
+        </div>
+        <p id="importStatus" class="helper-text">No video loaded. Select a video to begin.</p>
+      </section>
+
+      <section class="workspace-grid">
+        <section class="card video-card">
+          <div class="card-title-row">
+            <h2>Video and frame navigation</h2>
+            <span id="frameBadge" class="frame-badge">Frame —</span>
+          </div>
+          <div class="video-shell">
+            <video id="video" playsinline preload="metadata"></video>
+            <div id="videoPlaceholder" class="video-placeholder">
+              <span class="placeholder-icon">▶</span>
+              <strong>Select a custom video to begin</strong>
+              <span>The video stays local to this browser until you export or sync it.</span>
+            </div>
+          </div>
+          <div class="transport-row">
+            <button id="previousFrameButton" class="icon-button" type="button" aria-label="Previous frame">◀</button>
+            <button id="playButton" class="primary-button" type="button">Play</button>
+            <button id="nextFrameButton" class="icon-button" type="button" aria-label="Next frame">▶</button>
+            <label class="compact-field">Jump
+              <input id="jumpFramesInput" type="number" min="1" step="1" value="15" />
+            </label>
+            <button id="backJumpButton" class="secondary-button" type="button">− Jump</button>
+            <button id="forwardJumpButton" class="secondary-button" type="button">+ Jump</button>
+          </div>
+          <div class="time-row">
+            <label>Frame
+              <input id="frameInput" type="number" min="0" step="1" value="0" />
+            </label>
+            <label>Time (s)
+              <input id="timeInput" type="number" min="0" step="0.001" value="0" />
+            </label>
+            <span id="videoMeta" class="meta-text">FPS — · Duration — · Frames —</span>
+          </div>
+          <div id="thumbnailStrip" class="thumbnail-strip" aria-label="Nearby frames"></div>
+          <p class="helper-text">Arrow keys step one frame. Up/Down step by the jump value when the cursor is not in a text field.</p>
+        </section>
+
+        <section class="card editor-card">
+          <div class="card-title-row">
+            <div>
+              <h2>Annotation menu</h2>
+              <p id="editModeLabel" class="helper-text">Creating a new annotation</p>
+            </div>
+            <span id="layerHint" class="layer-hint">Choose a layer</span>
+          </div>
+
+          <div class="editor-grid">
+            <label>Layer
+              <select id="layerSelect">
+                <option value="activity">Activity Interval</option>
+                <option value="set">Set Interval</option>
+                <option value="repetition">Repetition Interval</option>
+                <option value="phase">Phase Interval</option>
+                <option value="form">Form Interval</option>
+                <option value="other">Other Interval</option>
+              </select>
+            </label>
+            <label>Boundary
+              <select id="boundarySelect">
+                <option value="frame_interval">Frame interval</option>
+                <option value="single_frame">Single frame</option>
+              </select>
+            </label>
+            <label>Activity
+              <select id="activitySelect">
+                <option value="N/A">N/A</option>
+                <option value="active">active</option>
+                <option value="idle">idle</option>
+                <option value="transition">transition</option>
+              </select>
+            </label>
+            <label>Movement type
+              <select id="movementTypeSelect"></select>
+            </label>
+            <label>Exercise name
+              <select id="exerciseSelect"></select>
+            </label>
+            <label>Set number
+              <select id="setSelect"></select>
+            </label>
+            <label>Rep number
+              <select id="repSelect"></select>
+            </label>
+            <label>Phase
+              <select id="phaseSelect">
+                <option value="N/A">N/A</option>
+                <option value="eccentric">eccentric</option>
+                <option value="concentric">concentric</option>
+                <option value="hold">hold</option>
+              </select>
+            </label>
+            <label>Form state
+              <select id="formStateSelect">
+                <option value="N/A">N/A</option>
+                <option value="unlabeled">unlabeled</option>
+                <option value="observed">observed</option>
+                <option value="absent">absent</option>
+                <option value="unknown">unknown</option>
+              </select>
+            </label>
+            <label>Issue type <span class="multi-label">multi-select</span>
+              <select id="issueTypeSelect" multiple size="3"></select>
+              <span id="issueTypeSummary" class="multi-summary">N/A</span>
+            </label>
+            <label>Issue category <span class="multi-label">multi-select</span>
+              <select id="issueCategorySelect" multiple size="3"></select>
+              <span id="issueCategorySummary" class="multi-summary">N/A</span>
+            </label>
+            <label>Affected joints <span class="multi-label">multi-select</span>
+              <select id="affectedJointsSelect" multiple size="4"></select>
+              <span id="affectedJointsSummary" class="multi-summary">N/A</span>
+            </label>
+            <label class="wide-field">Notes
+              <textarea id="notesInput" rows="3" placeholder="Evidence, context, or annotation notes"></textarea>
+            </label>
+          </div>
+
+          <div class="range-panel">
+            <div>
+              <strong>Range</strong>
+              <p id="rangeStatus">Press Start / reset, navigate, then Save range.</p>
+            </div>
+            <div class="range-actions">
+              <button id="startRangeButton" class="secondary-button" type="button">Start / reset (W)</button>
+              <button id="saveRangeButton" class="primary-button" type="button">Save range (S)</button>
+              <button id="clearButton" class="danger-button" type="button">Clear selected</button>
+            </div>
+          </div>
+        </section>
+      </section>
+
+      <section class="card table-card">
+        <div class="card-title-row">
+          <div>
+            <h2>Temporal annotations</h2>
+            <p class="helper-text">Rows are grouped by frame order and layer. Tap a row to edit it.</p>
+          </div>
+          <div class="table-actions">
+            <button id="saveJsonButton" class="secondary-button" type="button">Save JSON</button>
+            <button id="downloadSessionButton" class="secondary-button" type="button">Export session</button>
+          </div>
+        </div>
+        <div class="table-scroll">
+          <table>
+            <thead>
+              <tr>
+                <th>ID</th>
+                <th>Layer</th>
+                <th>Boundary</th>
+                <th>Frames</th>
+                <th>Activity</th>
+                <th>Movement</th>
+                <th>Exercise</th>
+                <th>Set</th>
+                <th>Rep</th>
+                <th>Phase</th>
+                <th>Issue type</th>
+                <th>Affected joints</th>
+                <th>Notes</th>
+              </tr>
+            </thead>
+            <tbody id="annotationsBody">
+              <tr><td colspan="13" class="empty-row">No annotations yet.</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <section class="card limitation-card">
+        <h2>Mobile data note</h2>
+        <p>This client can annotate a custom video immediately. MediaPipe processing and canonical Parquet generation remain laptop/server work. When you load an optional session JSON, its frame timing and existing annotations are preserved; annotations are exported separately so the feature Parquet remains unchanged.</p>
+      </section>
+    </main>
+
+    <div id="toast" class="toast" role="status" aria-live="polite"></div>
+    <script src="app.js" defer></script>
+  </body>
+</html>
