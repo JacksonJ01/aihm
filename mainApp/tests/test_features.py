@@ -26,13 +26,21 @@ def make_frame_data(n=4):
     return pd.DataFrame(rows)
 
 
-def test_feature_engine_single_pass_result():
+def test_feature_engine_single_pass_result(detail):
     cfg = {
         "features": {"use_raw_xyz": True, "use_world_xyz": True, "normalize_landmarks": True, "normalization_center": "shoulders", "normalization_scale": "shoulder_width", "use_angles": True, "use_distances": True, "distance_space": "normalized", "use_velocity": True, "use_acceleration": True},
         "angles": {"targets": {"left_elbow": [11, 13, 15]}},
         "distances": {"targets": {"shoulders": [11, 12]}},
     }
-    result = FeatureEngine(cfg).build(make_frame_data())
+    frames = make_frame_data()
+    detail(input=f"{len(frames)} frames at 30 FPS; 33 landmarks per frame",
+           expected="4 output rows, first derivatives missing, elbow angle and shoulder distance present")
+    result = FeatureEngine(cfg).build(frames)
+    output = result.dataframe
+    detail(observed=f"{len(output)} rows, {len(result.feature_columns)} model features; "
+           f"frame 0 velocity={output['n0_vx'].iloc[0]}, acceleration={output['n0_ax'].iloc[0]}; "
+           f"angle={output['angle_left_elbow'].iloc[0]:.2f} degrees; "
+           f"normalized shoulder distance={output['distance_shoulders'].iloc[0]:.3f}")
     assert len(result.dataframe) == 4
     assert result.dataframe["n0_vx"].isna().iloc[0]
     assert result.dataframe["n0_ax"].isna().iloc[0]

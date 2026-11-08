@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from pathlib import Path
 
+import cv2
 import pandas as pd
 
 LANDMARK_COUNT = 33
@@ -99,3 +100,22 @@ def validate_artifacts(
         raise ValueError(
             f"Row-count mismatch: landmarks={len(landmarks)}, features={len(features)}"
         )
+    cap = cv2.VideoCapture(str(processed_video))
+    try:
+        if not cap.isOpened():
+            raise ValueError(f"Cannot open skeleton video: {processed_video}")
+        frame_count = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
+        if frame_count != len(features):
+            raise ValueError(
+                f"Skeleton video has {frame_count} frames but features have {len(features)}: "
+                f"{processed_video}"
+            )
+        first_ok, _ = cap.read()
+        if not first_ok:
+            raise ValueError(f"Cannot decode the first skeleton video frame: {processed_video}")
+        if frame_count > 1:
+            last_ok = cap.set(cv2.CAP_PROP_POS_FRAMES, frame_count - 1) and cap.read()[0]
+            if not last_ok:
+                raise ValueError(f"Cannot decode the last skeleton video frame: {processed_video}")
+    finally:
+        cap.release()

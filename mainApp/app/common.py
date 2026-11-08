@@ -3,6 +3,19 @@ from __future__ import annotations
 import numpy as np
 import pandas as pd
 from PyQt6.QtCore import QAbstractTableModel, QModelIndex, Qt
+from PyQt6.QtWidgets import QWidget
+
+
+def close_and_return(window: QWidget) -> None:
+    """Return to the window that opened this one after an accepted close."""
+    parent = window.parentWidget()
+    if not window.close() or parent is None:
+        return
+    if parent.isMinimized():
+        parent.setWindowState(parent.windowState() & ~Qt.WindowState.WindowMinimized)
+    parent.show()
+    parent.raise_()
+    parent.activateWindow()
 
 
 class DataFrameModel(QAbstractTableModel):

@@ -4,7 +4,7 @@ import pandas as pd
 from aihumo.windowing import generate_window_records
 
 
-def test_windows_are_fixed_shape_at_canonical_model_fps():
+def test_windows_are_fixed_shape_at_canonical_model_fps(detail):
     source_fps = 60.0
     n = 600
     t = np.arange(n) / source_fps
@@ -19,6 +19,8 @@ def test_windows_are_fixed_shape_at_canonical_model_fps():
         "pose_present": [1] * n,
         "feature_a": np.sin(t),
     })
+    detail(input=f"{n} frames at {source_fps:g} FPS; 1 sine feature; 5 s windows with 1 s stride",
+           expected="Each 30 FPS window has shape (150, 1) and keeps both FPS values")
     records = generate_window_records(
         df,
         ["feature_a"],
@@ -26,6 +28,9 @@ def test_windows_are_fixed_shape_at_canonical_model_fps():
         stride_seconds=1.0,
         model_fps=30.0,
     )
+    detail(observed=f"{len(records)} windows; shapes={sorted({record.X.shape for record in records})}")
+    if records:
+        detail(fps=f"source={records[0].metadata['source_fps']}; model={records[0].metadata['model_fps']}")
     assert records
     assert all(record.X.shape == (150, 1) for record in records)
     assert records[0].metadata["source_fps"] == source_fps

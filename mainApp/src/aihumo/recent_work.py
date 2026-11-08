@@ -32,12 +32,17 @@ class RecentWorkStore:
             self.items = [dict(value) for _, value in sorted(document.get("recentWork", {}).items()) if isinstance(value, dict)]
         return self.items
 
-    def add(self, *, name: str, files: dict[str, str], identifiers: dict[str, Any] | None = None) -> dict[str, Any]:
+    def add(
+        self, *, name: str, files: dict[str, str], identifiers: dict[str, Any] | None = None,
+        last_frame: int | None = None,
+    ) -> dict[str, Any]:
         entry = {
             "name": str(name),
             "files": {key: str(value) for key, value in files.items() if value},
             "identifiers": dict(identifiers or {}),
         }
+        if last_frame is not None:
+            entry["lastFrame"] = last_frame
         identity = (entry["files"].get("featuresParquet"), entry["files"].get("processedVideo"))
         self.items = [item for item in self.items if (
             item.get("files", {}).get("featuresParquet"), item.get("files", {}).get("processedVideo")
@@ -46,6 +51,24 @@ class RecentWorkStore:
         self.items = self.items[:MAX_RECENT]
         self.save()
         return entry
+
+    def save_frame(self, *, video: str, parquet: str, frame: int) -> bool:
+        """Update a graph position without promoting an older workspace."""
+        for entry in self.items:
+            files = entry.get("files", {})
+            if (files.get("processedVideo"), files.get("featuresParquet")) != (video, parquet):
+                continue
+            if entry.get("lastFrame") == frame:
+                return False
+            previous = entry.get("lastFrame")
+            entry["lastFrame"] = frame
+            try:
+                self.save()
+            except OSError:
+                entry["lastFrame"] = previous
+                raise
+            return True
+        return False
 
     def save(self) -> None:
         recent_work = {}

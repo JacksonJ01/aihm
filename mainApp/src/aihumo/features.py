@@ -3,16 +3,31 @@ from __future__ import annotations
 from dataclasses import dataclass
 import logging
 from pathlib import Path
-from typing import Callable
+from typing import Callable, Iterable
 
 import numpy as np
 import pandas as pd
 
-from .geometry import vectorized_angles, vectorized_distances
+from .geometry import vectorized_angles, vectorized_distances, vectorized_point_angle
 
 LOGGER = logging.getLogger(__name__)
 LANDMARKS = 33
 AXES = ("x", "y", "z")
+LEGACY_ANGLE_PREFIX = "angle_"
+PROJECTED_ANGLE_PREFIX = "angle_2d_"
+WORLD_ANGLE_PREFIX = "angle_3d_"
+ANGLE_PREFIXES = {
+    "legacy": LEGACY_ANGLE_PREFIX, "2d": PROJECTED_ANGLE_PREFIX, "3d": WORLD_ANGLE_PREFIX,
+}
+
+
+def angle_family(columns: Iterable[str], prefix: str) -> dict[str, str]:
+    """Map logical joint names to column names in one angle space."""
+    return {
+        column.removeprefix(prefix): column for column in columns
+        if column.startswith(prefix)
+        and (prefix != LEGACY_ANGLE_PREFIX or not column.startswith((PROJECTED_ANGLE_PREFIX, WORLD_ANGLE_PREFIX)))
+    }
 
 
 @dataclass(frozen=True)
@@ -30,13 +45,14 @@ class FeatureEngine:
         self.cfg = cfg
         self.feature_cfg = cfg.get("features", {})
         self.angle_definitions = cfg.get("angles", {}).get("targets", {})
+        self.midpoint_angle_definitions = cfg.get("angles", {}).get("midpoint_targets", {})
         self.distance_definitions = cfg.get("distances", {}).get("targets", {})
 
     @staticmethod
-    def _landmark_array(df: pd.DataFrame, prefix: str = "lm") -> np.ndarray:
-        values = np.full((len(df), LANDMARKS, 3), np.nan, dtype=float)
+    def _landmark_array(df: pd.DataFrame, prefix: str = "lm", axes: tuple[str, ...] = AXES) -> np.ndarray:
+        values = np.full((len(df), LANDMARKS, len(axes)), np.nan, dtype=float)
         for i in range(LANDMARKS):
-            for axis_index, axis in enumerate(AXES):
+            for axis_index, axis in enumerate(axes):
                 column = f"{prefix}{i}_{axis}"
                 if column in df.columns:
                     values[:, i, axis_index] = pd.to_numeric(df[column], errors="coerce").to_numpy(dtype=float)
@@ -58,6 +74,67 @@ class FeatureEngine:
             "ankle_center": ankle_center,
             "head_center": head_center,
         }
+
+    def projected_angles(self, df: pd.DataFrame, frame_size: tuple[float, float]) -> dict[str, np.ndarray]:
+        """Reconstruct the configured angles in video-pixel XY without changing the frame table."""
+        return self._projected_angles(self._landmark_array(df, axes=("x", "y")), frame_size, LEGACY_ANGLE_PREFIX)
+
+    def _projected_angles(
+        self, xy: np.ndarray, frame_size: tuple[float, float], prefix: str = PROJECTED_ANGLE_PREFIX,
+    ) -> dict[str, np.ndarray]:
+        if not np.isfinite(frame_size).all() or min(frame_size) <= 0:
+            return {}
+        # Image X and Y were normalized by different dimensions. Restore both
+        # to pixels before taking angles and leave inferred depth out of it.
+        return self._calculate_angles(xy * frame_size, prefix=prefix)
+
+    def with_missing_spatial_angles(self, df: pd.DataFrame, frame_size: tuple[float, float]) -> pd.DataFrame:
+        """Augment legacy input in memory. A saved family, including its gaps, is authoritative."""
+        additions = {}
+        if not angle_family(df.columns, PROJECTED_ANGLE_PREFIX):
+            additions.update(self._projected_angles(self._landmark_array(df, axes=("x", "y")), frame_size))
+        if not angle_family(df.columns, WORLD_ANGLE_PREFIX):
+            additions.update(self._calculate_angles(self._landmark_array(df, "world"), prefix=WORLD_ANGLE_PREFIX))
+        available = {name: values for name, values in additions.items() if np.isfinite(values).any()}
+        return pd.concat([df, pd.DataFrame(available, index=df.index)], axis=1) if available else df
+
+    def _calculate_angles(
+        self, points: np.ndarray, centers: dict[str, np.ndarray] | None = None, *, prefix: str = LEGACY_ANGLE_PREFIX,
+    ) -> dict[str, np.ndarray]:
+        if centers is None:
+            centers = self._derived_centers(points)
+        regular_targets = {
+            name: target for name, target in self.angle_definitions.items()
+            if name not in {"torso_vertical", "torso_nose_shoulder_hip"}
+        }
+        values = vectorized_angles(points, regular_targets)
+        midpoint_points = {
+            "nose": points[:, 0, :],
+            "shoulder_midpoint": centers["shoulder_center"],
+            "hip_midpoint": centers["hip_center"],
+            "knee_midpoint": centers["knee_center"],
+            "ankle_midpoint": centers["ankle_center"],
+        }
+        if "torso_nose_shoulder_hip" in self.angle_definitions:
+            values["torso_nose_shoulder_hip"] = vectorized_point_angle(
+                midpoint_points["nose"], midpoint_points["shoulder_midpoint"], midpoint_points["hip_midpoint"]
+            )
+        for name, target in self.midpoint_angle_definitions.items():
+            if len(target) != 3 or any(point_name not in midpoint_points for point_name in target):
+                raise ValueError(
+                    f"Midpoint angle {name!r} must reference three known points: {sorted(midpoint_points)}"
+                )
+            values[name] = vectorized_point_angle(*(midpoint_points[point_name] for point_name in target))
+        if "torso_vertical" in self.angle_definitions:
+            vector = centers["shoulder_center"] - centers["hip_center"]
+            if prefix != WORLD_ANGLE_PREFIX:
+                vector = vector[:, :2]
+            norm = np.linalg.norm(vector, axis=1)
+            tilt = np.full(len(points), np.nan, dtype=float)
+            valid = np.isfinite(vector).all(axis=1) & (norm > 1e-8)
+            tilt[valid] = np.degrees(np.arccos(np.clip(np.abs(vector[valid, 1]) / norm[valid], -1.0, 1.0)))
+            values["torso_vertical"] = tilt
+        return {f"{prefix}{name}": value for name, value in values.items()}
 
     @staticmethod
     def _body_geometry(points: np.ndarray, centers: dict[str, np.ndarray]) -> dict[str, np.ndarray]:
@@ -147,6 +224,16 @@ class FeatureEngine:
         columns.append(f"{prefix}_magnitude")
         return columns
 
+    @staticmethod
+    def _add_point_columns(additions: dict[str, np.ndarray], prefix: str, points: np.ndarray) -> list[str]:
+        """Register a named anatomical point without recalculating it."""
+        columns = []
+        for axis_index, axis in enumerate(AXES):
+            name = f"{prefix}_{axis}"
+            additions[name] = points[:, axis_index]
+            columns.append(name)
+        return columns
+
     def _normalization_representations(self, points: np.ndarray, centers: dict[str, np.ndarray], geometry: dict[str, np.ndarray]) -> dict[str, tuple[np.ndarray, np.ndarray]]:
         representations: dict[str, tuple[np.ndarray, np.ndarray]] = {}
         enabled = self.feature_cfg.get("normalization", {}).get("representations")
@@ -176,7 +263,10 @@ class FeatureEngine:
                 raise ValueError(f"Unsupported normalization representation: {name}")
         return representations
 
-    def build(self, frame_df: pd.DataFrame, progress_callback: Callable[[float, str], None] | None = None) -> FeatureBuildResult:
+    def build(
+        self, frame_df: pd.DataFrame, progress_callback: Callable[[float, str], None] | None = None,
+        *, frame_size: tuple[float, float] | None = None,
+    ) -> FeatureBuildResult:
         if frame_df.empty:
             raise ValueError("Cannot build features from an empty frame DataFrame.")
         if frame_df.columns.duplicated().any():
@@ -205,6 +295,23 @@ class FeatureEngine:
                 generated_groups["anatomical_centers"].extend(self._add_vector_columns(additions, name, centers[name]))
         else:
             generated_groups["anatomical_centers"] = []
+        if self.feature_cfg.get("include_anatomical_points", True):
+            # These names are explicit aliases over the raw nose and the
+            # already-computed bilateral centers. No midpoint is recalculated.
+            point_definitions = {
+                "nose": raw_points[:, 0, :],
+                "shoulder_midpoint": centers["shoulder_center"],
+                "hip_midpoint": centers["hip_center"],
+                "knee_midpoint": centers["knee_center"],
+                "ankle_midpoint": centers["ankle_center"],
+            }
+            generated_groups["anatomical_points"] = []
+            for name, point in point_definitions.items():
+                generated_groups["anatomical_points"].extend(
+                    self._add_point_columns(additions, name, point)
+                )
+        else:
+            generated_groups["anatomical_points"] = []
         for name in ("shoulder_width", "hip_width", "combined_shoulder_hip_width", "torso_length"):
             additions[name] = geometry[name]
         generated_groups["body_geometry"] = ["shoulder_width", "hip_width", "combined_shoulder_hip_width", "torso_length"]
@@ -242,31 +349,10 @@ class FeatureEngine:
             progress_callback(step / total_steps, "Generated configurable normalization")
 
         if self.feature_cfg.get("use_angles", True):
-            regular_targets = {
-                name: target for name, target in self.angle_definitions.items()
-                if name not in {"torso_vertical", "torso_nose_shoulder_hip"}
-            }
-            angle_values = vectorized_angles(raw_points, regular_targets)
-            if "torso_nose_shoulder_hip" in self.angle_definitions:
-                # Nose -> shoulder midpoint -> hip midpoint. This is a
-                # midpoint-defined angle, not an alias for a single shoulder.
-                a = raw_points[:, 0, :]
-                b = centers["shoulder_center"]
-                c = centers["hip_center"]
-                ba, bc = a - b, c - b
-                denom = np.linalg.norm(ba, axis=1) * np.linalg.norm(bc, axis=1)
-                values = np.full(len(raw_points), np.nan, dtype=float)
-                valid = np.isfinite(denom) & (denom > 1e-8)
-                values[valid] = np.degrees(np.arccos(np.clip(np.sum(ba[valid] * bc[valid], axis=1) / denom[valid], -1.0, 1.0)))
-                angle_values["torso_nose_shoulder_hip"] = values
-            if "torso_vertical" in self.angle_definitions:
-                vector = centers["shoulder_center"] - centers["hip_center"]
-                norm = np.linalg.norm(vector[:, :2], axis=1)
-                values = np.full(len(raw_points), np.nan, dtype=float)
-                valid = np.isfinite(vector[:, :2]).all(axis=1) & (norm > 1e-8)
-                values[valid] = np.degrees(np.arccos(np.clip(np.abs(vector[valid, 1]) / norm[valid], -1.0, 1.0)))
-                angle_values["torso_vertical"] = values
-            angle_columns = {f"angle_{name}": value for name, value in angle_values.items()}
+            angle_columns = self._calculate_angles(raw_points, centers)
+            if frame_size is not None:
+                angle_columns.update(self._projected_angles(raw_points[:, :, :2], frame_size))
+            angle_columns.update(self._calculate_angles(world_points, prefix=WORLD_ANGLE_PREFIX))
             additions.update(angle_columns)
             generated_groups["angles"] = list(angle_columns)
         else:
@@ -388,6 +474,9 @@ class FeatureEngine:
         if self.feature_cfg.get("include_anatomical_centers", True):
             for name in ("hip_center", "shoulder_center", "torso_center", "knee_center", "ankle_center"):
                 features.extend(f"{name}_{axis}" for axis in AXES if f"{name}_{axis}" in df.columns)
+        if self.feature_cfg.get("include_anatomical_points", True):
+            for name in ("nose", "shoulder_midpoint", "hip_midpoint", "knee_midpoint", "ankle_midpoint"):
+                features.extend(f"{name}_{axis}" for axis in AXES if f"{name}_{axis}" in df.columns)
         if self.feature_cfg.get("include_body_geometry", True):
             features.extend(name for name in ("shoulder_width", "hip_width", "combined_shoulder_hip_width", "torso_length") if name in df.columns)
         if self.feature_cfg.get("include_body_axes", True):
@@ -396,7 +485,15 @@ class FeatureEngine:
                 if f"{name}_magnitude" in df.columns:
                     features.append(f"{name}_magnitude")
         if self.feature_cfg.get("use_angles", True):
-            features.extend(f"angle_{name}" for name in self.angle_definitions if f"angle_{name}" in df.columns)
+            angle_names = list(self.angle_definitions) + list(self.midpoint_angle_definitions)
+            for space in self.feature_cfg.get("model_angle_spaces", ["legacy"]):
+                if space not in ANGLE_PREFIXES:
+                    raise ValueError(f"Unknown model angle space {space!r}. Choose legacy, 2d, or 3d.")
+                prefix = ANGLE_PREFIXES[space]
+                columns = [f"{prefix}{name}" for name in angle_names if f"{prefix}{name}" in df.columns]
+                if space != "legacy" and angle_names and len(columns) != len(set(angle_names)):
+                    raise ValueError(f"The requested {space} angle family is incomplete. Build features with the required landmarks and video dimensions.")
+                features.extend(columns)
         if self.feature_cfg.get("use_distances", True):
             features.extend(f"distance_{name}" for name in self.distance_definitions if f"distance_{name}" in df.columns)
         if self.feature_cfg.get("use_velocity", True):
@@ -415,6 +512,7 @@ class FeatureEngine:
                 "normalized_xyz": bool(self.feature_cfg.get("use_normalized_xyz", self.feature_cfg.get("normalize_landmarks", True))),
                 "world_xyz": bool(self.feature_cfg.get("use_world_xyz", True)),
                 "anatomical_centers": bool(self.feature_cfg.get("anatomical_centers", {}).get("enabled", True)),
+                "anatomical_points": bool(self.feature_cfg.get("include_anatomical_points", True)),
                 "body_axes": bool(self.feature_cfg.get("body_axes", {}).get("enabled", True)),
                 "angles": bool(self.feature_cfg.get("use_angles", True)),
                 "distances": bool(self.feature_cfg.get("use_distances", True)),
@@ -424,6 +522,30 @@ class FeatureEngine:
             "normalization": normalization_cfg,
             "distance_space": self.feature_cfg.get("distance_space", "normalized"),
             "angle_definitions": self.angle_definitions,
+            "midpoint_angle_definitions": self.midpoint_angle_definitions,
+            "angle_feature_spaces": {
+                space: {
+                    "columns": list(angle_family(df.columns, prefix).values()),
+                    "units": "degrees",
+                    "coordinates": {
+                        "legacy": "normalized image XYZ; normalized XY for torso tilt",
+                        "2d": "source image pixels XY (normalized x × width, y × height)",
+                        "3d": "MediaPipe estimated world XYZ (hip-relative); world Y-axis for torso tilt",
+                    }[space],
+                }
+                for space, prefix in ANGLE_PREFIXES.items() if angle_family(df.columns, prefix)
+            },
+            "anatomical_point_definitions": {
+                "nose": "raw image landmark 0",
+                "shoulder_midpoint": "mean(raw image landmarks 11, 12)",
+                "hip_midpoint": "mean(raw image landmarks 23, 24)",
+                "knee_midpoint": "mean(raw image landmarks 25, 26)",
+                "ankle_midpoint": "mean(raw image landmarks 27, 28)",
+            },
+            "angle_semantics": {
+                "torso_nose_shoulder_hip": "angle(nose, shoulder_midpoint, hip_midpoint); vertex=shoulder_midpoint",
+                "shoulder_midpoint_hip_midpoint_knee_midpoint": "angle(shoulder_midpoint, hip_midpoint, knee_midpoint); vertex=hip_midpoint",
+            },
             "distance_definitions": self.distance_definitions,
             "velocity_definition": "v_t = (x_t - x_(t-1)) / (timestamp_t - timestamp_(t-1)); first/invalid samples => NaN",
             "acceleration_definition": "a_t = (v_t - v_(t-1)) / (timestamp_t - timestamp_(t-1)); insufficient/invalid samples => NaN",
@@ -439,9 +561,24 @@ def select_model_features(df: pd.DataFrame, cfg: dict) -> list[str]:
     return FeatureEngine(cfg).select_model_features(df)
 
 
-def build_features(input_path: str | Path, output_path: str | Path, cfg: dict) -> dict:
-    df = pd.read_parquet(input_path)
-    result = FeatureEngine(cfg).build(df)
-    from .storage import save_parquet_atomic
+def build_features(
+    input_path: str | Path, output_path: str | Path, cfg: dict, *, frame_size: tuple[float, float] | None = None,
+) -> dict:
+    from .storage import load_json, save_parquet_atomic
+
+    path = Path(input_path)
+    if frame_size is None and path.stem.endswith("_landmarks"):
+        name = path.stem.removesuffix("_landmarks") + "_metadata.json"
+        for sidecar in (path.parent.parent / "metadata" / name, path.with_name(name)):
+            if sidecar.is_file():
+                try:
+                    size = load_json(sidecar)["resolution"]
+                    candidate = (float(size["width"]), float(size["height"]))
+                    if np.isfinite(candidate).all() and min(candidate) > 0:
+                        frame_size = candidate
+                        break
+                except (OSError, ValueError, KeyError, TypeError):
+                    LOGGER.warning("Could not read video dimensions from %s", sidecar)
+    result = FeatureEngine(cfg).build(pd.read_parquet(path), frame_size=frame_size)
     save_parquet_atomic(result.dataframe, output_path)
     return {"feature_count": len(result.feature_columns), "features": result.feature_columns, "rows": len(result.dataframe), "manifest": result.feature_manifest}

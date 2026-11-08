@@ -29,7 +29,7 @@ def distance(a: np.ndarray, b: np.ndarray) -> float:
 
 
 def vectorized_angles(points: np.ndarray, targets: dict[str, list[int]]) -> dict[str, np.ndarray]:
-    """Calculate multiple A-B-C angles for points shaped [frames, landmarks, xyz]."""
+    """Calculate A-B-C angles for points shaped [frames, landmarks, coordinates]."""
     output: dict[str, np.ndarray] = {}
     for name, (a, b, c) in targets.items():
         ba = points[:, a, :] - points[:, b, :]
@@ -44,6 +44,24 @@ def vectorized_angles(points: np.ndarray, targets: dict[str, list[int]]) -> dict
             values[valid] = np.degrees(np.arccos(np.clip(cosine, -1.0, 1.0)))
         output[name] = values
     return output
+
+
+def vectorized_point_angle(a: np.ndarray, b: np.ndarray, c: np.ndarray) -> np.ndarray:
+    """Calculate angle ABC for frame-aligned XY or XYZ points."""
+    a = np.asarray(a, dtype=float)
+    b = np.asarray(b, dtype=float)
+    c = np.asarray(c, dtype=float)
+    if a.shape != b.shape or a.shape != c.shape or a.ndim != 2 or a.shape[1] not in (2, 3):
+        raise ValueError("Point angle inputs must have matching shape [frames, 2 or 3].")
+    ba = a - b
+    bc = c - b
+    denom = np.linalg.norm(ba, axis=1) * np.linalg.norm(bc, axis=1)
+    values = np.full(a.shape[0], np.nan, dtype=float)
+    valid = np.isfinite(denom) & (denom > EPSILON)
+    if np.any(valid):
+        cosine = np.sum(ba[valid] * bc[valid], axis=1) / denom[valid]
+        values[valid] = np.degrees(np.arccos(np.clip(cosine, -1.0, 1.0)))
+    return values
 
 
 def vectorized_distances(points: np.ndarray, definitions: dict[str, list[int]]) -> dict[str, np.ndarray]:

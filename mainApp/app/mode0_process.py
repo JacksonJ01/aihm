@@ -7,7 +7,7 @@ from typing import Any
 
 from PyQt6.QtCore import QObject, QThread, pyqtSignal
 from PyQt6.QtWidgets import (
-    QCheckBox, QDialog, QDialogButtonBox, QFileDialog, QFormLayout, QHBoxLayout, QLabel,
+    QCheckBox, QComboBox, QDialog, QDialogButtonBox, QFileDialog, QFormLayout, QHBoxLayout, QLabel,
     QLineEdit, QMessageBox, QPushButton, QTextEdit, QVBoxLayout, QWidget,
 )
 
@@ -18,8 +18,21 @@ if str(SRC_DIR) not in sys.path:
 
 from aihumo.config import load_config
 from aihumo.processing import process_video, processing_job_status
+from .preferences import ParticipantPicker, PreferenceStore
 
 LOGGER = logging.getLogger("AIHuMoDataStudio.Mode0")
+
+CAMERA_ANGLE_OPTIONS = [
+    ("N/A", "N/A"),
+    ("Front", "Front"),
+    ("Side", "Side"),
+    ("Rear", "Rear"),
+    ("Three-quarter", "Three-quarter"),
+    ("Low angle", "Low angle"),
+    ("High angle", "High angle"),
+    ("Camera adjustment", "Camera adjustment"),
+    ("Unknown", "Unknown"),
+]
 
 
 class ProcessingWorker(QObject):
@@ -54,7 +67,7 @@ class ProcessingWorker(QObject):
 class ProcessVideoDialog(QDialog):
     """Mode 0: prepare a recording and launch crash-safe processing."""
 
-    def __init__(self, parent=None):
+    def __init__(self, parent=None, *, preferences: PreferenceStore | None = None):
         super().__init__(parent)
         self.setWindowTitle("AIHuMo — Process New Video")
         self.resize(800, 680)
@@ -70,12 +83,17 @@ class ProcessVideoDialog(QDialog):
         self.model_edit = QLineEdit()
         self.session_edit = QLineEdit("S001")
         self.video_id_edit = QLineEdit("V001")
-        self.participant_edit = QLineEdit()
+        self.preferences = preferences or PreferenceStore(PROJECT_ROOT / ".aihumo" / "settings.json")
+        self.participant_picker = ParticipantPicker(self.preferences)
+        self.participant_edit = self.participant_picker.edit
         self.camera_id_edit = QLineEdit("camera_01")
         self.camera_name_edit = QLineEdit()
         self.recording_date_edit = QLineEdit()
         self.exercise_edit = QLineEdit()
         self.viewpoint_edit = QLineEdit()
+        self.camera_angle_combo = QComboBox()
+        for label, value in CAMERA_ANGLE_OPTIONS:
+            self.camera_angle_combo.addItem(label, value)
         self.environment_edit = QLineEdit()
         self.operator_edit = QLineEdit()
         self.notes_edit = QTextEdit(); self.notes_edit.setMaximumHeight(80)
@@ -86,12 +104,13 @@ class ProcessVideoDialog(QDialog):
         form.addRow("Source video*", self._browse_row(self.video_edit, self.browse_video, "Video Files (*.mp4 *.mov *.avi *.mkv *.webm);;All Files (*)"))
         form.addRow("Session ID*", self.session_edit)
         form.addRow("Video ID*", self.video_id_edit)
-        form.addRow("Participant ID*", self.participant_edit)
+        form.addRow("Participant ID*", self.participant_picker)
         form.addRow("Camera ID*", self.camera_id_edit)
         form.addRow("Camera name", self.camera_name_edit)
         form.addRow("Recording date", self.recording_date_edit)
         form.addRow("Exercise hint", self.exercise_edit)
         form.addRow("Viewpoint", self.viewpoint_edit)
+        form.addRow("Camera angle", self.camera_angle_combo)
         form.addRow("Environment", self.environment_edit)
         form.addRow("Operator / annotator", self.operator_edit)
         form.addRow("Notes", self.notes_edit)
@@ -151,7 +170,7 @@ class ProcessVideoDialog(QDialog):
     def refresh_job_status(self):
         source = Path(self.video_edit.text().strip())
         model = Path(self.model_edit.text().strip())
-        if not source.exists() or not model.exists() or not self.session_edit.text().strip() or not self.video_id_edit.text().strip():
+        if not source.is_file() or not model.is_file() or not self.session_edit.text().strip() or not self.video_id_edit.text().strip():
             self.job_status.clear()
             return
         try:
@@ -184,10 +203,10 @@ class ProcessVideoDialog(QDialog):
     def start_processing(self):
         source_video = Path(self.video_edit.text().strip())
         model_path = Path(self.model_edit.text().strip())
-        if not source_video.exists():
+        if not source_video.is_file():
             QMessageBox.warning(self, "Missing source video", "Select a valid source video.")
             return
-        if not model_path.exists():
+        if not model_path.is_file():
             QMessageBox.warning(self, "Missing MediaPipe model", "Select a valid .task model file.")
             return
         required = {
@@ -206,6 +225,7 @@ class ProcessVideoDialog(QDialog):
             "recording_date": self.recording_date_edit.text().strip() or None,
             "exercise_hint": self.exercise_edit.text().strip() or None,
             "viewpoint": self.viewpoint_edit.text().strip() or None,
+            "camera_angle": self.camera_angle_combo.currentData() or "N/A",
             "environment": self.environment_edit.text().strip() or None,
             "operator": self.operator_edit.text().strip() or None,
             "notes": self.notes_edit.toPlainText().strip() or None,
@@ -221,6 +241,7 @@ class ProcessVideoDialog(QDialog):
                 output_root=Path(self.output_edit.text().strip()),
                 session_id=required["session_id"],
                 video_id=required["video_id"],
+                identifiers=identifiers,
             )
             if status["status"] == "conflict":
                 QMessageBox.critical(self, "Processing conflict", status.get("message", "Existing job is incompatible."))
@@ -242,6 +263,8 @@ class ProcessVideoDialog(QDialog):
             "identifiers": identifiers,
             "optional_metadata": optional,
             "output_root": Path(self.output_edit.text().strip()),
+            "skeleton_line_color": self.preferences.values.skeleton_line,
+            "skeleton_joint_color": self.preferences.values.skeleton_joint,
         })
         self.worker.moveToThread(self.thread)
         self.thread.started.connect(self.worker.run)

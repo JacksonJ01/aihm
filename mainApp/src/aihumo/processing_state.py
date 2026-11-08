@@ -66,6 +66,7 @@ class ProcessingState:
     tracking_state: dict[str, Any] | None = None
     started_at: str = field(default_factory=utc_now_iso)
     updated_at: str = field(default_factory=utc_now_iso)
+    recording_identity: dict[str, str | None] | None = None
 
     @classmethod
     def new(
@@ -76,6 +77,7 @@ class ProcessingState:
         source_fingerprint: dict[str, Any],
         model_fingerprint: dict[str, Any],
         config_fingerprint: str,
+        recording_identity: dict[str, str | None] | None = None,
     ) -> "ProcessingState":
         return cls(
             session_id=session_id,
@@ -83,11 +85,14 @@ class ProcessingState:
             source_fingerprint=source_fingerprint,
             model_fingerprint=model_fingerprint,
             config_fingerprint=config_fingerprint,
+            recording_identity=recording_identity,
         )
 
     @classmethod
     def load(cls, path: str | Path) -> "ProcessingState":
         document = load_json(path)
+        if not isinstance(document, dict):
+            raise ValueError("Processing state must be a JSON object.")
         if document.get("schema_version") not in {"1.0", STATE_SCHEMA_VERSION}:
             raise ValueError(
                 f"Unsupported processing state schema: {document.get('schema_version')}"
@@ -107,6 +112,10 @@ class ProcessingState:
             tracking_state=document.get("tracking_state"),
             started_at=str(document.get("started_at", utc_now_iso())),
             updated_at=str(document.get("updated_at", utc_now_iso())),
+            recording_identity=(
+                dict(document["recording_identity"])
+                if document.get("recording_identity") is not None else None
+            ),
         )
 
     def to_document(self) -> dict[str, Any]:
@@ -126,6 +135,7 @@ class ProcessingState:
             "tracking_state": self.tracking_state,
             "started_at": self.started_at,
             "updated_at": self.updated_at,
+            "recording_identity": self.recording_identity,
         }
 
     def save(self, path: str | Path) -> None:

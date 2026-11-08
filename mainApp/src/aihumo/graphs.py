@@ -8,10 +8,7 @@ from typing import Any
 import pandas as pd
 
 from .exercise_library import LIBRARY_VERSION, angle_preset
-
-
-def _angle_columns(df: pd.DataFrame, names: list[str]) -> list[str]:
-    return [f"angle_{name}" for name in names if f"angle_{name}" in df.columns]
+from .features import LEGACY_ANGLE_PREFIX, PROJECTED_ANGLE_PREFIX, angle_family
 
 
 def generate_angle_graphs(
@@ -21,6 +18,7 @@ def generate_angle_graphs(
     exercise_id: str | None = None,
     feature_data_version: str | None = None,
     export_images: bool = True,
+    export_dpi: int = 180,
 ) -> dict[str, Any]:
     """Generate optional PNG previews without recomputing pose or features.
 
@@ -29,10 +27,13 @@ def generate_angle_graphs(
     """
     if "timestamp_s" not in features.columns:
         raise ValueError("timestamp_s is required for angle graphs")
-    names = angle_preset(exercise_id)
-    if not names:
-        names = [c.removeprefix("angle_") for c in features.columns if c.startswith("angle_")]
-    columns = _angle_columns(features, names)
+    prefix = PROJECTED_ANGLE_PREFIX
+    available = angle_family(features.columns, prefix)
+    if not available:
+        prefix = LEGACY_ANGLE_PREFIX
+        available = angle_family(features.columns, prefix)
+    names = angle_preset(exercise_id) or list(available)
+    columns = [available[name] for name in names if name in available]
     output = Path(output_dir)
     output.mkdir(parents=True, exist_ok=True)
     manifest: dict[str, Any] = {
@@ -40,11 +41,13 @@ def generate_angle_graphs(
         "exerciseId": exercise_id,
         "exerciseLibraryVersion": LIBRARY_VERSION,
         "angleFeatureIds": columns,
+        "angleSpace": "video_plane_2d" if prefix == PROJECTED_ANGLE_PREFIX else "legacy",
         "units": "degrees",
         "xAxis": "timeElapsedS",
         "featureDataVersion": feature_data_version,
         "smoothing": {"enabled": False, "method": None},
         "missingValues": "preserved as gaps",
+        "imageExportDpi": max(72, int(export_dpi)),
         "imageExports": [],
     }
     if export_images and columns:
@@ -53,13 +56,13 @@ def generate_angle_graphs(
         import matplotlib.pyplot as plt
         for column in columns:
             figure, axis = plt.subplots(figsize=(9, 4.5))
-            axis.plot(features["timestamp_s"], pd.to_numeric(features[column], errors="coerce"), label=column.removeprefix("angle_"))
+            axis.plot(features["timestamp_s"], pd.to_numeric(features[column], errors="coerce"), label=column.removeprefix(prefix))
             axis.set(xlabel="Elapsed time (s)", ylabel="Angle (degrees)", title=f"AIHuMo — {column}")
             axis.grid(True, alpha=0.25)
             axis.legend()
             path = output / f"{column}.png"
             figure.tight_layout()
-            figure.savefig(path, dpi=140)
+            figure.savefig(path, dpi=max(72, int(export_dpi)))
             plt.close(figure)
             manifest["imageExports"].append(str(path))
     manifest_path = output / "graph_manifest.json"

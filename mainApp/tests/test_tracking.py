@@ -24,7 +24,7 @@ def candidate(tracker, cx, color=None):
     return tracker.candidate_from_landmarks(pose)
 
 
-def test_tracker_keeps_target_when_passerby_appears():
+def test_tracker_keeps_target_when_passerby_appears(detail):
     cfg = {
         "enabled": True,
         "warmup_frames": 3,
@@ -32,6 +32,8 @@ def test_tracker_keeps_target_when_passerby_appears():
         "reacquire_max_missed_frames": 8,
         "allow_ambiguous_auto_selection": True,
     }
+    detail(input="3 warmup frames at center x=0.50; then candidates at x=0.52 and x=0.80",
+           expected="Original track ID stays tracked when the passerby appears")
     tracker = TargetTracker(cfg)
     decisions = []
     for frame in range(3):
@@ -41,11 +43,12 @@ def test_tracker_keeps_target_when_passerby_appears():
     assert decisions[-1].status == TargetStatus.TRACKED
 
     decision = tracker.update([candidate(tracker, 0.52), candidate(tracker, 0.80)], 3)
+    detail(observed=f"original ID={target_id}; selected ID={decision.target_track_id}; status={decision.status.value}")
     assert decision.target_track_id == target_id
     assert decision.status == TargetStatus.TRACKED
 
 
-def test_tracker_does_not_substitute_passerby_during_occlusion():
+def test_tracker_does_not_substitute_passerby_during_occlusion(detail):
     cfg = {
         "enabled": True,
         "warmup_frames": 2,
@@ -53,17 +56,21 @@ def test_tracker_does_not_substitute_passerby_during_occlusion():
         "reacquire_max_missed_frames": 8,
         "allow_ambiguous_auto_selection": True,
     }
+    detail(input="Target moves from x=0.50 to 0.51; next frame contains only a passerby at x=0.85",
+           expected="Original ID retained, occlusion status, pose confidence 0")
     tracker = TargetTracker(cfg)
     tracker.update([candidate(tracker, 0.50)], 0)
     tracker.update([candidate(tracker, 0.51)], 1)
     target_id = tracker.target_track_id
     decision = tracker.update([candidate(tracker, 0.85)], 2)
+    detail(observed=f"original ID={target_id}; selected ID={decision.target_track_id}; "
+           f"status={decision.status.value}; confidence={decision.pose_confidence}")
     assert decision.target_track_id == target_id
     assert decision.status in {TargetStatus.PARTIALLY_OCCLUDED, TargetStatus.OCCLUDED}
     assert decision.pose_confidence == 0.0
 
 
-def test_tracker_reacquires_original_target():
+def test_tracker_reacquires_original_target(detail):
     cfg = {
         "enabled": True,
         "warmup_frames": 2,
@@ -71,11 +78,14 @@ def test_tracker_reacquires_original_target():
         "reacquire_max_missed_frames": 8,
         "allow_ambiguous_auto_selection": True,
     }
+    detail(input="Target starts at x=0.50 and 0.51, disappears for one frame, then returns at x=0.52 with a passerby at x=0.85",
+           expected="Reacquired status with the original target ID")
     tracker = TargetTracker(cfg)
     tracker.update([candidate(tracker, 0.50)], 0)
     tracker.update([candidate(tracker, 0.51)], 1)
     target_id = tracker.target_track_id
     tracker.update([], 2)
     decision = tracker.update([candidate(tracker, 0.52), candidate(tracker, 0.85)], 3)
+    detail(observed=f"original ID={target_id}; selected ID={decision.target_track_id}; status={decision.status.value}")
     assert decision.target_track_id == target_id
     assert decision.status == TargetStatus.REACQUIRED

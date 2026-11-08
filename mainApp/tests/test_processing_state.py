@@ -1,7 +1,9 @@
 from aihumo.processing_state import ProcessingState
 
 
-def test_processing_state_quick_and_full_compatibility():
+def test_processing_state_quick_and_full_compatibility(detail):
+    detail(input="Recording S1/V1; same paths, sizes and timestamps; retry with a changed source hash",
+           expected="Quick metadata match; full match only when both hashes agree")
     state = ProcessingState.new(
         session_id="S1",
         video_id="V1",
@@ -9,18 +11,20 @@ def test_processing_state_quick_and_full_compatibility():
         model_fingerprint={"path": "/model.task", "size_bytes": 20, "modified_ns": 21, "sha256": "model"},
         config_fingerprint="cfg",
     )
-    assert state.compatible_quickly_with(
+    quick = state.compatible_quickly_with(
         source_fingerprint={"path": "/video.mp4", "size_bytes": 10, "modified_ns": 11},
         model_fingerprint={"path": "/model.task", "size_bytes": 20, "modified_ns": 21},
         config_fingerprint="cfg",
     )
-    assert state.compatible_with(
+    full = state.compatible_with(
         source_fingerprint={"path": "/video.mp4", "size_bytes": 10, "modified_ns": 11, "sha256": "source"},
         model_fingerprint={"path": "/model.task", "size_bytes": 20, "modified_ns": 21, "sha256": "model"},
         config_fingerprint="cfg",
     )
-    assert not state.compatible_with(
+    changed = state.compatible_with(
         source_fingerprint={"path": "/video.mp4", "size_bytes": 10, "modified_ns": 11, "sha256": "changed"},
         model_fingerprint={"path": "/model.task", "size_bytes": 20, "modified_ns": 21, "sha256": "model"},
         config_fingerprint="cfg",
     )
+    detail(observed=f"quick match={quick}; full match={full}; changed hash accepted={changed}")
+    assert quick and full and not changed

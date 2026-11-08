@@ -358,6 +358,19 @@ pytest -q
 python -m compileall src app scripts
 ```
 
+For a terminal report with the synthetic input, expected behavior, measured
+output, and timing for each test, run from `mainApp` in PowerShell:
+
+```powershell
+$env:PYTHONPATH = 'src'
+.\.venv\Scripts\python.exe -m pytest -q tests --pipeline-details
+```
+
+Install pytest with `.\.venv\Scripts\python.exe -m pip install pytest` if it
+is missing. Add `-k "rep_detection or windowing"` to inspect a smaller group.
+The report follows the normal pytest progress and failure tracebacks, and
+uses synthetic fixtures instead of recordings from the project.
+
 The local project tests cover geometry, feature generation, anatomical reference points, normalization, temporal derivatives, target tracking/occlusion behavior, annotation hierarchy/recovery, window resampling, repetition-signal analysis, processing-state compatibility, and frame validation.
 
 MediaPipe, PyQt6, and PyArrow are runtime dependencies for the complete GUI/processing stack. They must be installed in the target environment before running Mode 0 or reading/writing Parquet through the GUI.
@@ -380,11 +393,103 @@ with exercise/library and feature-data provenance. Unknown exercises fall back
 to all available angle columns. A graph failure is logged as nonfatal and does
 not invalidate the processed feature data.
 
-The configured angle registry contains 14 angles: bilateral shoulder, elbow,
-wrist, hip, knee, and ankle angles plus midpoint-defined
-`torso_nose_shoulder_hip` and `torso_vertical`. The actual feature count is
-published in the feature manifest; no historical total is treated as a schema
-invariant.
+Open **Interactive Graph Viewer** on the launcher and select the skeleton MP4
+and its matching feature Parquet. The viewer opens a read-only workspace with
+the video and frame controls on the left and the joint traces on the right.
+The graph viewer and Mode 1 open maximized with the operating system's window
+controls. Use **Back to menu** in either workspace to return to the launcher.
+In Mode 1, **Interactive Graph Viewer** opens a preview at the annotation's
+current recording and frame. **Back to annotation** returns to Mode 1.
+Escape also goes back in the graph viewer. Launcher graph resume progress is separate.
+
+Use the checkboxes in **Joint traces** to show or hide individual curves.
+Turn on **Display Overlay** to see angle values beside the joints, using the
+same colors as the visible traces. In Mode 1, the overlay starts with the
+neck and hip-midpoint angles. Turn on **Mirror selected graph angles** to
+use the traces and angle source selected in the graph preview opened from
+Mode 1. The selection stays with the annotation window when you return
+from the preview. Angle labels start hidden in both workspaces.
+
+**Angle source** defaults to **Video plane (2D)** when available. Mode 0
+scales X by video width and Y by video height before calculating angles in
+the video plane. These can be foreshortened when a limb moves toward the
+camera. **Estimated world (3D)** uses MediaPipe's monocular, hip-relative
+world XYZ estimates. **Legacy (normalized image)** uses the original
+normalized image XYZ angles and normalized XY torso tilt.
+
+New recordings store `angle_2d_*`, `angle_3d_*`, and the existing
+`angle_*` columns in the same feature Parquet. Mode 1 reads these
+automatically for the midpoint overlay and the graph viewer. Both workspaces
+can reconstruct missing families in memory for older recordings with the
+required landmarks. Missing observations remain gaps.
+
+The default dataset input selection uses legacy angles for compatibility.
+To select the saved spatial angles for a new experiment, set
+`features.model_angle_spaces` to `["2d"]`, `["3d"]`, or `["2d", "3d"]`
+in the experiment's config. Use recordings with the requested families
+stored in their Parquet. The standalone feature builder gets source
+dimensions from the recording metadata or from `--width` and `--height`.
+
+Zoom with the mouse wheel or toolbar, or set **Detail window** to `1.00 s`
+and select **Zoom to window**. At close zoom, **Frame points** displays the
+native frame samples. Hover near a trace to inspect its closest sample.
+Move away to see the last inspected joint at the current video frame.
+The card marks missing samples as unavailable. When valid samples are
+available, it also shows landmark coordinates and motion calculated from
+consecutive samples. World coordinates are relative to the hips.
+The video frame and vertical graph cursor stay linked. Click the plot to seek
+to the closest native frame, or pan to a new part of the recording to seek to
+the center of that view. Zoom keeps the frame selected if it is still visible.
+In both workspaces, Left/Right step one frame and Up/Down jump by the
+editable **Jump** value. The launcher **Settings** sets the starting value
+for new windows, initially 50 frames. A graph preview opened from Mode 1
+starts with that annotation window's current Jump value. Use Tab to move
+keyboard focus between controls. Both workspaces have **Play/Pause** between
+the frame-step buttons and use the saved source timestamps for playback.
+Static PNG exports use the configured
+`graphs.export_dpi` value (220 by default).
+
+The launcher has separate **Resume Mode 1 Annotation** and **Resume Interactive
+Graph Viewer** lists. Graph resume reopens the saved video and feature Parquet
+at the last viewed frame. Annotation resume uses the annotation file's saved
+progress.
+
+In launcher **Settings**, choose colors for the selected workflow, the current
+thumbnail, and the skeleton lines and joints rendered by Mode 0. A rendered
+MP4 retains the colors it was created with. Add participant IDs in Settings
+or use **Save participant** beside the editable picker in either Mode 0 dialog.
+An optional default participant is prefilled when those dialogs open.
+
+A `Model Lab — Mode 2` placeholder is also present. It lists
+the planned 1D CNN, TCN, LSTM, ST-GCN, GCN, and DNN experiment families, but it
+does not train or run a model yet.
+
+The configured angle registry contains 15 angles: bilateral shoulder, elbow,
+wrist, hip, knee, and ankle angles plus the existing
+`torso_nose_shoulder_hip` angle and `torso_vertical`, and the midpoint-defined
+`shoulder_midpoint_hip_midpoint_knee_midpoint` angle. The first special angle
+is geometrically `nose → shoulder midpoint → hip midpoint` (the vertex is the
+shoulder midpoint); the new angle is `shoulder midpoint → hip midpoint → knee
+midpoint` (the vertex is the hip midpoint). The feature table also exposes
+explicit `nose_*`, `shoulder_midpoint_*`, `hip_midpoint_*`,
+`knee_midpoint_*`, and `ankle_midpoint_*` columns as named aliases over the
+already calculated landmark arrays. The actual feature count is published in
+the feature manifest; no historical total is treated as a schema invariant.
+
+Mode 0 also has a `Process Session Folders` workflow. Each selected folder is
+one session and every video is processed as its own recording. Participant ID,
+date, environment, operator, and notes are shared metadata. The recording table
+shows one row per video so camera ID and camera angle can be assigned separately
+for multi-angle sessions; distinct camera IDs are generated by default and
+obvious filename hints such as `front` or `side` are offered as defaults.
+Session and video IDs are still generated separately so Parquet artifacts cannot
+collide. In Mode 1, camera angle is editable only on the Activity interval; Set,
+Repetition, Phase, and Form intervals inherit it for display.
+
+The skeleton-overlay MP4 and the Mode 1 current-frame view draw the named
+shoulder, hip, knee, and ankle midpoints, the nose-to-shoulder-to-hip geometry,
+and the shoulder-to-hip-to-knee geometry. Mode 1 reads angle values from the
+canonical feature Parquet when available; rendering does not rerun MediaPipe.
 
 ## Synthetic end-to-end smoke test
 

@@ -20,7 +20,7 @@ sys.path.insert(0, str(ROOT / "src"))
 
 from aihumo.annotations import AnnotationState, annotation_to_frame_targets, validate_annotations
 from aihumo.config import load_config
-from aihumo.features import FeatureEngine
+from aihumo.features import ANGLE_PREFIXES, FeatureEngine, angle_family
 from aihumo.graphs import generate_angle_graphs
 from aihumo.splits import grouped_split
 from aihumo.storage import load_parquet, save_parquet_atomic
@@ -65,10 +65,10 @@ def digest(path: Path) -> str:
 def main() -> None:
     cfg = load_config(ROOT / "configs" / "config.json")
     frame_df = synthetic_frames()
-    feature_result = FeatureEngine(cfg).build(frame_df)
+    feature_result = FeatureEngine(cfg).build(frame_df, frame_size=(1280, 720))
     features = feature_result.dataframe
     validate_frame_dataframe(features)
-    assert len([column for column in features if column.startswith("angle_")]) == 14
+    assert all(len(angle_family(features.columns, prefix)) == 15 for prefix in ANGLE_PREFIXES.values())
 
     with tempfile.TemporaryDirectory(prefix="aihumo_simulation_") as temp:
         root = Path(temp)
@@ -85,6 +85,7 @@ def main() -> None:
             export_images=False,
         )
         assert graph_manifest["angleFeatureIds"]
+        assert graph_manifest["angleSpace"] == "video_plane_2d"
         assert Path(graph_manifest["manifestPath"]).exists()
 
         state = AnnotationState.new({
@@ -167,7 +168,8 @@ def main() -> None:
             "status": "passed",
             "frames": len(features),
             "featureCount": len(feature_columns),
-            "angleCount": 14,
+            "angleCountsBySpace": {space: len(angle_family(features.columns, prefix))
+                                   for space, prefix in ANGLE_PREFIXES.items()},
             "windowCount": len(records),
             "annotationCount": len(reopened.annotations),
             "activityGapAllowed": True,

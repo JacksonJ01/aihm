@@ -10,7 +10,7 @@ import pandas as pd
 from .metadata import utc_now_iso
 from .storage import load_json, save_json_atomic, save_parquet_atomic
 
-SCHEMA_VERSION = "1.4"
+SCHEMA_VERSION = "1.5"
 # ``form_interval`` is a sibling overlay, not a parent in the exercise
 # hierarchy.  It can overlap an activity, set, repetition, or phase range and
 # stores the observed tracking/form issue for only the frames where it occurs.
@@ -85,6 +85,12 @@ def _canonical_annotation(annotation: dict[str, Any]) -> dict[str, Any]:
         out["phase"] = "hold"
     if out.get("form_label") is None:
         out["form_label"] = "unlabeled"
+    # Camera angle is an Activity-interval property.  Child rows inherit it
+    # through the resolved frame context rather than storing competing values.
+    if out["annotation_type"] != "activity_state":
+        out["camera_angle"] = None
+    if out.get("camera_angle") is not None:
+        out["camera_angle"] = str(out["camera_angle"])
     out["issue_type"] = _canonical_value_list(out.get("issue_type"))
     out["error_category"] = _canonical_value_list(out.get("error_category"))
     out["affected_joints"] = _canonical_value_list(out.get("affected_joints"))
@@ -157,6 +163,7 @@ class AnnotationState:
                 "annotation_types": sorted(ANNOTATION_TYPES),
                 "activity_states": sorted(ACTIVITY_STATES),
                 "phases": sorted(PHASES),
+                "camera_angle_owner": "activity_state",
                 "ground_truth_source": "annotations",
             },
             "annotation_session": {
@@ -270,18 +277,22 @@ class AnnotationState:
         self,
         *,
         activity_state: str | None = None,
+        camera_angle: str | None = None,
         exercise: str | None = None,
         set_id: int | None = None,
         rep_id: int | None = None,
+        phase: str | None = None,
     ) -> None:
         if activity_state is not None and activity_state not in ACTIVITY_STATES:
             raise ValueError(f"Unsupported activity state: {activity_state}")
         self.current_context = {
             **self.current_context,
             "activity_state": activity_state if activity_state is not None else self.current_context.get("activity_state"),
+            "camera_angle": camera_angle if camera_angle is not None else self.current_context.get("camera_angle"),
             "exercise": exercise if exercise is not None else self.current_context.get("exercise", ""),
             "set_id": set_id if set_id is not None else self.current_context.get("set_id"),
             "rep_id": rep_id if rep_id is not None else self.current_context.get("rep_id"),
+            "phase": phase if phase is not None else self.current_context.get("phase"),
         }
         self.updated_at = utc_now_iso()
 
@@ -292,9 +303,11 @@ class AnnotationState:
         self.last_completed_frame = int(annotation["end_frame"])
         self.current_context = {
             "activity_state": annotation.get("activity_state"),
+            "camera_angle": annotation.get("camera_angle") if annotation.get("annotation_type") == "activity_state" else self.current_context.get("camera_angle"),
             "exercise": annotation.get("exercise") or self.current_context.get("exercise", ""),
             "set_id": annotation.get("set_id") if annotation.get("set_id") is not None else self.current_context.get("set_id"),
             "rep_id": annotation.get("rep_id") if annotation.get("rep_id") is not None else self.current_context.get("rep_id"),
+            "phase": annotation.get("phase") if annotation.get("phase") not in (None, "none") else self.current_context.get("phase"),
         }
 
     def _recalculate_progress(self) -> None:
@@ -373,6 +386,7 @@ def annotation_to_dataframe(document: dict) -> pd.DataFrame:
     columns = [
         "annotation_id", "segment_id", "annotation_type", "start_frame", "end_frame",
         "start_time_s", "end_time_s", "duration_s", "activity_state", "exercise",
+        "camera_angle",
         "phase", "rep_id", "set_id", "form_label", "form_score", "error_category", "notes",
         "issue_type", "affected_joints",
     ]

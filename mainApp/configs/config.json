@@ -4,7 +4,7 @@
     "version": "0.5.0",
     "dataset_version": "0.2.0",
     "processing_version": "3.0.0",
-    "annotation_schema_version": "1.2"
+    "annotation_schema_version": "1.5"
   },
   "video": {
     "target_fps": null
@@ -23,7 +23,8 @@
   },
   "graphs": {
     "enabled": true,
-    "export_images": true
+    "export_images": true,
+    "export_dpi": 220
   },
   "quality": {
     "min_pose_present_fraction": 0.8
@@ -73,6 +74,7 @@
       ]
     },
     "include_anatomical_centers": true,
+    "include_anatomical_points": true,
     "include_body_geometry": true,
     "include_body_axes": true
   },
@@ -147,6 +149,13 @@
         11,
         23,
         23
+      ]
+    },
+    "midpoint_targets": {
+      "shoulder_midpoint_hip_midpoint_knee_midpoint": [
+        "shoulder_midpoint",
+        "hip_midpoint",
+        "knee_midpoint"
       ]
     }
   },

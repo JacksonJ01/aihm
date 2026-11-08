@@ -175,6 +175,7 @@ def iter_landmark_rows(
     tracker: TargetTracker | None = None,
     start_frame: int = 0,
     end_frame: int | None = None,
+    previous_timestamp_s: float | None = None,
     progress_callback: ProgressCallback | None = None,
     cancel_check: Callable[[], bool] | None = None,
 ) -> Iterator[dict]:
@@ -211,13 +212,13 @@ def iter_landmark_rows(
     cap = cv2.VideoCapture(str(video_path))
     if not cap.isOpened():
         raise RuntimeError(f"Could not open source video: {video_path}")
-    if start_frame:
-        cap.set(cv2.CAP_PROP_POS_FRAMES, start_frame)
-
     try:
+        if start_frame and not cap.set(cv2.CAP_PROP_POS_FRAMES, start_frame):
+            raise RuntimeError(f"Could not seek to checkpoint frame {start_frame}: {video_path}")
         with _make_landmarker(model_path, pose_cfg) as landmarker:
             frame_idx = start_frame
-            last_timestamp_s = None
+            last_timestamp_s = previous_timestamp_s
+            last_inference_ms = -1
             while frame_idx < stop_frame:
                 if cancel_check and cancel_check():
                     raise InterruptedError("Video processing was cancelled.")
@@ -228,20 +229,23 @@ def iter_landmark_rows(
                         f"Could not read source frame {frame_idx}; expected frames through {stop_frame - 1}."
                     )
 
-                decoder_timestamp_ms = float(cap.get(cv2.CAP_PROP_POS_MSEC) or np.nan)
-                decoder_timestamp_s = decoder_timestamp_ms / 1000.0 if np.isfinite(decoder_timestamp_ms) else np.nan
-                if last_timestamp_s is None:
-                    timestamp_s = decoder_timestamp_s if np.isfinite(decoder_timestamp_s) else frame_idx / source_fps
-                    timestamp_source = "decoder" if np.isfinite(decoder_timestamp_s) else "fps_estimate"
-                elif np.isfinite(decoder_timestamp_s) and decoder_timestamp_s > last_timestamp_s:
+                decoder_timestamp_s = float(cap.get(cv2.CAP_PROP_POS_MSEC)) / 1000.0
+                if (np.isfinite(decoder_timestamp_s) and decoder_timestamp_s >= 0
+                        and (last_timestamp_s is None or decoder_timestamp_s > last_timestamp_s)):
                     timestamp_s = decoder_timestamp_s
                     timestamp_source = "decoder"
                 else:
-                    timestamp_s = frame_idx / source_fps
+                    # Anchor fallback to the last accepted source timestamp. An
+                    # irregular stream can be ahead of frame_idx / source_fps.
+                    timestamp_s = (frame_idx / source_fps if last_timestamp_s is None
+                                   else last_timestamp_s + 1.0 / source_fps)
                     timestamp_source = "fps_estimate"
                 delta_time_s = np.nan if last_timestamp_s is None else timestamp_s - last_timestamp_s
                 last_timestamp_s = timestamp_s
-                timestamp_ms = max(0, int(round(timestamp_s * 1000.0)))
+                # MediaPipe requires increasing integer milliseconds. Preserve
+                # the higher precision source timestamps in the frame table.
+                timestamp_ms = max(last_inference_ms + 1, int(round(timestamp_s * 1000.0)))
+                last_inference_ms = timestamp_ms
                 frame_rgb = cv2.cvtColor(frame_bgr, cv2.COLOR_BGR2RGB)
                 result = landmarker.detect_for_video(
                     mp.Image(image_format=mp.ImageFormat.SRGB, data=frame_rgb),

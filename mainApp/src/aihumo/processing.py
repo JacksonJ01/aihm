@@ -9,6 +9,7 @@ from typing import Any, Callable
 import cv2
 import numpy as np
 import pandas as pd
+import pyarrow.parquet as pq
 
 from .features import FeatureEngine
 from .graphs import generate_angle_graphs
@@ -66,6 +67,56 @@ def _artifact_paths(output_root: Path, session_id: str, video_id: str) -> dict[s
     }
 
 
+def _load_job_state(path: Path) -> ProcessingState:
+    try:
+        return ProcessingState.load(path)
+    except (OSError, ValueError, TypeError, KeyError) as exc:
+        raise ValueError(
+            f"Cannot read processing checkpoint {path}: {exc}. "
+            "Use a different Video ID or output folder to start a new job."
+        ) from exc
+
+
+def _recording_identity(identifiers: dict) -> dict[str, str | None]:
+    return {key: str(identifiers[key]) if identifiers.get(key) is not None else None
+            for key in ("participant_id", "camera_id")}
+
+
+def _check_recording_identity(
+    paths: dict[str, Path], state: ProcessingState, identifiers: dict
+) -> None:
+    expected = _recording_identity(identifiers)
+    stored = state.recording_identity
+    if stored is None:
+        # Legacy checkpoints did not store participant or camera identity.
+        # Read it from the completed sidecar or the first persisted frame.
+        if state.status == "completed":
+            stored = _recording_identity(load_json(paths["metadata_path"]))
+        elif state.next_frame:
+            landmark_path = paths["landmarks_path"]
+            if not landmark_path.is_file():
+                if not state.checkpoint_chunks:
+                    raise ValueError("Cannot verify recording identity: checkpoint frames are missing.")
+                landmark_path = paths["output_dir"] / state.checkpoint_chunks[0]
+            with pq.ParquetFile(landmark_path) as parquet:
+                columns = [key for key in expected if key in parquet.schema_arrow.names]
+                batch = next(parquet.iter_batches(batch_size=1, columns=columns), None)
+                if batch is None:
+                    raise ValueError(f"Cannot verify recording identity: no frames in {landmark_path}")
+                stored = _recording_identity(batch.to_pylist()[0])
+        else:
+            return
+    differences = [
+        f"{key}: saved {stored.get(key)!r}, requested {value!r}"
+        for key, value in expected.items() if stored.get(key) != value
+    ]
+    if differences:
+        raise ValueError(
+            f"Recording identity conflicts with {paths['output_dir']}: "
+            f"{'; '.join(differences)}. Use the original IDs or a different Video ID or output folder."
+        )
+
+
 def processing_job_status(
     *,
     source_video: str | Path,
@@ -74,13 +125,17 @@ def processing_job_status(
     output_root: str | Path,
     session_id: str,
     video_id: str,
+    identifiers: dict | None = None,
 ) -> dict[str, Any]:
     """Inspect whether a Mode 0 job is new, resumable, complete, or conflicting."""
     paths = _artifact_paths(Path(output_root), session_id, video_id)
     source = Path(source_video)
     model = Path(model_path)
-    if not source.exists() or not model.exists():
-        return {"status": "invalid_inputs", "output_dir": str(paths["output_dir"])}
+    if not source.is_file() or not model.is_file():
+        return {
+            "status": "invalid_inputs", "output_dir": str(paths["output_dir"]),
+            "message": "The source video or MediaPipe model is not a file.",
+        }
 
     if not paths["state_path"].exists():
         final_exists = any(paths[key].exists() for key in ("landmarks_path", "features_path", "processed_video_path"))
@@ -89,13 +144,13 @@ def processing_job_status(
             "output_dir": str(paths["output_dir"]),
         }
 
-    state = ProcessingState.load(paths["state_path"])
+    state = _load_job_state(paths["state_path"])
     compatible = state.compatible_quickly_with(
         source_fingerprint=fingerprint_file(source, include_hash=False),
         model_fingerprint=fingerprint_file(model, include_hash=False),
         config_fingerprint=stable_json_hash(cfg),
     )
-    if not compatible:
+    if not compatible or (state.session_id, state.video_id) != (session_id, video_id):
         return {
             "status": "conflict",
             "stage": state.stage,
@@ -103,6 +158,8 @@ def processing_job_status(
             "output_dir": str(paths["output_dir"]),
             "message": "Existing processing state was created from a different source video, pose model, or configuration.",
         }
+    if identifiers is not None:
+        _check_recording_identity(paths, state, identifiers)
     return {
         "status": "complete" if state.status == "completed" else "resumable",
         "stage": state.stage,
@@ -114,14 +171,29 @@ def processing_job_status(
     }
 
 
+def _hex_to_bgr(color: str) -> tuple[int, int, int]:
+    if not isinstance(color, str) or len(color) != 7 or color[0] != "#":
+        raise ValueError(f"Expected an RGB color in #RRGGBB format, got {color!r}.")
+    try:
+        red, green, blue = bytes.fromhex(color[1:])
+    except ValueError as exc:
+        raise ValueError(f"Invalid skeleton color {color!r}.") from exc
+    return blue, green, red
+
+
 def create_skeleton_video(
     source_video: str | Path,
     landmarks_df: pd.DataFrame,
     output_path: str | Path,
     progress_callback: ProgressCallback | None = None,
     cancel_check: Callable[[], bool] | None = None,
+    *,
+    skeleton_line_color: str = "#00ff00",
+    skeleton_joint_color: str = "#ff0000",
 ) -> int:
     """Create a source-derived skeleton MP4 without modifying the source."""
+    line_color = _hex_to_bgr(skeleton_line_color)
+    joint_color = _hex_to_bgr(skeleton_joint_color)
     source_video = Path(source_video)
     output_path = Path(output_path)
     output_path.parent.mkdir(parents=True, exist_ok=True)
@@ -151,9 +223,18 @@ def create_skeleton_video(
     connections = [
         (0, 1), (1, 2), (2, 3), (3, 7), (0, 4), (4, 5), (5, 6), (6, 8), (9, 10),
         (11, 12), (11, 13), (13, 15), (12, 14), (14, 16), (11, 23), (12, 24), (23, 24),
-        (23, 25), (25, 27), (27, 29), (29, 31), (24, 26), (26, 28), (28, 30), (30, 32),
+        (23, 25), (25, 27), (27, 29), (29, 31), (27, 31),
+        (24, 26), (26, 28), (28, 30), (30, 32), (28, 32),
         (15, 17), (15, 19), (15, 21), (16, 18), (16, 20), (16, 22), (17, 19), (18, 20),
     ]
+
+    def midpoint(first: tuple[int, int] | None, second: tuple[int, int] | None) -> tuple[int, int] | None:
+        if first is None or second is None:
+            return None
+        return (
+            int(round((first[0] + second[0]) / 2.0)),
+            int(round((first[1] + second[1]) / 2.0)),
+        )
 
     processed = 0
     try:
@@ -170,10 +251,38 @@ def create_skeleton_video(
                     points.append((int(round(float(x) * width)), int(round(float(y) * height))) if np.isfinite(x) and np.isfinite(y) else None)
                 for a, b in connections:
                     if points[a] is not None and points[b] is not None:
-                        cv2.line(frame, points[a], points[b], (0, 255, 0), 2, cv2.LINE_AA)
+                        cv2.line(frame, points[a], points[b], line_color, 2, cv2.LINE_AA)
                 for point in points:
                     if point is not None:
-                        cv2.circle(frame, point, 3, (0, 0, 255), -1, cv2.LINE_AA)
+                        cv2.circle(frame, point, 3, joint_color, -1, cv2.LINE_AA)
+
+                # Draw the named anatomical points used by the angle registry.
+                # These are render-only aliases over the already extracted
+                # landmarks; MediaPipe is never rerun and the canonical angle
+                # values remain in the feature Parquet.
+                shoulder_midpoint = midpoint(points[11], points[12])
+                hip_midpoint = midpoint(points[23], points[24])
+                knee_midpoint = midpoint(points[25], points[26])
+                ankle_midpoint = midpoint(points[27], points[28])
+                midpoint_lines = [
+                    ((points[0], shoulder_midpoint), (255, 180, 0)),
+                    ((shoulder_midpoint, hip_midpoint), (255, 180, 0)),
+                    ((hip_midpoint, knee_midpoint), (0, 220, 255)),
+                    ((knee_midpoint, ankle_midpoint), (0, 220, 255)),
+                ]
+                for (first, second), color in midpoint_lines:
+                    if first is not None and second is not None:
+                        cv2.line(frame, first, second, color, 2, cv2.LINE_AA)
+                named_points = [
+                    (shoulder_midpoint, "SM"),
+                    (hip_midpoint, "HM"),
+                    (knee_midpoint, "KM"),
+                    (ankle_midpoint, "AM"),
+                ]
+                for point, label in named_points:
+                    if point is not None:
+                        cv2.circle(frame, point, 5, (255, 180, 0), -1, cv2.LINE_AA)
+                        cv2.putText(frame, label, (point[0] + 6, point[1] - 6), cv2.FONT_HERSHEY_SIMPLEX, 0.45, (255, 180, 0), 1, cv2.LINE_AA)
 
                 # Tracking metadata is rendered into the validation video so a human
                 # can see when AIHuMo believes the target is tracked or occluded.
@@ -277,6 +386,9 @@ def _extract_with_checkpoints(
 
     if state.next_frame > 0:
         checkpoint_df = _normalize_single_pose_rows(_load_checkpoint_chunks(state, checkpoint_dir), tracking_cfg)
+        validate_frame_dataframe(checkpoint_df)
+        if len(checkpoint_df) != state.next_frame:
+            raise ValueError("Persisted landmark count does not match the checkpoint frame index.")
     else:
         checkpoint_df = pd.DataFrame()
         for path in checkpoint_dir.glob("*.parquet"):
@@ -297,6 +409,9 @@ def _extract_with_checkpoints(
             tracking_cfg=tracking_cfg,
             tracker=tracker,
             start_frame=start_frame,
+            previous_timestamp_s=(
+                float(checkpoint_df["timestamp_s"].iloc[-1]) if start_frame else None
+            ),
             progress_callback=lambda p, m: _emit(progress_callback, 0.05 + p * 0.35, m),
             cancel_check=cancel_check,
         ):
@@ -388,6 +503,8 @@ def process_video(
     output_root: str | Path,
     progress_callback: ProgressCallback | None = None,
     cancel_check: Callable[[], bool] | None = None,
+    skeleton_line_color: str = "#00ff00",
+    skeleton_joint_color: str = "#ff0000",
 ) -> ProcessingResult:
     """Run the complete Mode 0 pipeline with crash-safe raw checkpoints.
 
@@ -402,9 +519,9 @@ def process_video(
     video_id = str(identifiers["video_id"])
     paths = _artifact_paths(output_root, session_id, video_id)
 
-    if not source_video.exists():
+    if not source_video.is_file():
         raise FileNotFoundError(f"Source video does not exist: {source_video}")
-    if not model_path.exists():
+    if not model_path.is_file():
         raise FileNotFoundError(f"MediaPipe model does not exist: {model_path}")
 
     output_dir = paths["output_dir"]
@@ -416,8 +533,8 @@ def process_video(
     config_fingerprint = stable_json_hash(cfg)
 
     if paths["state_path"].exists():
-        state = ProcessingState.load(paths["state_path"])
-        if not state.compatible_with(
+        state = _load_job_state(paths["state_path"])
+        if (state.session_id, state.video_id) != (session_id, video_id) or not state.compatible_with(
             source_fingerprint=state_fingerprint,
             model_fingerprint=model_fingerprint,
             config_fingerprint=config_fingerprint,
@@ -427,6 +544,7 @@ def process_video(
                 "pose model, or configuration does not match the current request. "
                 "Use a new video_id or deliberately remove the old processing job."
             )
+        _check_recording_identity(paths, state, identifiers)
     else:
         final_artifacts = [paths[key] for key in ("landmarks_path", "features_path", "processed_video_path", "metadata_path")]
         if any(path.exists() for path in final_artifacts):
@@ -440,6 +558,7 @@ def process_video(
             source_fingerprint=state_fingerprint,
             model_fingerprint=model_fingerprint,
             config_fingerprint=config_fingerprint,
+            recording_identity=_recording_identity(identifiers),
         )
         state.save(paths["state_path"])
 
@@ -451,11 +570,14 @@ def process_video(
             features_path=paths["features_path"],
             metadata_path=paths["metadata_path"],
             manifest_path=paths["manifest_path"],
+            quality_path=paths["quality_path"],
         )
+        graph_path = output_dir / "Graphs" / "graph_manifest.json"
         return ProcessingResult(
             output_dir, paths["landmarks_path"], paths["features_path"],
             paths["processed_video_path"], paths["metadata_path"],
             paths["manifest_path"], paths["quality_path"], paths["state_path"],
+            graph_manifest_path=graph_path if graph_path.is_file() else None,
         )
 
     try:
@@ -470,6 +592,7 @@ def process_video(
         state.stage = "landmarks"
         state.status = "in_progress"
         state.error = None
+        state.recording_identity = _recording_identity(identifiers)
         state.save(paths["state_path"])
 
         if paths["landmarks_path"].exists() and state.next_frame >= video_info["frame_count"]:
@@ -513,6 +636,8 @@ def process_video(
                 partial_video,
                 lambda p, m: _emit(progress_callback, 0.42 + p * 0.18, m),
                 cancel_check,
+                skeleton_line_color=skeleton_line_color,
+                skeleton_joint_color=skeleton_joint_color,
             )
             partial_video.replace(paths["processed_video_path"])
         state.stage = "skeleton_saved"
@@ -534,6 +659,7 @@ def process_video(
             feature_result = FeatureEngine(cfg).build(
                 landmark_df,
                 lambda p, m: _emit(progress_callback, 0.62 + p * 0.25, m),
+                frame_size=(video_info["width"], video_info["height"]),
             )
             final_df = feature_result.dataframe
             feature_columns = feature_result.feature_columns
@@ -582,6 +708,7 @@ def process_video(
                     exercise_id=optional_metadata.get("exercise_hint"),
                     feature_data_version=cfg.get("project", {}).get("processing_version"),
                     export_images=bool(cfg.get("graphs", {}).get("export_images", True)),
+                    export_dpi=int(cfg.get("graphs", {}).get("export_dpi", 180)),
                 )
                 metadata["graph_manifest"] = graph_manifest.get("manifestPath")
             except Exception as graph_error:
@@ -647,6 +774,7 @@ def process_video(
             feature_manifest_path=paths["manifest_path"],
             quality_report_path=paths["quality_path"],
             processing_state_path=paths["state_path"],
+            graph_manifest_path=Path(graph_manifest["manifestPath"]) if graph_manifest is not None else None,
         )
 
     except InterruptedError:

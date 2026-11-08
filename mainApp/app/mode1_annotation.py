@@ -13,11 +13,11 @@ SRC_DIR = PROJECT_ROOT / "src"
 if str(SRC_DIR) not in sys.path:
     sys.path.insert(0, str(SRC_DIR))
 
-from PyQt6.QtCore import QEvent, QTimer, Qt
+from PyQt6.QtCore import QEvent, QSignalBlocker, QTimer, Qt, pyqtSignal
 from PyQt6.QtGui import QColor, QImage, QKeySequence, QPixmap, QShortcut, QStandardItem, QStandardItemModel
 from PyQt6.QtWidgets import (
     QAbstractSpinBox, QApplication, QCheckBox, QComboBox, QDialog, QDialogButtonBox, QFileDialog, QFormLayout,
-    QDockWidget, QGroupBox, QHBoxLayout, QLabel, QLineEdit, QMainWindow, QMessageBox, QScrollArea,
+    QGroupBox, QHBoxLayout, QLabel, QLineEdit, QMainWindow, QMessageBox, QScrollArea,
     QPushButton, QDoubleSpinBox, QSpinBox, QSplitter, QTableView, QTextEdit, QSizePolicy,
     QVBoxLayout, QWidget,
 )
@@ -33,6 +33,7 @@ from aihumo.annotations import (
     save_annotation_parquet,
 )
 from aihumo.config import load_config
+from aihumo.features import FeatureEngine, LEGACY_ANGLE_PREFIX, PROJECTED_ANGLE_PREFIX, WORLD_ANGLE_PREFIX
 from aihumo.rep_detection import RepDetector, save_rep_suggestions
 from aihumo.storage import load_json, save_json_atomic
 from aihumo.exercise_library import (
@@ -41,8 +42,12 @@ from aihumo.exercise_library import (
     get_exercise,
     movement_type_options,
 )
-from .common import DataFrameModel
-from .joint_graph import JointGraphWidget
+from .angle_overlay import OverlayTrace, frame_angle_labels, paint_angle_labels
+from .common import DataFrameModel, close_and_return
+from .graph_viewer import InteractiveGraphViewer, open_graph_viewer
+from .joint_graph import GraphAngleSelection
+from .playback import FramePlayback
+from .preferences import DEFAULT_FRAME_JUMP, MAX_FRAME_JUMP
 
 LOGGER = logging.getLogger("AIHuMoDataStudio.Mode1")
 
@@ -62,6 +67,18 @@ _LAYER_OPTIONS = [
     ("Phase interval", "phase"),
     ("Form interval", "form_interval"),
     ("Other interval", "general"),
+]
+
+_CAMERA_ANGLE_OPTIONS = [
+    ("N/A", "N/A"),
+    ("Front", "Front"),
+    ("Side", "Side"),
+    ("Rear", "Rear"),
+    ("Three-quarter", "Three-quarter"),
+    ("Low angle", "Low angle"),
+    ("High angle", "High angle"),
+    ("Camera adjustment", "Camera adjustment"),
+    ("Unknown", "Unknown"),
 ]
 
 _ISSUE_TYPE_LABELS = {
@@ -404,6 +421,15 @@ class AnnotationDialog(QDialog):
         default_state = existing.get("activity_state", context.get("activity_state", "active"))
         self._set_combo(self.activity_state, default_state)
 
+        self.camera_angle = QComboBox()
+        for label, value in _CAMERA_ANGLE_OPTIONS:
+            self.camera_angle.addItem(label, value)
+        self._set_combo_data(
+            self.camera_angle,
+            existing.get("camera_angle", context.get("camera_angle")),
+            "N/A",
+        )
+
         exercise_default = existing.get("exercise", defaults.get("exercise", context.get("exercise", ""))) or ""
         self.exercise_selector = ExerciseSelector(self, str(exercise_default))
 
@@ -463,6 +489,7 @@ class AnnotationDialog(QDialog):
         form.addRow("Range", self.range_label)
         form.addRow("Annotation layer", self.annotation_type)
         form.addRow("Activity state", self.activity_state)
+        form.addRow("Camera angle", self.camera_angle)
         form.addRow("Movement type", self.exercise_selector.movement_type)
         form.addRow("Exercise name", self.exercise_selector.exercise_name)
         form.addRow("Set ID", self.set_id)
@@ -535,6 +562,7 @@ class AnnotationDialog(QDialog):
         is_phase = layer == "phase"
         is_form = layer == "form_interval"
         self.activity_state.setEnabled(True)
+        self.camera_angle.setEnabled(is_activity)
         self.exercise_selector.movement_type.setEnabled(is_set)
         self.exercise_selector.exercise_name.setEnabled(is_set)
         self.set_id.setEnabled(is_set)
@@ -551,6 +579,8 @@ class AnnotationDialog(QDialog):
             self.issue_type.set_checked_values([])
             self.error_category.set_checked_values([])
             self.affected_joints.set_checked_values([])
+        if not is_activity:
+            self.camera_angle.setCurrentIndex(self.camera_angle.findData("N/A"))
         if is_activity:
             self.phase.setCurrentText("none")
             self.rep_id.setValue(0)
@@ -575,6 +605,7 @@ class AnnotationDialog(QDialog):
         return {
             "annotation_type": layer,
             "activity_state": state,
+            "camera_angle": self.camera_angle.currentData() if layer == "activity_state" else None,
             "exercise": self.exercise_selector.value() if layer == "set" else None,
             "phase": self.phase.currentData() if layer == "phase" else "none",
             "rep_id": None if layer != "rep" or self.rep_id.value() < 1 else self.rep_id.value(),
@@ -611,7 +642,9 @@ class AnnotationDialog(QDialog):
 class AnnotationStudio(QMainWindow):
     """Mode 1: manual activity-state segments plus nested reps/phases."""
 
-    def __init__(self, video_path: str | Path, parquet_path: str | Path, annotation_json_path: str | Path | None = None, metadata_path: str | Path | None = None, parent=None):
+    closed = pyqtSignal()
+
+    def __init__(self, video_path: str | Path, parquet_path: str | Path, annotation_json_path: str | Path | None = None, metadata_path: str | Path | None = None, parent=None, *, frame_highlight: str = "#20c55a", frame_jump: int = DEFAULT_FRAME_JUMP):
         super().__init__(parent)
         self.video_path = Path(video_path)
         self.parquet_path = Path(parquet_path)
@@ -623,7 +656,15 @@ class AnnotationStudio(QMainWindow):
         if rep_summary_stem == self.annotation_json_path.stem:
             rep_summary_stem = f"{rep_summary_stem}_rep_summary"
         self.rep_summary_path = self.annotation_json_path.with_name(rep_summary_stem + ".json")
-        self.metadata_path = Path(metadata_path) if metadata_path else self.parquet_path.with_name(self.parquet_path.stem.replace("_features", "_metadata") + ".json")
+        metadata_name = self.parquet_path.stem.replace("_features", "_metadata") + ".json"
+        standard_sidecar = self.parquet_path.parent.parent / "metadata" / metadata_name
+        if metadata_path:
+            self.metadata_path = Path(metadata_path)
+        elif standard_sidecar.is_file():
+            self.metadata_path = standard_sidecar
+        else:
+            self.metadata_path = self.parquet_path.with_name(metadata_name)
+        self.frame_highlight = frame_highlight
         self.dataframe = pd.read_parquet(self.parquet_path)
         if self.dataframe.empty:
             raise ValueError(f"Feature Parquet is empty: {self.parquet_path}")
@@ -632,6 +673,9 @@ class AnnotationStudio(QMainWindow):
         self.metadata = load_json(self.metadata_path) if self.metadata_path.exists() else {}
         self.annotation_state: AnnotationState | None = None
         self.current_frame = 0
+        self.annotation_graph_window: InteractiveGraphViewer | None = None
+        self._graph_angle_selection: GraphAngleSelection | None = None
+        self._mirrored_angle_traces: tuple[OverlayTrace, ...] = ()
         self.total_frames = 0
         self._current_video_pixmap: QPixmap | None = None
         # The thumbnail strip is a five-slot sliding window, not a slideshow.
@@ -645,6 +689,7 @@ class AnnotationStudio(QMainWindow):
         self._layout_initialized = False
         self.range_capture: RangeCaptureDialog | None = None
         self.annotation_start_frame: int | None = None
+        self._annotation_save_failed = False
         self.cap = cv2.VideoCapture(str(self.video_path))
         if not self.cap.isOpened():
             raise RuntimeError(f"Could not open processed video: {self.video_path}")
@@ -655,9 +700,20 @@ class AnnotationStudio(QMainWindow):
                 "Choose the matching processed video and canonical feature Parquet."
             )
         self.fps = float(self.cap.get(cv2.CAP_PROP_FPS) or self.metadata.get("source_fps", 30.0))
+        frame_size = (self.cap.get(cv2.CAP_PROP_FRAME_WIDTH), self.cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
+        engine = FeatureEngine(load_config(PROJECT_ROOT / "configs" / "config.json"))
+        self.dataframe = engine.with_missing_spatial_angles(self.dataframe, frame_size)
+        default_traces = []
+        for joint in ("torso_nose_shoulder_hip", "shoulder_midpoint_hip_midpoint_knee_midpoint"):
+            for prefix in (PROJECTED_ANGLE_PREFIX, WORLD_ANGLE_PREFIX, LEGACY_ANGLE_PREFIX):
+                column = f"{prefix}{joint}"
+                if column in self.dataframe:
+                    default_traces.append(OverlayTrace(f"{LEGACY_ANGLE_PREFIX}{joint}", column, "#f2c94c"))
+                    break
+        self._default_angle_traces = tuple(default_traces)
         # Keyboard navigation is deliberately independent of source FPS.
         # Left/Right = one frame; Up/Down = this configurable jump.
-        self.frame_jump = 15
+        self.frame_jump = frame_jump
         self._load_annotations()
         self._build_ui()
         self._setup_shortcuts()
@@ -665,6 +721,7 @@ class AnnotationStudio(QMainWindow):
         resume_frame = max(0, min(int(resume_frame or 0), max(0, self.total_frames - 1)))
         self.goto_frame(resume_frame)
         self._refresh_summary()
+        self.setAttribute(Qt.WidgetAttribute.WA_DeleteOnClose)
 
     def _load_annotations(self) -> None:
         metadata = dict(self.metadata)
@@ -753,6 +810,10 @@ class AnnotationStudio(QMainWindow):
         main = QVBoxLayout(central)
 
         header = QHBoxLayout()
+        self.back_button = QPushButton("Back to menu")
+        self.back_button.setToolTip("Close the annotation workspace and return to the launcher.")
+        self.back_button.clicked.connect(lambda: close_and_return(self))
+        header.addWidget(self.back_button)
         header.addWidget(QLabel("Mode 1 Annotation Studio"), 1)
         self.frame_spin = QSpinBox()
         self.frame_spin.setRange(0, max(0, self.total_frames - 1))
@@ -761,17 +822,15 @@ class AnnotationStudio(QMainWindow):
         header.addWidget(self.frame_spin)
         header.addWidget(QLabel("Jump"))
         self.jump_spin = QSpinBox()
-        self.jump_spin.setRange(1, 10000)
+        self.jump_spin.setRange(1, MAX_FRAME_JUMP)
         self.jump_spin.setValue(self.frame_jump)
         self.jump_spin.valueChanged.connect(lambda value: setattr(self, "frame_jump", int(value)))
         self.jump_spin.setToolTip("Frames moved by Up/Down and the −Jump/+Jump buttons.")
         header.addWidget(self.jump_spin)
-        self.graph_toggle_button = QPushButton("Joint graphs")
-        self.graph_toggle_button.setCheckable(True)
-        self.graph_toggle_button.setToolTip(
-            "Show all registered joint-angle graphs from the canonical feature Parquet."
-        )
-        header.addWidget(self.graph_toggle_button)
+        self.graph_viewer_button = QPushButton("Interactive Graph Viewer")
+        self.graph_viewer_button.setToolTip("Open this recording and frame in the graph viewer.")
+        self.graph_viewer_button.clicked.connect(self.open_annotation_graph)
+        header.addWidget(self.graph_viewer_button)
         main.addLayout(header)
 
         context_group = QGroupBox("Current annotation context")
@@ -799,6 +858,21 @@ class AnnotationStudio(QMainWindow):
         splitter.setChildrenCollapsible(False)
         left = QWidget()
         left_layout = QVBoxLayout(left)
+        overlay_controls = QHBoxLayout()
+        self.overlay_button = QPushButton("Display Overlay")
+        self.overlay_button.setCheckable(True)
+        self.overlay_button.setToolTip("Show angle values beside their joints. Starts with the two midpoint angles.")
+        self.overlay_button.toggled.connect(lambda: self._render_video_pixmap())
+        overlay_controls.addWidget(self.overlay_button)
+        self.mirror_angles_button = QPushButton("Mirror selected graph angles")
+        self.mirror_angles_button.setCheckable(True)
+        self.mirror_angles_button.setToolTip(
+            "Open the Interactive Graph Viewer from Mode 1 to choose the traces and angle source to mirror."
+        )
+        self.mirror_angles_button.toggled.connect(lambda: self._render_video_pixmap())
+        overlay_controls.addWidget(self.mirror_angles_button)
+        overlay_controls.addStretch(1)
+        left_layout.addLayout(overlay_controls)
         self.video_label = QLabel("No frame")
         # Keep the video readable without forcing the annotation pane narrow.
         # Aligning the image to the top uses the otherwise empty space above
@@ -827,16 +901,21 @@ class AnnotationStudio(QMainWindow):
         self.thumbnail_row.addStretch(1)
         left_layout.addLayout(self.thumbnail_row)
         controls = QHBoxLayout()
-        for text, callback in [
-            ("◀", lambda: self.goto_frame(self.current_frame - 1)),
+        self.playback = FramePlayback(
+            self, timestamps=pd.to_numeric(self.dataframe["timestamp_s"], errors="coerce").to_numpy(dtype=float),
+            position=lambda: self.current_frame, display_frame=self._show_frame,
+            refresh_thumbnails=self._refresh_thumbnails, fps=self.fps,
+        )
+        self.play_button = self.playback.button
+        controls.addWidget(QPushButton("◀", clicked=lambda: self.goto_frame(self.current_frame - 1)))
+        controls.addWidget(self.play_button)
+        for text, callback in (
             ("▶", lambda: self.goto_frame(self.current_frame + 1)),
             ("−Jump", lambda: self.goto_frame(self.current_frame - self.frame_jump)),
             ("+Jump", lambda: self.goto_frame(self.current_frame + self.frame_jump)),
-            ("Home", lambda: self.goto_frame(0)),
-            ("End", lambda: self.goto_frame(self.total_frames - 1)),
             ("Mark segment (W)", self.start_range_capture),
             ("Rep analysis (R)", self.analyze_current_active_segment),
-        ]:
+        ):
             button = QPushButton(text)
             button.clicked.connect(callback)
             controls.addWidget(button)
@@ -903,19 +982,42 @@ class AnnotationStudio(QMainWindow):
         self.main_splitter = splitter
         main.addWidget(splitter, 1)
         self.setCentralWidget(central)
-        self.joint_graph_widget = JointGraphWidget(self.dataframe, self)
-        self.joint_graph_widget.frameSelected.connect(self.goto_frame)
-        self.graph_dock = QDockWidget("Joint graphs", self)
-        self.graph_dock.setObjectName("JointGraphsDock")
-        self.graph_dock.setAllowedAreas(
-            Qt.DockWidgetArea.BottomDockWidgetArea | Qt.DockWidgetArea.RightDockWidgetArea
-        )
-        self.graph_dock.setWidget(self.joint_graph_widget)
-        self.addDockWidget(Qt.DockWidgetArea.BottomDockWidgetArea, self.graph_dock)
-        self.graph_dock.hide()
-        self.graph_toggle_button.toggled.connect(self.graph_dock.setVisible)
-        self.graph_dock.visibilityChanged.connect(self.graph_toggle_button.setChecked)
         self.refresh_annotation_table()
+
+    def open_annotation_graph(self) -> None:
+        """Preview the current recording without registering launcher resume progress."""
+        self.playback.pause()
+        viewer = self.annotation_graph_window
+        try:
+            if viewer is None:
+                viewer = open_graph_viewer(
+                    self, video_path=self.video_path, parquet_path=self.parquet_path,
+                    frame=self.current_frame, frame_highlight=self.frame_highlight,
+                    annotation_preview=True, frame_jump=self.frame_jump,
+                )
+                self.annotation_graph_window = viewer
+                viewer.closed.connect(self._clear_annotation_graph_window)
+                if self._graph_angle_selection is not None:
+                    viewer.graph.restore_angle_selection(self._graph_angle_selection)
+                viewer.graph.traceSelectionChanged.connect(self._update_mirrored_angles)
+                self._update_mirrored_angles()
+            elif not viewer.goto_frame(self.current_frame):
+                raise ValueError(f"Could not show annotation frame {self.current_frame}.")
+            viewer.raise_()
+            viewer.activateWindow()
+        except Exception as exc:
+            LOGGER.exception("Could not open annotation graph viewer")
+            QMessageBox.critical(self, "Could Not Open Interactive Graph Viewer", str(exc))
+
+    def _clear_annotation_graph_window(self) -> None:
+        self.annotation_graph_window = None
+
+    def _update_mirrored_angles(self) -> None:
+        graph = self.annotation_graph_window.graph
+        self._graph_angle_selection = graph.angle_selection()
+        self._mirrored_angle_traces = graph.overlay_traces()
+        if self.overlay_button.isChecked() and self.mirror_angles_button.isChecked():
+            self._render_video_pixmap()
 
     def _build_embedded_annotation_editor(self, parent_layout: QVBoxLayout) -> None:
         """Build the always-visible annotation editor used by W/S workflow."""
@@ -941,12 +1043,12 @@ class AnnotationStudio(QMainWindow):
         self.editor_exercise_selector = ExerciseSelector(
             group, str(self.metadata.get("exercise_hint", "") or "")
         )
-        self.editor_auto_context = QCheckBox("Auto-fill from timeline")
-        self.editor_auto_context.setChecked(True)
-        self.editor_auto_context.setToolTip(
-            "When W starts a new annotation, reuse the activity, exercise, set, "
-            "rep, and phase context already covering the current frame."
-        )
+        self.editor_camera_angle = QComboBox()
+        for label, value in _CAMERA_ANGLE_OPTIONS:
+            self.editor_camera_angle.addItem(label, value)
+        metadata_camera_angle = self.metadata.get("camera_angle") or self.metadata.get("viewpoint")
+        if metadata_camera_angle:
+            self.editor_camera_angle.setCurrentText(str(metadata_camera_angle))
         self.editor_set_id = QSpinBox(); self.editor_set_id.setRange(0, 10000); self.editor_set_id.setSpecialValueText("N/A"); self.editor_set_id.setValue(0)
         self.editor_rep_id = QSpinBox(); self.editor_rep_id.setRange(0, 100000); self.editor_rep_id.setSpecialValueText("N/A"); self.editor_rep_id.setValue(0)
         self.editor_phase = QComboBox()
@@ -969,9 +1071,9 @@ class AnnotationStudio(QMainWindow):
         form.addRow("Layer", self.editor_annotation_type)
         form.addRow("Boundary", self.editor_range_mode)
         form.addRow("Activity", self.editor_activity_state)
+        form.addRow("Camera angle", self.editor_camera_angle)
         form.addRow("Movement type", self.editor_exercise_selector.movement_type)
         form.addRow("Exercise name", self.editor_exercise_selector.exercise_name)
-        form.addRow("Context", self.editor_auto_context)
         form.addRow("Set", self.editor_set_id)
         form.addRow("Rep", self.editor_rep_id)
         form.addRow("Phase", self.editor_phase)
@@ -1018,6 +1120,7 @@ class AnnotationStudio(QMainWindow):
         # values are filled below before these controls are disabled.
         self.editor_range_mode.setEnabled(True)
         self.editor_activity_state.setEnabled(True)
+        self.editor_camera_angle.setEnabled(is_activity)
         self.editor_notes.setEnabled(True)
         self.editor_exercise_selector.movement_type.setEnabled(is_set)
         self.editor_exercise_selector.exercise_name.setEnabled(is_set)
@@ -1049,6 +1152,8 @@ class AnnotationStudio(QMainWindow):
             self.editor_issue_type.set_checked_values([])
             self.editor_issue_category.set_checked_values([])
             self.editor_affected_joints.set_checked_values([])
+        if not is_activity:
+            self.editor_camera_angle.setCurrentIndex(self.editor_camera_angle.findData("N/A"))
         current_categories = self.editor_issue_category.checked_values()
         category_choices = _issue_categories_for_exercise(self.editor_exercise_selector.value())
         self.editor_issue_category.clear_items()
@@ -1076,6 +1181,11 @@ class AnnotationStudio(QMainWindow):
             state = context.get("activity_state")
             if state in ACTIVITY_STATES:
                 self.editor_activity_state.setCurrentText(str(state))
+            camera_angle = context.get("camera_angle")
+            if camera_angle:
+                camera_index = self.editor_camera_angle.findData(str(camera_angle))
+                if camera_index >= 0:
+                    self.editor_camera_angle.setCurrentIndex(camera_index)
 
         if layer != "set":
             self.editor_exercise_selector.set_value(context.get("exercise"))
@@ -1180,6 +1290,7 @@ class AnnotationStudio(QMainWindow):
         self.annotation_status.setText(f"Cleared {annotation_id}. Editor fields were left unchanged.")
 
     def finish_embedded_annotation(self) -> None:
+        self.playback.pause()
         if self.annotation_start_frame is None:
             self.annotation_status.setText("Press W first to capture the start frame.")
             return
@@ -1300,9 +1411,12 @@ class AnnotationStudio(QMainWindow):
         set_id = None
         rep_id = None
         phase = "none"
+        camera_angle = None
         if layer == "set":
             exercise = self.editor_exercise_selector.value()
             set_id = self.editor_set_id.value() if self.editor_set_id.value() >= 1 else None
+        elif layer == "activity_state":
+            camera_angle = self.editor_camera_angle.currentData() or "N/A"
         elif layer == "rep":
             exercise = inherited.get("exercise") or (existing or {}).get("exercise")
             set_id = inherited.get("set_id") or (existing or {}).get("set_id")
@@ -1323,6 +1437,7 @@ class AnnotationStudio(QMainWindow):
             "end_time_s": end_time,
             "duration_s": max(0.0, end_time - start_time),
             "activity_state": activity_state,
+            "camera_angle": camera_angle,
             "exercise": exercise,
             "set_id": set_id,
             "rep_id": rep_id,
@@ -1358,6 +1473,15 @@ class AnnotationStudio(QMainWindow):
             else:
                 self.annotation_state.add(values)
             self._sync_descendant_contexts()
+            # Context is derived from the saved intervals at the selected
+            # range's end frame. Persist that effective state for resume, and
+            # let the usual resolver populate inherited controls throughout
+            # the interval as frames are navigated.
+            effective_context, _ = self._context_for_frame(end_frame)
+            self.annotation_state.current_context = {
+                **self.annotation_state.current_context,
+                **effective_context,
+            }
             if self._persist_annotations(show_error=True):
                 self.annotation_start_frame = None
                 self.annotation_edit_id = None
@@ -1396,6 +1520,10 @@ class AnnotationStudio(QMainWindow):
         state = annotation.get("activity_state")
         if state in ACTIVITY_STATES:
             self.editor_activity_state.setCurrentText(str(state))
+        camera_angle = str(annotation.get("camera_angle") or "N/A")
+        camera_index = self.editor_camera_angle.findData(camera_angle)
+        if camera_index >= 0:
+            self.editor_camera_angle.setCurrentIndex(camera_index)
         self.editor_exercise_selector.set_value(annotation.get("exercise"))
         self.editor_set_id.setValue(int(annotation.get("set_id") or 0))
         self.editor_rep_id.setValue(int(annotation.get("rep_id") or 0))
@@ -1457,7 +1585,7 @@ class AnnotationStudio(QMainWindow):
         for item in sorted(matching, key=lambda value: priority.get(str(value.get("annotation_type")), 0)):
             if item.get("activity_state"):
                 resolved["activity_state"] = item["activity_state"]
-            for key in ("exercise", "set_id", "rep_id", "phase"):
+            for key in ("camera_angle", "exercise", "set_id", "rep_id", "phase"):
                 value = item.get(key)
                 if value not in (None, "", "none"):
                     resolved[key] = value
@@ -1503,11 +1631,8 @@ class AnnotationStudio(QMainWindow):
         self.shortcut_end = shortcut(Qt.Key.Key_End, lambda: self.goto_frame(self.total_frames - 1))
         self.shortcut_annotate = shortcut("W", self.start_range_capture)
         self.shortcut_finish_annotation = shortcut("S", self.finish_embedded_annotation)
-        # S is the explicit range/update command in Mode 1. Application scope
-        # makes it reliable even when a combo box or notes editor still owns
-        # focus; this prevents the previous behavior where S was merely typed
-        # into the notes field and the temporal row stayed unchanged.
-        self.shortcut_finish_annotation.setContext(Qt.ShortcutContext.ApplicationShortcut)
+        # The event filter also handles S in focused editors within this
+        # window. Keep the shortcut scoped to Mode 1 when the viewer is open.
         self.shortcut_save = shortcut("Ctrl+S", self.save_annotations)
         self.shortcut_rep_analysis = shortcut("R", self.analyze_current_active_segment)
         self._navigation_shortcuts = [
@@ -1518,6 +1643,7 @@ class AnnotationStudio(QMainWindow):
         if app is not None:
             app.focusChanged.connect(self._update_navigation_shortcuts)
             app.installEventFilter(self)
+            self._navigation_hooks_installed = True
         self._update_navigation_shortcuts(None, self.focusWidget())
 
     def _update_navigation_shortcuts(self, _old, focused) -> None:
@@ -1525,6 +1651,11 @@ class AnnotationStudio(QMainWindow):
         text_control = isinstance(focused, (QLineEdit, QTextEdit, QComboBox, QAbstractSpinBox))
         for item in getattr(self, "_navigation_shortcuts", []):
             item.setEnabled(not text_control)
+        if focused is not None and (
+            self.annotation_editor_container.isAncestorOf(focused)
+            or focused is self.annotation_table or self.annotation_table.isAncestorOf(focused)
+        ):
+            self.playback.pause()
 
     def eventFilter(self, watched, event):
         # This filter is installed at QApplication scope so arrow/S handling
@@ -1556,34 +1687,94 @@ class AnnotationStudio(QMainWindow):
         if self.dataframe.empty:
             raise ValueError("Feature DataFrame is empty.")
         frame = max(0, min(int(frame), self.total_frames - 1))
+        row = self.dataframe.iloc[frame]
+        if row["frame_id"] == frame:
+            return row
         matches = self.dataframe.index[self.dataframe["frame_id"] == frame]
         if len(matches):
             return self.dataframe.loc[matches[0]]
-        return self.dataframe.iloc[frame]
+        return row
 
-    def goto_frame(self, frame_number: int):
+    def goto_frame(self, frame_number: int) -> bool:
+        self.playback.pause(refresh=False)
+        return self._show_frame(frame_number)
+
+    def _show_frame(self, frame_number: int) -> bool:
         frame_number = max(0, min(int(frame_number), max(0, self.total_frames - 1)))
-        self.current_frame = frame_number
-        if hasattr(self, "frame_spin"):
-            self.frame_spin.blockSignals(True)
-            self.frame_spin.setValue(frame_number)
-            self.frame_spin.blockSignals(False)
-        self.cap.set(cv2.CAP_PROP_POS_FRAMES, frame_number)
-        ok, frame = self.cap.read()
+        at_frame = int(self.cap.get(cv2.CAP_PROP_POS_FRAMES)) == frame_number
+        ok, frame = self.cap.read() if at_frame or self.cap.set(cv2.CAP_PROP_POS_FRAMES, frame_number) else (False, None)
         if not ok:
-            return
+            with QSignalBlocker(self.frame_spin):
+                self.frame_spin.setValue(self.current_frame)
+            self.annotation_status.setText(f"Could not decode video frame {frame_number}.")
+            return False
+        self.current_frame = frame_number
+        with QSignalBlocker(self.frame_spin):
+            self.frame_spin.setValue(frame_number)
+        row = self._row_for_frame(frame_number)
+        self._draw_midpoint_overlay(frame, row)
         rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
         image = QImage(rgb.data, rgb.shape[1], rgb.shape[0], rgb.strides[0], QImage.Format.Format_RGB888).copy()
         self._current_video_pixmap = QPixmap.fromImage(image)
-        self._render_video_pixmap()
+        self._render_video_pixmap(row)
         self._refresh_thumbnails()
-        row = self._row_for_frame(frame_number)
         self.current_frame_context_label.setText(self._frame_info(row))
         self._refresh_context_label()
-        if hasattr(self, "joint_graph_widget"):
-            self.joint_graph_widget.set_current_frame(frame_number)
+        if hasattr(self, "editor_annotation_type") and not getattr(self, "annotation_edit_loaded", False):
+            self._populate_inherited_editor_values()
+        return True
 
-    def _render_video_pixmap(self) -> None:
+    @staticmethod
+    def _draw_midpoint_overlay(frame, row: pd.Series) -> None:
+        """Draw the named midpoint geometry on a frame.
+
+        The frame is already backed by the processed video.  This overlay reads
+        the corresponding row from the canonical feature Parquet, so navigating
+        in Mode 1 can display the same geometry even when the video was created
+        by an older renderer.  It never changes the Parquet or reruns pose
+        estimation.
+        """
+        height, width = frame.shape[:2]
+
+        def point(index: int):
+            try:
+                x = float(row.get(f"lm{index}_x"))
+                y = float(row.get(f"lm{index}_y"))
+            except (TypeError, ValueError):
+                return None
+            if not pd.notna(x) or not pd.notna(y):
+                return None
+            return int(round(x * width)), int(round(y * height))
+
+        def midpoint(first, second):
+            if first is None or second is None:
+                return None
+            return (int(round((first[0] + second[0]) / 2.0)), int(round((first[1] + second[1]) / 2.0)))
+
+        points = {index: point(index) for index in (0, 11, 12, 23, 24, 25, 26, 27, 28)}
+        shoulder_midpoint = midpoint(points[11], points[12])
+        hip_midpoint = midpoint(points[23], points[24])
+        knee_midpoint = midpoint(points[25], points[26])
+        ankle_midpoint = midpoint(points[27], points[28])
+        for first, second, color in (
+            (points[0], shoulder_midpoint, (255, 180, 0)),
+            (shoulder_midpoint, hip_midpoint, (255, 180, 0)),
+            (hip_midpoint, knee_midpoint, (0, 220, 255)),
+            (knee_midpoint, ankle_midpoint, (0, 220, 255)),
+        ):
+            if first is not None and second is not None:
+                cv2.line(frame, first, second, color, 2, cv2.LINE_AA)
+        for named_point, label in (
+            (shoulder_midpoint, "SM"),
+            (hip_midpoint, "HM"),
+            (knee_midpoint, "KM"),
+            (ankle_midpoint, "AM"),
+        ):
+            if named_point is not None:
+                cv2.circle(frame, named_point, 5, (255, 180, 0), -1, cv2.LINE_AA)
+                cv2.putText(frame, label, (named_point[0] + 6, named_point[1] - 6), cv2.FONT_HERSHEY_SIMPLEX, 0.45, (255, 180, 0), 1, cv2.LINE_AA)
+
+    def _render_video_pixmap(self, row: pd.Series | None = None) -> None:
         """Fit the cached frame to the current pane without changing layout."""
         if (
             self._current_video_pixmap is None
@@ -1591,13 +1782,16 @@ class AnnotationStudio(QMainWindow):
             or self.video_label.size().isEmpty()
         ):
             return
-        self.video_label.setPixmap(
-            self._current_video_pixmap.scaled(
-                self.video_label.size(),
-                Qt.AspectRatioMode.KeepAspectRatio,
-                Qt.TransformationMode.SmoothTransformation,
-            )
+        display = self._current_video_pixmap.scaled(
+            self.video_label.size(),
+            Qt.AspectRatioMode.KeepAspectRatio,
+            Qt.TransformationMode.SmoothTransformation,
         )
+        if self.overlay_button.isChecked():
+            traces = self._mirrored_angle_traces if self.mirror_angles_button.isChecked() else self._default_angle_traces
+            row = self._row_for_frame(self.current_frame) if row is None else row
+            paint_angle_labels(display, frame_angle_labels(row, traces))
+        self.video_label.setPixmap(display)
 
     def resizeEvent(self, event) -> None:
         # Re-render only the cached image.  No splitter sizes or widget
@@ -1621,19 +1815,19 @@ class AnnotationStudio(QMainWindow):
                 continue
             thumbnail = self._thumbnail_cache.get(frame_number)
             if thumbnail is None:
-                self.cap.set(cv2.CAP_PROP_POS_FRAMES, frame_number)
-                ok, frame = self.cap.read()
-                if not ok:
+                pixmap = self._current_video_pixmap if frame_number == self.current_frame else None
+                if pixmap is None and not self.playback.playing:
+                    self.cap.set(cv2.CAP_PROP_POS_FRAMES, frame_number)
+                    ok, frame = self.cap.read()
+                    if ok:
+                        pixmap = QPixmap.fromImage(QImage(
+                            frame.data, frame.shape[1], frame.shape[0], frame.strides[0], QImage.Format.Format_BGR888
+                        ))
+                if pixmap is None:
                     label.setPixmap(self._thumbnail_placeholder)
-                    label.setStyleSheet("border: 1px solid #9aa4b2; background: #20242b;")
                     continue
-                rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
-                image = QImage(
-                    rgb.data, rgb.shape[1], rgb.shape[0], rgb.strides[0], QImage.Format.Format_RGB888
-                ).copy()
-                thumbnail = QPixmap.fromImage(image).scaled(
-                    self._thumbnail_size[0],
-                    self._thumbnail_size[1],
+                thumbnail = pixmap.scaled(
+                    *self._thumbnail_size,
                     Qt.AspectRatioMode.KeepAspectRatio,
                     Qt.TransformationMode.SmoothTransformation,
                 )
@@ -1643,7 +1837,7 @@ class AnnotationStudio(QMainWindow):
             else:
                 self._thumbnail_cache.move_to_end(frame_number)
             label.setPixmap(thumbnail)
-            border = "#20c55a" if frame_number == self.current_frame else "#9aa4b2"
+            border = self.frame_highlight if frame_number == self.current_frame else "#9aa4b2"
             label.setStyleSheet(f"border: 3px solid {border}; background: #20242b;")
 
     def _frame_info(self, row: pd.Series) -> str:
@@ -1696,6 +1890,7 @@ class AnnotationStudio(QMainWindow):
         return self.annotation_state.next_rep_id(int(set_id)) if self.annotation_state else None
 
     def open_context_dialog(self):
+        self.playback.pause()
         dialog = QDialog(self)
         dialog.setWindowTitle("Set annotation context")
         form = QFormLayout(dialog)
@@ -1723,25 +1918,24 @@ class AnnotationStudio(QMainWindow):
             self._refresh_context_label()
 
     def start_range_capture(self):
-        if getattr(self, "editor_auto_context", None) is not None and self.editor_auto_context.isChecked():
-            self._apply_context_to_editor(self.current_frame)
-            if (
-                self.editor_annotation_type.currentData() == "set"
-                and not getattr(self, "annotation_edit_loaded", False)
-            ):
-                context, _ = self._context_for_frame(self.current_frame)
-                # Set IDs are local to the current Activity interval.  When
-                # this frame is not already inside a set, start the manual
-                # set counter at N/A/0 so the next save assigns 1 locally.
-                if context.get("set_id") is None:
-                    self.editor_set_id.setValue(0)
+        self.playback.pause()
+        self._apply_context_to_editor(self.current_frame)
+        if (
+            self.editor_annotation_type.currentData() == "set"
+            and not getattr(self, "annotation_edit_loaded", False)
+        ):
+            context, _ = self._context_for_frame(self.current_frame)
+            # Set IDs are local to the current Activity interval.  When
+            # this frame is not already inside a set, start at N/A/0.
+            if context.get("set_id") is None:
+                self.editor_set_id.setValue(0)
         self.annotation_start_frame = self.current_frame
         if hasattr(self, "editor_range_mode") and self.editor_range_mode.currentData() == "point":
             self.editor_range_label.setText(f"Point captured at frame {self.current_frame}. Press S to save it.")
         else:
             self.editor_range_label.setText(f"Start captured at frame {self.current_frame}. Navigate, then press S to save.")
         self.annotation_status.setText(
-            f"Capturing range from frame {self.current_frame}. Use ←/→ or ±1s, then press S."
+            f"Capturing range from frame {self.current_frame}. Use ←/→ or ±Jump, then press S."
         )
 
     def set_range_status(self, start_frame: int, end_frame: int):
@@ -1819,7 +2013,7 @@ class AnnotationStudio(QMainWindow):
                 int(annotation.get("start_frame", 0)),
                 exclude_id=str(annotation.get("annotation_id")),
             )
-            for key in ("exercise", "set_id", "rep_id", "phase"):
+            for key in ("camera_angle", "exercise", "set_id", "rep_id", "phase"):
                 if display.get(key) in (None, "", "none") and context.get(key) not in (None, "", "none"):
                     display[key] = context[key]
             if not display.get("activity_state") and context.get("activity_state"):
@@ -1830,7 +2024,7 @@ class AnnotationStudio(QMainWindow):
         columns = [
             "Annotation ID", "Segment ID", "Layer", "Boundary", "Start frame", "End frame",
             "Start time (s)", "End time (s)", "Duration (s)", "Activity", "Movement type",
-            "Exercise name", "Set", "Rep", "Phase", "Form", "Form score", "Notes",
+            "Camera angle", "Exercise name", "Set", "Rep", "Phase", "Form", "Form score", "Notes",
             "Issue type", "Issue category", "Affected joints",
         ]
         rows = []
@@ -1851,6 +2045,7 @@ class AnnotationStudio(QMainWindow):
                 "Duration (s)": display.get("duration_s"),
                 "Activity": display.get("activity_state"),
                 "Movement type": movement_type or "N/A",
+                "Camera angle": display.get("camera_angle") or "N/A",
                 "Exercise name": exercise_name or "N/A",
                 "Set": display.get("set_id"),
                 "Rep": display.get("rep_id"),
@@ -1891,15 +2086,17 @@ class AnnotationStudio(QMainWindow):
         if self.annotation_state is None:
             return False
         document = self.annotation_state.to_document()
-        validate_annotations(document, len(self.dataframe))
         try:
+            validate_annotations(document, len(self.dataframe))
             # JSON is authoritative. A failed derived Parquet export must never erase it.
             save_json_atomic(document, self.annotation_json_path)
         except Exception as exc:
+            self._annotation_save_failed = True
             LOGGER.exception("Annotation JSON persistence failed")
             if show_error:
                 QMessageBox.critical(self, "Annotation save failed", f"Could not save the JSON source of truth.\n\n{type(exc).__name__}: {exc}")
             return False
+        self._annotation_save_failed = False
         try:
             save_annotation_parquet(document, self.annotation_parquet_path)
             if self.rep_summary_path.resolve() == self.annotation_json_path.resolve():
@@ -1933,6 +2130,7 @@ class AnnotationStudio(QMainWindow):
             self.annotation_status.setText("Annotation session marked complete.")
 
     def analyze_current_active_segment(self):
+        self.playback.pause()
         active = [
             item for item in self.annotations
             if item.get("annotation_type") == "activity_state"
@@ -1962,13 +2160,45 @@ class AnnotationStudio(QMainWindow):
         )
 
     def closeEvent(self, event):
+        self.playback.pause(refresh=False)
+        if self._annotation_save_failed:
+            choice = QMessageBox.warning(
+                self, "Annotations could not be saved",
+                "Retry saving the annotation changes before leaving?",
+                QMessageBox.StandardButton.Save | QMessageBox.StandardButton.Discard | QMessageBox.StandardButton.Cancel,
+                QMessageBox.StandardButton.Cancel,
+            )
+            if (choice == QMessageBox.StandardButton.Cancel
+                    or (choice == QMessageBox.StandardButton.Save and not self._persist_annotations(show_error=True))):
+                event.ignore()
+                return
+        elif self.annotation_start_frame is not None:
+            choice = QMessageBox.question(
+                self, "Leave the annotation editor?",
+                "An annotation range is open. Leave and discard any unsubmitted edits?",
+                QMessageBox.StandardButton.Discard | QMessageBox.StandardButton.Cancel,
+                QMessageBox.StandardButton.Cancel,
+            )
+            if choice != QMessageBox.StandardButton.Discard:
+                event.ignore()
+                return
+        if self.annotation_graph_window is not None:
+            self.annotation_graph_window.close()
+        app = QApplication.instance()
+        if app is not None and getattr(self, "_navigation_hooks_installed", False):
+            app.removeEventFilter(self)
+            app.focusChanged.disconnect(self._update_navigation_shortcuts)
+            self._navigation_hooks_installed = False
         if self.range_capture is not None:
             self.range_capture.close()
         self.cap.release()
         event.accept()
+        self.closed.emit()
 
 
-def open_annotation_studio(parent=None, video_path=None, parquet_path=None):
+def open_annotation_studio(parent=None, video_path=None, parquet_path=None, *,
+                           metadata_path=None, annotation_json_path=None, frame_highlight="#20c55a",
+                           frame_jump=DEFAULT_FRAME_JUMP):
     if video_path is None:
         video_path, _ = QFileDialog.getOpenFileName(parent, "Select processed skeleton video", "", "Video Files (*.mp4 *.mov *.avi *.mkv);;All Files (*)")
         if not video_path:
@@ -1977,7 +2207,10 @@ def open_annotation_studio(parent=None, video_path=None, parquet_path=None):
         parquet_path, _ = QFileDialog.getOpenFileName(parent, "Select feature Parquet", "", "Parquet (*.parquet);;All Files (*)")
         if not parquet_path:
             return
-    window = AnnotationStudio(video_path, parquet_path, parent=parent)
+    window = AnnotationStudio(
+        video_path, parquet_path, annotation_json_path=annotation_json_path,
+        metadata_path=metadata_path, parent=parent, frame_highlight=frame_highlight, frame_jump=frame_jump,
+    )
     # Qt resolves this against the active monitor's available work area.  It
     # avoids the previous 1450x920 hard-coded geometry and keeps the splitter
     # proportions stable when the user starts navigating or editing fields.
