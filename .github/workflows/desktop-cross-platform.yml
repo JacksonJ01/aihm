@@ -91,7 +91,7 @@ jobs:
           from urllib.request import urlopen
 
           url = ("https://storage.googleapis.com/mediapipe-models/pose_landmarker/"
-                 "pose_landmarker_full/float16/1/pose_landmarker_full.task")
+                 "pose_landmarker_full/float16/latest/pose_landmarker_full.task")
           with urlopen(url, timeout=60) as response:
               model = response.read()
           assert sha256(model).hexdigest() == "4eaa5eb7a98365221087693fcc286334cf0858e2eb6e15b506aa4a7ecdcec4ad"
