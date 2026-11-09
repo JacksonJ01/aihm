@@ -13,7 +13,14 @@ on:
         default: desktop-v0.1.1
 
 permissions:
-  contents: write
+  contents: read
+
+env:
+  PACKAGE_VERSION: ${{ inputs.version }}
+  RELEASE_TAG: ${{ inputs.release_tag }}
+
+concurrency:
+  group: desktop-release-${{ inputs.release_tag }}
 
 jobs:
   build:
@@ -57,7 +64,7 @@ jobs:
         if: matrix.platform == 'Linux'
         run: |
           sudo apt-get update
-          sudo apt-get install -y libgl1 libglib2.0-0 libxkbcommon-x11-0 libxcb-cursor0 xvfb
+          sudo apt-get install -y libegl1 libgl1 libglib2.0-0 libxkbcommon-x11-0 libxcb-cursor0 xvfb
 
       - name: Install packaging dependencies
         shell: bash
@@ -75,9 +82,27 @@ jobs:
         run: |
           python -c "import cv2, mediapipe, pyarrow; from app.AIHuMoDataStudio import HomeWindow; print('source imports passed')"
 
+      - name: Fetch and verify the bundled pose model
+        shell: bash
+        run: |
+          python - <<'PY'
+          from hashlib import sha256
+          from pathlib import Path
+          from urllib.request import urlopen
+
+          url = ("https://storage.googleapis.com/mediapipe-models/pose_landmarker/"
+                 "pose_landmarker_full/float16/1/pose_landmarker_full.task")
+          with urlopen(url, timeout=60) as response:
+              model = response.read()
+          assert sha256(model).hexdigest() == "4eaa5eb7a98365221087693fcc286334cf0858e2eb6e15b506aa4a7ecdcec4ad"
+          path = Path("mainApp/full_model/pose_landmarker_full.task")
+          path.parent.mkdir(parents=True, exist_ok=True)
+          path.write_bytes(model)
+          PY
+
       - name: Build native package
         shell: bash
-        run: bash "${{ matrix.script }}" "${{ inputs.version }}"
+        run: bash "${{ matrix.script }}" "$PACKAGE_VERSION"
 
       - name: Smoke-test frozen Linux launcher
         if: matrix.platform == 'Linux'
@@ -85,8 +110,8 @@ jobs:
         env:
           QT_QPA_PLATFORM: offscreen
         run: |
-          timeout 8s xvfb-run -a "mainApp/AI Humo EXE pipeline/Linux/dist/v${{ inputs.version }}-x64/AIHuMo Data Studio/AIHuMo Data Studio" || status=$?
-          test "${status:-0}" -eq 0 -o "${status:-0}" -eq 124
+          timeout 20s xvfb-run -a "mainApp/AI Humo EXE pipeline/Linux/dist/v${PACKAGE_VERSION}-x64/AIHuMo Data Studio/AIHuMo Data Studio" || status=$?
+          test "${status:-0}" -eq 124
 
       - name: Smoke-test frozen macOS launcher
         if: matrix.platform == 'macOS'
@@ -94,11 +119,12 @@ jobs:
         env:
           QT_QPA_PLATFORM: offscreen
         run: |
-          app="mainApp/AI Humo EXE pipeline/macOS/dist/v${{ inputs.version }}-$(uname -m)/AIHuMo Data Studio.app"
+          app="mainApp/AI Humo EXE pipeline/macOS/dist/v${PACKAGE_VERSION}-$(uname -m)/AIHuMo Data Studio.app"
           executable="$app/Contents/MacOS/AIHuMo Data Studio"
           "$executable" & pid=$!
-          sleep 5
-          kill "$pid" 2>/dev/null || true
+          sleep 15
+          kill -0 "$pid"
+          kill "$pid"
           wait "$pid" 2>/dev/null || true
 
       - name: Verify package checksums
@@ -124,6 +150,8 @@ jobs:
     name: Attach packages to release
     needs: build
     runs-on: ubuntu-22.04
+    permissions:
+      contents: write
     steps:
       - name: Download native packages
         uses: actions/download-artifact@v4
@@ -135,9 +163,13 @@ jobs:
       - name: Confirm target release exists
         env:
           GH_TOKEN: ${{ github.token }}
-        run: gh release view "${{ inputs.release_tag }}"
+          GH_REPO: ${{ github.repository }}
+        run: |
+          [[ "$RELEASE_TAG" == "desktop-v$PACKAGE_VERSION" ]]
+          gh release view "$RELEASE_TAG"
 
       - name: Publish native packages
         env:
           GH_TOKEN: ${{ github.token }}
-        run: gh release upload "${{ inputs.release_tag }}" release-assets/* --clobber
+          GH_REPO: ${{ github.repository }}
+        run: gh release upload "$RELEASE_TAG" release-assets/*
