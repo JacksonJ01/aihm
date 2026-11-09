@@ -11,7 +11,8 @@ import numpy as np
 import pandas as pd
 import pyarrow.parquet as pq
 
-from .features import FeatureEngine
+from .features import FeatureEngine, review_schema_metadata
+from .geometry import POSE_CONNECTIONS
 from .graphs import generate_angle_graphs
 from .metadata import build_metadata
 from .pose import extract_landmarks_dataframe, inspect_video, iter_landmark_rows
@@ -214,19 +215,24 @@ def create_skeleton_video(
         points_array[:, i, 0] = pd.to_numeric(landmarks_df[f"lm{i}_x"], errors="coerce").to_numpy(dtype=np.float32)
         points_array[:, i, 1] = pd.to_numeric(landmarks_df[f"lm{i}_y"], errors="coerce").to_numpy(dtype=np.float32)
 
+    bbox_array = None
+    tracking_status = None
+    bbox_columns = [f"target_bbox_{axis}" for axis in ("x1", "y1", "x2", "y2")]
+    if all(column in landmarks_df for column in bbox_columns):
+        bbox_array = np.column_stack([
+            pd.to_numeric(landmarks_df[column], errors="coerce").to_numpy(dtype=np.float32)
+            for column in bbox_columns
+        ])
+        tracking_status = (
+            landmarks_df["target_status"].fillna("tracked").astype(str).to_numpy(copy=False)
+            if "target_status" in landmarks_df else np.full(len(landmarks_df), "tracked", dtype=object)
+        )
+
     fourcc = cv2.VideoWriter_fourcc(*"mp4v")
     writer = cv2.VideoWriter(str(output_path), fourcc, fps, (width, height))
     if not writer.isOpened():
         cap.release()
         raise RuntimeError(f"Could not create processed video: {output_path}")
-
-    connections = [
-        (0, 1), (1, 2), (2, 3), (3, 7), (0, 4), (4, 5), (5, 6), (6, 8), (9, 10),
-        (11, 12), (11, 13), (13, 15), (12, 14), (14, 16), (11, 23), (12, 24), (23, 24),
-        (23, 25), (25, 27), (27, 29), (29, 31), (27, 31),
-        (24, 26), (26, 28), (28, 30), (30, 32), (28, 32),
-        (15, 17), (15, 19), (15, 21), (16, 18), (16, 20), (16, 22), (17, 19), (18, 20),
-    ]
 
     def midpoint(first: tuple[int, int] | None, second: tuple[int, int] | None) -> tuple[int, int] | None:
         if first is None or second is None:
@@ -249,7 +255,7 @@ def create_skeleton_video(
                 for i in range(33):
                     x, y = points_array[processed, i]
                     points.append((int(round(float(x) * width)), int(round(float(y) * height))) if np.isfinite(x) and np.isfinite(y) else None)
-                for a, b in connections:
+                for a, b in POSE_CONNECTIONS:
                     if points[a] is not None and points[b] is not None:
                         cv2.line(frame, points[a], points[b], line_color, 2, cv2.LINE_AA)
                 for point in points:
@@ -286,13 +292,10 @@ def create_skeleton_video(
 
                 # Tracking metadata is rendered into the validation video so a human
                 # can see when AIHuMo believes the target is tracked or occluded.
-                if "target_bbox_x1" in landmarks_df.columns:
-                    x1 = pd.to_numeric(landmarks_df["target_bbox_x1"], errors="coerce").iloc[processed]
-                    y1 = pd.to_numeric(landmarks_df["target_bbox_y1"], errors="coerce").iloc[processed]
-                    x2 = pd.to_numeric(landmarks_df["target_bbox_x2"], errors="coerce").iloc[processed]
-                    y2 = pd.to_numeric(landmarks_df["target_bbox_y2"], errors="coerce").iloc[processed]
+                if bbox_array is not None:
+                    x1, y1, x2, y2 = bbox_array[processed]
                     if np.isfinite([x1, y1, x2, y2]).all():
-                        status = str(landmarks_df.get("target_status", pd.Series(["tracked"] * len(landmarks_df))).iloc[processed])
+                        status = tracking_status[processed]
                         left, top = int(round(x1 * width)), int(round(y1 * height))
                         right, bottom = int(round(x2 * width)), int(round(y2 * height))
                         cv2.rectangle(frame, (left, top), (right, bottom), (255, 200, 0), 2, cv2.LINE_AA)
@@ -626,7 +629,8 @@ def process_video(
         state.stage = "landmarks_saved"
         state.save(paths["state_path"])
 
-        if not paths["processed_video_path"].exists():
+        rendered_skeleton = not paths["processed_video_path"].exists()
+        if rendered_skeleton:
             _emit(progress_callback, 0.42, "Creating skeleton-overlay video")
             partial_video = paths["processed_video_path"].with_suffix(".partial.mp4")
             partial_video.unlink(missing_ok=True)
@@ -667,10 +671,14 @@ def process_video(
             validate_frame_dataframe(final_df)
             if len(final_df) != len(landmark_df):
                 raise ValueError("Feature generation changed the frame count.")
-            save_parquet_atomic(final_df, paths["features_path"])
+            save_parquet_atomic(final_df, paths["features_path"], metadata=review_schema_metadata(final_df.columns))
             LOGGER.info("Final feature count: %d", len(feature_columns))
         state.stage = "features_saved"
         state.save(paths["state_path"])
+        # FeatureEngine owns a separate frame table. The raw landmark table is
+        # no longer needed after this point and can be released before reports,
+        # optional graph export, and final artifact validation.
+        del landmark_df
 
         quality_report = build_quality_report(final_df, feature_columns)
         quality_report["ready_for_annotation"] = (
@@ -695,6 +703,8 @@ def process_video(
         metadata["quality_report"] = str(paths["quality_path"])
         metadata["annotation_ground_truth"] = "separate annotations.json; never stored in feature Parquet"
         metadata["target_tracking"] = cfg.get("tracking", {})
+        if rendered_skeleton:
+            metadata["skeleton_midpoints_baked"] = True
 
         # Graphs are a derived, non-authoritative visualization artifact. They
         # consume the already-written canonical feature table and never rerun

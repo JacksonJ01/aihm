@@ -23,7 +23,7 @@
   },
   "graphs": {
     "enabled": true,
-    "export_images": true,
+    "export_images": false,
     "export_dpi": 220
   },
   "quality": {

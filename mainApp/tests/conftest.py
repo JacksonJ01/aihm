@@ -7,6 +7,22 @@ from textwrap import fill
 import pytest
 
 
+@pytest.fixture(scope="session")
+def qt_app():
+    """Keep one offscreen QApplication alive for the desktop and alignment tests."""
+    from PyQt6.QtCore import QCoreApplication, QEvent
+    from PyQt6.QtWidgets import QApplication
+
+    with pytest.MonkeyPatch.context() as environment:
+        environment.setenv("QT_QPA_PLATFORM", "offscreen")
+        app = QApplication.instance() or QApplication([])
+        app.setQuitOnLastWindowClosed(False)
+        yield app
+        app.closeAllWindows()
+        QCoreApplication.sendPostedEvents(None, QEvent.Type.DeferredDelete)
+        app.processEvents()
+
+
 def pytest_addoption(parser):
     parser.addoption(
         "--pipeline-details",

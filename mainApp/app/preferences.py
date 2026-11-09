@@ -19,7 +19,6 @@ DEFAULT_FRAME_JUMP = 50
 MAX_FRAME_JUMP = 10_000
 COLOR_FIELDS = {
     "launcher_accent": "Selected workflow border",
-    "frame_highlight": "Current-frame border",
     "skeleton_line": "Skeleton lines",
     "skeleton_joint": "Skeleton joints",
 }
@@ -28,7 +27,6 @@ COLOR_FIELDS = {
 @dataclass(frozen=True)
 class DesktopPreferences:
     launcher_accent: str = "#20a253"
-    frame_highlight: str = "#20c55a"
     skeleton_line: str = "#00ff00"
     skeleton_joint: str = "#ff0000"
     participants: tuple[str, ...] = ()

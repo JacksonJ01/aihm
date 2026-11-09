@@ -1,12 +1,13 @@
 from __future__ import annotations
 
 from dataclasses import asdict, dataclass, field
-import json
 from pathlib import Path
 from typing import Any
 
 import numpy as np
 import pandas as pd
+
+from .storage import save_json_atomic
 
 
 @dataclass(frozen=True)
@@ -347,6 +348,4 @@ class RepDetector:
 
 
 def save_rep_suggestions(result: RepDetectionResult, path: str | Path) -> None:
-    path = Path(path)
-    path.parent.mkdir(parents=True, exist_ok=True)
-    path.write_text(json.dumps(result.to_document(), indent=2, allow_nan=False), encoding="utf-8")
+    save_json_atomic(result.to_document(), path)

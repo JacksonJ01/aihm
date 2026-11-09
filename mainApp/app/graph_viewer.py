@@ -1,7 +1,8 @@
 """Read-only desktop workspace for synchronized skeleton video and joint traces."""
 from __future__ import annotations
 
-from collections import OrderedDict
+from dataclasses import dataclass
+import json
 from pathlib import Path
 import re
 
@@ -12,21 +13,23 @@ import pyarrow.parquet as pq
 from PyQt6.QtCore import QEvent, QSignalBlocker, QTimer, Qt, pyqtSignal
 from PyQt6.QtGui import QImage, QKeySequence, QPixmap, QShortcut
 from PyQt6.QtWidgets import (
-    QApplication, QFileDialog, QHBoxLayout, QLabel, QMainWindow, QPushButton, QSizePolicy,
-    QSlider, QSpinBox, QSplitter, QVBoxLayout, QWidget,
+    QApplication, QComboBox, QDialog, QFileDialog, QHBoxLayout, QLabel, QMessageBox, QPushButton, QSizePolicy,
+    QSlider, QSpinBox, QSplitter, QTableWidget, QTableWidgetItem, QVBoxLayout, QWidget,
 )
 
-from aihumo.config import load_config
-from aihumo.features import FeatureEngine, LEGACY_ANGLE_PREFIX
+from aihumo.features import (
+    CROSS_MEAN_PREFIX, CROSS_MEAN_SOURCE, LEGACY_ANGLE_PREFIX, MEAN_ANGLE_PREFIX, REVIEW_LANDMARKS,
+    TIME_COLUMNS, VIEWER_FEATURE_PREFIX,
+)
+from aihumo.storage import load_json
 
-from .angle_overlay import AngleLabel, frame_angle_labels, paint_angle_labels
-from .common import close_and_return
-from .joint_graph import JointGraphWidget, TIME_COLUMNS
-from .playback import FramePlayback
+from .angle_overlay import SKELETON_COLUMNS, AngleLabel, frame_angle_labels, midpoint_overlay_button, paint_angle_labels, paint_skeleton
+from .common import ReviewWindow, close_and_return
+from .joint_graph import GRAPH_MODES, MEAN_SOURCE, JointGraphWidget, SAVED_SOURCE, TORSO_SOURCE, WORLD_SOURCE
+from .playback import FrameBuffer, FrameNavigationButton, FramePlayback, open_review_video, review_window_is_covered
 from .preferences import DEFAULT_FRAME_JUMP, MAX_FRAME_JUMP
 
 
-PROJECT_ROOT = Path(__file__).resolve().parents[1]
 ARROW_FRAME_STEPS = {
     Qt.Key.Key_Left: -1,
     Qt.Key.Key_Down: -1,
@@ -35,18 +38,36 @@ ARROW_FRAME_STEPS = {
 }
 
 
+def review_metadata(parquet_path: Path) -> dict:
+    name = parquet_path.stem.removesuffix("_features") + "_metadata.json"
+    sidecars = (parquet_path.parent.parent / "metadata" / name, parquet_path.with_name(name))
+    return next((load_json(candidate) for candidate in sidecars if candidate.is_file()), {})
+
+
+@dataclass(frozen=True)
+class GraphRecording:
+    frames: pd.DataFrame
+    overlay_frames: pd.DataFrame
+    timestamps: np.ndarray
+    measurements: dict
+    metadata: dict
+
+
 class SkeletonPreview(QLabel):
     """Scale the current frame without letting the image set the pane size."""
 
-    def __init__(self):
+    def __init__(self, draw_skeleton):
         super().__init__("Skeleton video")
         self.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.setSizePolicy(QSizePolicy.Policy.Ignored, QSizePolicy.Policy.Ignored)
         self._frame = QPixmap()
         self._labels: tuple[AngleLabel, ...] = ()
+        self._draw_skeleton = draw_skeleton
+        self._smooth = True
 
-    def show_frame(self, frame: QPixmap, labels: tuple[AngleLabel, ...] = ()) -> None:
+    def show_frame(self, frame: QPixmap, labels: tuple[AngleLabel, ...] = (), *, smooth: bool = True) -> None:
         self._frame = frame
+        self._smooth = smooth
         self.show_angle_labels(labels)
 
     def show_angle_labels(self, labels: tuple[AngleLabel, ...]) -> None:
@@ -61,96 +82,193 @@ class SkeletonPreview(QLabel):
         if not self._frame.isNull() and not self.size().isEmpty():
             display = self._frame.scaled(
                 self.size(), Qt.AspectRatioMode.KeepAspectRatio,
-                Qt.TransformationMode.SmoothTransformation,
+                (Qt.TransformationMode.SmoothTransformation if self._smooth
+                 else Qt.TransformationMode.FastTransformation),
             )
+            self._draw_skeleton(display)
             paint_angle_labels(display, self._labels)
             self.setPixmap(display)
 
 
-class InteractiveGraphViewer(QMainWindow):
+class InteractiveGraphViewer(ReviewWindow):
     """Browse feature samples without loading or saving any annotation state."""
 
     position_checkpoint = pyqtSignal(int)
+    frame_changed = pyqtSignal(int)
+    annotation_requested = pyqtSignal()
     closed = pyqtSignal()
+    viewer_title = "AIHuMo Interactive Graph Viewer (2D) · Mode 3"
 
     def __init__(self, video_path: str | Path, parquet_path: str | Path, parent=None, *,
-                 frame_highlight: str = "#20c55a", annotation_preview: bool = False,
-                 frame_jump: int = DEFAULT_FRAME_JUMP):
-        super().__init__(parent)
+                 annotation_preview: bool = False,
+                 frame_jump: int = DEFAULT_FRAME_JUMP, initial_frame: int | None = 0):
+        super().__init__(parent, Qt.WindowType.Window)
         self.setAttribute(Qt.WidgetAttribute.WA_DeleteOnClose)
-        self.video_path = Path(video_path)
-        self.parquet_path = Path(parquet_path)
-        self.setWindowTitle(f"AIHuMo Interactive Graph Viewer — {self.video_path.stem}")
-        with pq.ParquetFile(self.parquet_path) as parquet:
-            names = parquet.schema_arrow.names
-        time_column = next((name for name in TIME_COLUMNS if name in names), None)
-        angles = [name for name in names if name.startswith(LEGACY_ANGLE_PREFIX)]
-        if "frame_id" not in names or not time_column or not angles:
-            raise ValueError("Select a feature Parquet with frame IDs, source timestamps and joint angles.")
-        positions = [name for name in names if re.fullmatch(r"(?:lm|world)\d+_[xyz]", name)]
-        frames = pd.read_parquet(self.parquet_path, columns=["frame_id", time_column, *angles, *positions])
-        ids = pd.to_numeric(frames["frame_id"], errors="coerce").to_numpy(dtype=float)
-        self.timestamps = pd.to_numeric(frames[time_column], errors="coerce").to_numpy(dtype=float)
-        if not len(frames) or not np.array_equal(ids, np.arange(len(frames))):
-            raise ValueError("Feature frame IDs must run from 0 through the last video frame.")
-        if not np.isfinite(self.timestamps).all() or np.any(np.diff(self.timestamps) < 0):
-            raise ValueError("Feature timestamps must be finite and ordered.")
-        self.total_frames = len(frames)
+        self.setWindowTitle(f"{self.viewer_title} — {Path(video_path).stem}")
         self.current_frame = 0
-        self.frame_highlight = frame_highlight
+        self._deferred_linked_frame = None
         self.annotation_preview = annotation_preview
-        self._thumb_cache: OrderedDict[int, QPixmap] = OrderedDict()
         self._checkpoint_timer = QTimer(self)
         self._checkpoint_timer.setSingleShot(True)
         self._checkpoint_timer.setInterval(750)
         self._checkpoint_timer.timeout.connect(self._checkpoint_position)
+        self._set_recording(video_path, parquet_path)
+        self._open_capture()
+        try:
+            self._build_ui(self._frames, frame_jump)
+            if initial_frame is not None and not self.goto_frame(initial_frame):
+                raise ValueError("Could not decode the first skeleton video frame.")
+        except Exception:
+            self._close_capture()
+            raise
+        QApplication.instance().installEventFilter(self)
 
-        self.cap = cv2.VideoCapture(str(self.video_path))
+    def _set_recording(self, video_path, parquet_path):
+        parquet_path = Path(parquet_path)
+        recording = self._read_recording(parquet_path)
+        self.video_path, self.parquet_path = Path(video_path), parquet_path
+        self._frames = recording.frames
+        self._measurements = recording.measurements
+        self._overlay_frames = recording.overlay_frames
+        self.timestamps = recording.timestamps
+        self.total_frames = len(recording.frames)
+        self.metadata = recording.metadata
+
+    def _read_recording(self, parquet_path):
+        with pq.ParquetFile(parquet_path) as parquet:
+            names = parquet.schema_arrow.names
+            metadata = parquet.schema_arrow.metadata or {}
+        measurements = json.loads(metadata.get(b"aihumo.review_schema", b"{}")).get("columns", {})
+        time_column = next((name for name in TIME_COLUMNS if name in names), None)
+        angles = [name for name in names if name.startswith(LEGACY_ANGLE_PREFIX)]
+        extra_columns = self._extra_feature_columns(names)
+        if "frame_id" not in names or not time_column or not (angles or extra_columns):
+            raise ValueError("Select a matching feature Parquet with frame IDs, source timestamps, and graph data.")
+        overlay_columns = [name for name in names if name in SKELETON_COLUMNS]
+        indices = "|".join(map(str, REVIEW_LANDMARKS))
+        points = rf"(?:lm(?:{indices})|(?:shoulder|hip)_midpoint)"
+        reading_pattern = rf"review_(?:legacy|world|torso2d|cross_mean)_{points}_(?:[va]?[xyz]|speed)"
+        viewer_columns = [name for name in names if name.startswith((VIEWER_FEATURE_PREFIX, "review_omega_", "review_alpha_", f"{CROSS_MEAN_PREFIX}angle_"))
+                          or re.fullmatch(reading_pattern, name)
+                          or re.fullmatch(r"review_(?:legacy|world|torso2d|cross_mean)_distance_.+", name)]
+        wanted = list(dict.fromkeys(["frame_id", time_column, *angles, *overlay_columns, *viewer_columns,
+                                    *extra_columns]))
+        frames = pd.read_parquet(parquet_path, columns=wanted)
+        mean_columns = [name for name in viewer_columns if name.startswith((f"{CROSS_MEAN_PREFIX}angle_", f"{MEAN_ANGLE_PREFIX}angle_"))
+                        and not name.endswith("_source_count")]
+        ids = pd.to_numeric(frames["frame_id"], errors="coerce").to_numpy(dtype=float)
+        timestamps = pd.to_numeric(frames[time_column], errors="coerce").to_numpy(dtype=float)
+        if not len(frames) or not np.array_equal(ids, np.arange(len(frames))):
+            raise ValueError("Feature frame IDs must run from 0 through the last video frame.")
+        if not np.isfinite(timestamps).all() or np.any(np.diff(timestamps) < 0):
+            raise ValueError("Feature timestamps must be finite and ordered.")
+        # Keep one owner for the selected Parquet columns. The overlay used to
+        # duplicate a potentially large subset of the same frame table.
+        return GraphRecording(frames, frames,
+                              timestamps, measurements, review_metadata(parquet_path))
+
+    def _extra_feature_columns(self, columns):
+        return ()
+
+    def _open_capture(self):
+        self.cap, self._decode_path, self._baked = open_review_video(
+            self.video_path, self.metadata, self.total_frames, timestamps=self.timestamps,
+        )
+        self._midpoints_baked = self._baked and bool(self.metadata.get("skeleton_midpoints_baked"))
+        self._frame_buffer = None
         try:
             if not self.cap.isOpened():
                 raise ValueError(f"Could not open skeleton video: {self.video_path}")
             if int(self.cap.get(cv2.CAP_PROP_FRAME_COUNT)) != self.total_frames:
                 raise ValueError("Video frame count differs from the selected Parquet. Choose a matching pair.")
-            self._build_ui(frames, frame_jump)
-            if not self.goto_frame(0):
-                raise ValueError("Could not decode the first skeleton video frame.")
+            size = tuple(int(self.cap.get(prop)) for prop in (cv2.CAP_PROP_FRAME_WIDTH, cv2.CAP_PROP_FRAME_HEIGHT))
+            self._frame_buffer = FrameBuffer(self._decode_path, self.total_frames, size,
+                                             timestamps=getattr(self.cap, "timestamps", None))
         except Exception:
             self.cap.release()
             raise
-        QApplication.instance().installEventFilter(self)
+
+    def _close_capture(self):
+        self._frame_buffer.close()
+        self.cap.release()
+
+    def _back(self):
+        close_and_return(self)
+
+    def _build_preview(self):
+        return SkeletonPreview(self._paint_skeleton)
+
+    def _create_playback(self):
+        playback = FramePlayback(
+            self, timestamps=self.timestamps, position=lambda: self.current_frame,
+            display_frame=self._show_frame, refresh_paused_frame=self._refresh_paused_frame,
+            fps=self.cap.get(cv2.CAP_PROP_FPS),
+            ready_frame=self._frame_buffer.ready_for_playback,
+        )
+        playback.starting.connect(self.resume_review)
+        playback.paused.connect(lambda: self._frame_buffer.request(self.current_frame))
+        playback.paused.connect(lambda: self.frame_changed.emit(self.current_frame))
+        return playback
 
     def _build_ui(self, frames: pd.DataFrame, frame_jump: int) -> None:
-        splitter = QSplitter(Qt.Orientation.Horizontal)
+        self.splitter = splitter = QSplitter(Qt.Orientation.Horizontal)
         splitter.setChildrenCollapsible(False)
         left = QWidget()
         layout = QVBoxLayout(left)
         video_header = QHBoxLayout()
         self.back_button = QPushButton("Back to annotation" if self.annotation_preview else "Back to menu")
         self.back_button.setToolTip("Close the graph viewer and return to the previous window (Esc).")
-        self.back_button.clicked.connect(lambda: close_and_return(self))
+        self.back_button.clicked.connect(self._back)
         video_header.addWidget(self.back_button)
-        video_header.addWidget(QLabel("Skeleton video"), 1)
+        video_header.addStretch(1)
         self.overlay_button = QPushButton("Display Overlay")
         self.overlay_button.setCheckable(True)
         self.overlay_button.setToolTip("Label the checked graph angles beside their joints on the video.")
         self.overlay_button.toggled.connect(self._refresh_angle_overlay)
         video_header.addWidget(self.overlay_button)
+        self.skeleton_button = QPushButton("Show Skeleton")
+        self.skeleton_button.setCheckable(True)
+        self.skeleton_button.setChecked(True)
+        self._update_skeleton_control()
+        self.skeleton_button.toggled.connect(self._refresh_angle_overlay)
+        video_header.addWidget(self.skeleton_button)
+        self.graph_mode = QComboBox()
+        self.graph_mode.addItems(GRAPH_MODES)
+        self.graph_mode.setAccessibleName("Graph view")
+        self.midpoint_button = midpoint_overlay_button(self._overlay_frames.columns, baked=self._midpoints_baked)
+        self.midpoint_button.toggled.connect(self._refresh_angle_overlay)
+        video_header.addWidget(self.midpoint_button)
         self._back_shortcut = QShortcut(QKeySequence(Qt.Key.Key_Escape), self)
         self._back_shortcut.activated.connect(self.back_button.click)
         layout.addLayout(video_header)
-        self.preview = SkeletonPreview()
-        layout.addWidget(self.preview, 1)
+        self._build_review_controls(layout, frame_jump)
+        self.graph = self._new_graph(frames)
+        self.graph_mode.currentTextChanged.connect(lambda mode: self.graph.set_graph_mode(mode))
+        splitter.addWidget(left)
+        splitter.addWidget(self.graph)
+        splitter.setStretchFactor(0, 2)
+        splitter.setStretchFactor(1, 4)
+        splitter.setSizes([400, 900])
+        self.setCentralWidget(splitter)
 
-        thumbnails = QHBoxLayout()
-        self.thumbnails = []
-        for _ in range(5):
-            thumb = QLabel()
-            thumb.setFixedHeight(68)
-            thumb.setSizePolicy(QSizePolicy.Policy.Ignored, QSizePolicy.Policy.Fixed)
-            thumb.setAlignment(Qt.AlignmentFlag.AlignCenter)
-            thumbnails.addWidget(thumb, 1)
-            self.thumbnails.append(thumb)
-        layout.addLayout(thumbnails)
+    def _update_skeleton_control(self):
+        self.skeleton_button.setEnabled(not self._baked)
+        self.skeleton_button.setToolTip("The matching clean video is unavailable or could not be verified." if self._baked
+                                        else "Show the skeleton from saved image landmarks.")
+
+    def _build_review_controls(self, layout, frame_jump):
+        self.graph_picker = graph_picker = QHBoxLayout()
+        graph_picker.addWidget(QLabel("Graph view"))
+        graph_picker.addWidget(self.graph_mode)
+        graph_picker.addStretch()
+        if not self.annotation_preview and self.parentWidget() is not None:
+            self.open_annotations_button = QPushButton("Open annotations")
+            self.open_annotations_button.setToolTip("Open this recording in Mode 1 at the current frame.")
+            self.open_annotations_button.clicked.connect(self._request_annotations)
+            graph_picker.addWidget(self.open_annotations_button)
+        layout.addLayout(graph_picker)
+        self.preview = self._build_preview()
+        layout.addWidget(self.preview, 1)
 
         self.frame_label = QLabel()
         layout.addWidget(self.frame_label)
@@ -160,20 +278,15 @@ class InteractiveGraphViewer(QMainWindow):
         layout.addWidget(self.slider)
 
         buttons = QHBoxLayout()
-        previous = QPushButton("Previous")
-        previous.clicked.connect(lambda: self.goto_frame(self.current_frame - 1))
-        self.playback = FramePlayback(
-            self, timestamps=self.timestamps, position=lambda: self.current_frame,
-            display_frame=self._show_frame, refresh_thumbnails=self._refresh_thumbnails,
-            fps=self.cap.get(cv2.CAP_PROP_FPS),
-        )
+        self.playback = self._create_playback()
         self.play_button = self.playback.button
-        following = QPushButton("Next")
-        following.clicked.connect(lambda: self.goto_frame(self.current_frame + 1))
+        self.speed_control = self.playback.speed.control()
+        previous = self._navigation_button("Previous", -1)
+        following = self._navigation_button("Next", 1)
         self.frame_spin = QSpinBox()
         self.frame_spin.setRange(0, self.total_frames - 1)
         self.frame_spin.valueChanged.connect(self.goto_frame)
-        for widget in (previous, self.play_button, following, QLabel("Frame"), self.frame_spin):
+        for widget in (previous, self.play_button, following, self.speed_control, QLabel("Frame"), self.frame_spin):
             buttons.addWidget(widget)
         layout.addLayout(buttons)
 
@@ -182,31 +295,33 @@ class InteractiveGraphViewer(QMainWindow):
         self.jump_spin.setRange(1, MAX_FRAME_JUMP)
         self.jump_spin.setValue(frame_jump)
         self.jump_spin.setToolTip("Frames moved by Up/Down and the −Jump/+Jump buttons.")
-        jumps.addWidget(QPushButton("−Jump", clicked=lambda: self.goto_frame(self.current_frame - self.jump_spin.value())))
-        jumps.addWidget(QPushButton("+Jump", clicked=lambda: self.goto_frame(self.current_frame + self.jump_spin.value())))
+        jumps.addWidget(self._navigation_button("−Jump", -1, jump=True))
+        jumps.addWidget(self._navigation_button("+Jump", 1, jump=True))
         jumps.addWidget(QLabel("Jump"))
         jumps.addWidget(self.jump_spin)
         jumps.addStretch(1)
         layout.addLayout(jumps)
 
-        frame_size = (self.cap.get(cv2.CAP_PROP_FRAME_WIDTH), self.cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
-        engine = FeatureEngine(load_config(PROJECT_ROOT / "configs" / "config.json"))
-        self.graph = JointGraphWidget(engine.with_missing_spatial_angles(frames, frame_size), link_video=True)
-        self.graph.navigationStarted.connect(self.playback.pause)
-        self.graph.frameSelected.connect(self.goto_frame)
-        self.graph.traceSelectionChanged.connect(self._refresh_angle_overlay)
-        splitter.addWidget(left)
-        splitter.addWidget(self.graph)
-        splitter.setStretchFactor(0, 2)
-        splitter.setStretchFactor(1, 3)
-        splitter.setSizes([500, 800])
-        self.setCentralWidget(splitter)
+    def _navigation_button(self, text, direction, *, jump=False):
+        return FrameNavigationButton(
+            text, playback=self.playback, pause=self._pause_review, direction=direction, jump=jump,
+            seek=lambda: self.goto_frame(self.current_frame + direction * (self.jump_spin.value() if jump else 1)),
+        )
+
+    def _new_graph(self, frames, **timeline):
+        graph = JointGraphWidget(frames, link_video=True, **timeline)
+        graph.navigationStarted.connect(self.playback.pause)
+        graph.frameSelected.connect(self.goto_frame)
+        graph.traceSelectionChanged.connect(self._refresh_angle_overlay)
+        measurements = QPushButton("Frame measurements")
+        measurements.setEnabled(bool(self._measurements))
+        measurements.setToolTip("Inspect saved midpoint positions and distances at the current frame.")
+        measurements.clicked.connect(self._show_measurements)
+        graph.layout().insertWidget(3, measurements, alignment=Qt.AlignmentFlag.AlignLeft)
+        return graph
 
     def _decode(self, index: int) -> QPixmap:
-        if int(self.cap.get(cv2.CAP_PROP_POS_FRAMES)) != index:
-            if not self.cap.set(cv2.CAP_PROP_POS_FRAMES, index):
-                return QPixmap()
-        ok, frame = self.cap.read()
+        ok, frame = self._frame_buffer.read(self.cap, index)
         if not ok:
             return QPixmap()
         height, width = frame.shape[:2]
@@ -214,11 +329,32 @@ class InteractiveGraphViewer(QMainWindow):
         return QPixmap.fromImage(image)
 
     def goto_frame(self, frame: int) -> bool:
+        self._deferred_linked_frame = None
         self.playback.pause(refresh=False)
         return self._show_frame(frame)
 
+    def follow_annotation_frame(self, frame, *, playing):
+        if frame == self.current_frame:
+            self._deferred_linked_frame = None
+        elif self.review_suspended or (playing and review_window_is_covered(self)):
+            self._deferred_linked_frame = frame
+        else:
+            self.goto_frame(frame)
+
+    def _flush_linked_frame(self):
+        if self._deferred_linked_frame is not None:
+            self.goto_frame(self._deferred_linked_frame)
+
+    def _pause_review(self):
+        self.playback.pause(refresh=False)
+        self.graph.cancel_playback_render()
+
+    def _resume_review(self):
+        self._flush_linked_frame()
+
     def _show_frame(self, frame: int) -> bool:
         index = min(max(int(frame), 0), self.total_frames - 1)
+        self._frame_buffer.request(index, playback=self.playback.playing, direction=self.playback.direction)
         pixmap = self._decode(index)
         if pixmap.isNull():
             self.frame_label.setText(f"Could not decode video frame {index}.")
@@ -228,28 +364,83 @@ class InteractiveGraphViewer(QMainWindow):
             return False
         self.current_frame = index
         self._checkpoint_timer.start()
-        self.preview.show_frame(pixmap, self._angle_labels())
+        self.preview.show_frame(pixmap, self._angle_labels(), smooth=not self.playback.playing)
+        self._update_frame_controls(index)
+        return True
+
+    def _update_frame_controls(self, index, time_label=None, *, playing=None):
         with QSignalBlocker(self.slider), QSignalBlocker(self.frame_spin):
             self.slider.setValue(index)
             self.frame_spin.setValue(index)
-        self.frame_label.setText(f"Frame {index:,} / {self.total_frames - 1:,}   |   {self.timestamps[index]:.6f} s")
-        self.graph.set_current_frame(index)
-        self._remember_thumbnail(index, pixmap)
-        self._refresh_thumbnails()
-        return True
+        time_label = time_label or f"{self.timestamps[index]:.6f} s"
+        self.frame_label.setText(f"Frame {index:,} / {self.total_frames - 1:,}   |   {time_label}")
+        playing = self.playback.playing if playing is None else playing
+        self._update_graph_frame(index, playing=playing)
+        self.frame_changed.emit(index)
+
+    def _update_graph_frame(self, index, *, playing=False):
+        self.graph.set_current_frame(index, playing=playing)
 
     def _angle_labels(self) -> tuple[AngleLabel, ...]:
         if not self.overlay_button.isChecked():
             return ()
-        return frame_angle_labels(self.graph.dataframe.iloc[self.current_frame], self.graph.overlay_traces())
+        return frame_angle_labels(self._overlay_frames.iloc[self.current_frame], self.graph.overlay_traces())
+
+    def _paint_skeleton(self, pixmap: QPixmap) -> None:
+        body = self.skeleton_button.isChecked() and not self._baked
+        midpoints = self.midpoint_button.isChecked() and not self._midpoints_baked
+        if body or midpoints:
+            paint_skeleton(pixmap, self._overlay_frames.iloc[self.current_frame], draw_body=body, draw_centerline=midpoints)
 
     def _refresh_angle_overlay(self) -> None:
         self.preview.show_angle_labels(self._angle_labels())
 
+    def _show_measurements(self) -> None:
+        self.playback.pause()
+        sources = {TORSO_SOURCE: "torso2d", WORLD_SOURCE: "world", SAVED_SOURCE: "legacy", MEAN_SOURCE: CROSS_MEAN_SOURCE}
+        names = {source: label for label, source in sources.items()}
+        selected = sources.get(self.graph.angle_source.currentText(), "pixels")
+        columns = {
+            name: spec for name, spec in self._measurements.items()
+            if (self.graph.show_all_sources.isChecked() or spec.get("source") == selected)
+            and (spec.get("measurement") == "distance"
+                 or (spec.get("measurement") == "position" and spec.get("point", "").endswith("_midpoint")))
+        }
+        dialog = QDialog(self)
+        dialog.setWindowTitle(f"Saved measurements · frame {self.current_frame:,}")
+        layout = QVBoxLayout(dialog)
+        if not columns:
+            layout.addWidget(QLabel("No saved midpoint or distance measurements for this source."))
+            dialog.exec()
+            return
+        try:
+            saved = pq.read_table(self.parquet_path, columns=list(columns), filters=[("frame_id", "=", self.current_frame)])
+        except (OSError, ValueError) as error:
+            QMessageBox.warning(self, "Saved measurements unavailable", str(error))
+            return
+        table = QTableWidget(len(columns), 4, dialog)
+        table.setHorizontalHeaderLabels(["Source", "Measurement", "Value", "Unit"])
+        table.setEditTriggers(QTableWidget.EditTrigger.NoEditTriggers)
+        for row, (name, spec) in enumerate(columns.items()):
+            value = saved[name][0].as_py() if saved.num_rows else None
+            title = spec["point"].replace("_", " ").capitalize()
+            if spec["measurement"] == "position":
+                title += f" {spec['axis'].upper()}"
+            fields = (names.get(spec["source"], "Video pixels"), title,
+                      f"{value:.4f}" if value is not None and np.isfinite(value) else "Unavailable", spec["unit"])
+            for column, text in enumerate(fields):
+                table.setItem(row, column, QTableWidgetItem(text))
+        table.resizeColumnsToContents()
+        layout.addWidget(table)
+        dialog.resize(740, 500)
+        dialog.exec()
+
     def eventFilter(self, watched, event):
         kind = event.type()
         if (kind in (QEvent.Type.ShortcutOverride, QEvent.Type.KeyPress, QEvent.Type.KeyRelease)
-                and isinstance(watched, QWidget) and watched.window() is self
+                and isinstance(watched, QWidget) and (watched is self or self.isAncestorOf(watched))
+                and watched is not self.speed_control
+                and watched.window() is self.window()
                 and event.modifiers() == Qt.KeyboardModifier.NoModifier):
             step = ARROW_FRAME_STEPS.get(event.key())
             if step is not None:
@@ -263,44 +454,33 @@ class InteractiveGraphViewer(QMainWindow):
                 return True
         return super().eventFilter(watched, event)
 
-    def _remember_thumbnail(self, index: int, frame: QPixmap) -> QPixmap:
-        thumbnail = frame.scaled(
-            96, 62, Qt.AspectRatioMode.KeepAspectRatio, Qt.TransformationMode.SmoothTransformation,
-        )
-        self._thumb_cache[index] = thumbnail
-        self._thumb_cache.move_to_end(index)
-        if len(self._thumb_cache) > 32:
-            self._thumb_cache.popitem(last=False)
-        return thumbnail
-
-    def _refresh_thumbnails(self) -> None:
-        for offset, label in zip(range(-2, 3), self.thumbnails):
-            index = self.current_frame + offset
-            thumbnail = self._thumb_cache.get(index)
-            if thumbnail is None and not self.playback.playing and 0 <= index < self.total_frames:
-                frame = self._decode(index)
-                if not frame.isNull():
-                    thumbnail = self._remember_thumbnail(index, frame)
-            label.setPixmap(thumbnail if thumbnail is not None else QPixmap())
-            label.setToolTip(f"Frame {index}" if thumbnail is not None else "")
-            label.setStyleSheet(f"border: 2px solid {self.frame_highlight};" if offset == 0 else "border: 1px solid palette(mid);")
-
     def _checkpoint_position(self) -> None:
         self.position_checkpoint.emit(self.current_frame)
+
+    def _request_annotations(self) -> None:
+        self._pause_review()
+        self.annotation_requested.emit()
+
+    def _refresh_paused_frame(self) -> None:
+        self.graph.finish_playback()
 
     def closeEvent(self, event):
         QApplication.instance().removeEventFilter(self)
         self.playback.pause(refresh=False)
+        self.graph.dispose()
         self._checkpoint_timer.stop()
         self._checkpoint_position()
-        self.cap.release()
+        self._close_capture()
+        self._frames = pd.DataFrame()
+        self._overlay_frames = pd.DataFrame()
+        self.timestamps = np.array([])
         self.closed.emit()
         super().closeEvent(event)
 
 
 def open_graph_viewer(parent=None, *, video_path=None, parquet_path=None, frame: int = 0,
-                      frame_highlight: str = "#20c55a", annotation_preview: bool = False,
-                      frame_jump: int = DEFAULT_FRAME_JUMP):
+                      annotation_preview: bool = False,
+                      frame_jump: int = DEFAULT_FRAME_JUMP, viewer_class=InteractiveGraphViewer):
     if video_path is None:
         video_path, _ = QFileDialog.getOpenFileName(
             parent, "Select processed skeleton video", "", "Video Files (*.mp4 *.mov *.avi *.mkv);;All Files (*)",
@@ -317,8 +497,8 @@ def open_graph_viewer(parent=None, *, video_path=None, parquet_path=None, frame:
         )
         if not parquet_path:
             return None
-    viewer = InteractiveGraphViewer(
-        video_path, parquet_path, parent, frame_highlight=frame_highlight,
+    viewer = viewer_class(
+        video_path, parquet_path, parent,
         annotation_preview=annotation_preview, frame_jump=frame_jump,
     )
     if frame > 0:

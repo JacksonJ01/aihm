@@ -9,19 +9,20 @@ from copy import deepcopy
 import re
 from typing import Any
 
-LIBRARY_VERSION = "1.1.0"
+LIBRARY_VERSION = "1.2.0"
+_RETIRED_FAMILIES = {"accessory"}  # Keep definitions available for existing annotations.
 
 _FAMILIES = {
-    "squat": ["bodyweight_squat", "goblet_squat", "sumo_squat"],
-    "hinge": ["romanian_deadlift", "conventional_deadlift", "good_morning"],
-    "lunge": ["forward_lunge", "reverse_lunge", "lateral_lunge"],
-    "push": ["push_up", "shoulder_press", "bench_press", "dips"],
-    "pull": ["biceps_curl", "bent_over_row", "pull_up"],
-    "carry": ["farmers_carry", "suitcase_carry", "overhead_carry"],
-    "rotate": ["russian_twist", "woodchopper", "standing_torso_rotation"],
-    "core": ["plank", "side_plank", "dead_bug"],
-    "jump_conditioning": ["jump_squat", "jumping_jack", "broad_jump"],
-    "walking_locomotion": ["walking", "running_in_place", "mountain_climber"],
+    "squat": ["bodyweight_squat", "goblet_squat", "back_squat", "front_squat", "sumo_squat", "box_squat", "pause_squat", "hack_squat", "leg_press", "belt_squat"],
+    "hinge": ["romanian_deadlift", "conventional_deadlift", "sumo_deadlift", "kettlebell_swing", "hip_thrust", "glute_bridge", "good_morning", "cable_pull_through", "back_extension", "single_leg_romanian_deadlift"],
+    "lunge": ["forward_lunge", "reverse_lunge", "walking_lunge", "lateral_lunge", "curtsy_lunge", "deficit_reverse_lunge", "bulgarian_split_squat", "front_foot_elevated_split_squat", "step_up", "jumping_lunge"],
+    "push": ["push_up", "shoulder_press", "single_arm_shoulder_press", "bench_press", "incline_bench_press", "dumbbell_bench_press", "dips", "landmine_press", "machine_chest_press", "triceps_extension"],
+    "pull": ["biceps_curl", "single_arm_biceps_curl", "bent_over_row", "single_arm_dumbbell_row", "seated_cable_row", "pull_up", "assisted_pull_up", "lat_pulldown", "chest_supported_row", "face_pull"],
+    "carry": ["farmers_carry", "suitcase_carry", "overhead_carry", "sled_push", "sled_drag", "incline_treadmill_walk", "rowing", "cycling", "walking", "running_in_place"],
+    "rotate": ["russian_twist", "woodchopper", "cable_lift", "landmine_rotation", "medicine_ball_rotational_throw", "medicine_ball_side_toss", "standing_torso_rotation", "bicycle_crunch", "windshield_wiper", "turkish_get_up"],
+    "core": ["plank", "side_plank", "dead_bug", "bird_dog", "hollow_hold", "hanging_knee_raise", "ab_wheel_rollout", "pallof_press", "suitcase_hold", "cable_crunch"],
+    "jump_conditioning": ["jump_squat", "box_jump", "broad_jump", "split_squat_jump", "lateral_skater_jump", "jumping_jack", "tuck_jump", "pogo_jump", "lateral_hurdle_jump", "medicine_ball_slam"],
+    "accessory": ["barbell_biceps_curl", "single_arm_dumbbell_curl", "bilateral_dumbbell_curl", "triceps_extension", "overhead_triceps_extension", "face_pull", "rear_delt_fly", "lateral_raise", "front_raise", "wrist_curl"],
 }
 
 # These labels are intentionally compact PascalCase labels for the annotation
@@ -33,11 +34,11 @@ _MOVEMENT_TYPE_LABELS = {
     "lunge": "Lunge",
     "push": "Push",
     "pull": "Pull",
-    "carry": "Carry",
+    "carry": "Locomotion",
     "rotate": "Twist",
     "core": "Core",
     "jump_conditioning": "Jump",
-    "walking_locomotion": "Locomotion",
+    "accessory": "Upper-body accessories",
 }
 
 
@@ -68,6 +69,12 @@ _ERRORS = [
 
 
 def _definition(exercise_id: str, family: str) -> dict[str, Any]:
+    primary = list(_ANGLE_PRESETS.get(exercise_id, []))
+    variation_map = {
+        "goblet_squat": ["goblet"], "bench_press": ["flat", "incline"],
+        "incline_bench_press": ["incline"], "biceps_curl": ["barbell", "bilateral"],
+        "single_arm_biceps_curl": ["single_arm"], "shoulder_press": ["barbell", "dumbbell", "seated", "standing"],
+    }
     return {
         "exerciseId": exercise_id,
         "name": exercise_id.replace("_", " ").title(),
@@ -76,6 +83,18 @@ def _definition(exercise_id: str, family: str) -> dict[str, Any]:
         "movementType": _MOVEMENT_TYPE_LABELS.get(family, pascal_case(family)),
         "libraryVersion": LIBRARY_VERSION,
         "anglePreset": list(_ANGLE_PRESETS.get(exercise_id, [])),
+        "exerciseName": exercise_id.replace("_", " ").title(),
+        "movementCategory": _MOVEMENT_TYPE_LABELS.get(family, pascal_case(family)),
+        "exerciseVariation": None,
+        "variationOptions": variation_map.get(exercise_id, []),
+        "equipment": [],
+        "primaryJoints": primary,
+        "secondaryJoints": [],
+        "trackedLandmarks": primary,
+        "primaryAngles": primary,
+        "secondaryAngles": [],
+        "movementPhases": ["eccentric", "concentric", "hold"],
+        "formChecks": [e[0] for e in _ERRORS[:4]],
         "phaseSchema": ["eccentric", "concentric", "hold"],
         "candidateErrors": [e[0] for e in _ERRORS[:4]],
         "viewObservability": ["front", "side", "three_quarter"],
@@ -108,7 +127,11 @@ def get_exercise(exercise_id: str) -> dict[str, Any] | None:
 
 def movement_type_options() -> list[str]:
     """Return movement types in catalog order for a linked UI dropdown."""
-    return list(dict.fromkeys(_MOVEMENT_TYPE_LABELS.get(family, pascal_case(family)) for family in _FAMILIES))
+    labels = dict.fromkeys(
+        _MOVEMENT_TYPE_LABELS.get(family, pascal_case(family))
+        for family in _FAMILIES if family not in _RETIRED_FAMILIES
+    )
+    return [*labels, "Other"]
 
 
 def exercise_options(movement_type: str | None = None) -> list[tuple[str, str]]:
@@ -116,6 +139,8 @@ def exercise_options(movement_type: str | None = None) -> list[tuple[str, str]]:
     wanted = str(movement_type or "").strip()
     result: list[tuple[str, str]] = []
     for family, ids in _FAMILIES.items():
+        if family in _RETIRED_FAMILIES:
+            continue
         label = _MOVEMENT_TYPE_LABELS.get(family, pascal_case(family))
         if wanted and wanted != label:
             continue

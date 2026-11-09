@@ -17,15 +17,10 @@ def _majority(series: pd.Series) -> str:
     return str(values.mode().iloc[0]) if not values.empty else UNKNOWN
 
 
-def _finite_mean(series: pd.Series) -> float | None:
-    values = pd.to_numeric(series, errors="coerce")
-    return float(values.mean()) if values.notna().any() else None
-
-
 def _infer_fps(df: pd.DataFrame) -> float:
     if "fps" in df.columns:
         fps = pd.to_numeric(df["fps"], errors="coerce").dropna()
-        if not fps.empty and float(fps.iloc[0]) > 0:
+        if not fps.empty and np.isfinite(fps.iloc[0]) and float(fps.iloc[0]) > 0:
             return float(fps.iloc[0])
     timestamps = pd.to_numeric(df["timestamp_s"], errors="coerce").to_numpy(dtype=float)
     dt = np.diff(timestamps)
@@ -35,19 +30,26 @@ def _infer_fps(df: pd.DataFrame) -> float:
     return float(1.0 / np.median(valid))
 
 
-def _prepare_window_features(chunk: pd.DataFrame, feature_cols: list[str], target_times: np.ndarray) -> np.ndarray:
-    source_times = pd.to_numeric(chunk["timestamp_s"], errors="coerce").to_numpy(dtype=float)
-    matrix = chunk[feature_cols].apply(pd.to_numeric, errors="coerce").to_numpy(dtype=float)
-    result = np.full((len(target_times), len(feature_cols)), np.nan, dtype=np.float32)
-    for column_index in range(matrix.shape[1]):
-        values = matrix[:, column_index]
-        valid = np.isfinite(values) & np.isfinite(source_times)
-        if valid.sum() >= 2:
-            result[:, column_index] = np.interp(target_times, source_times[valid], values[valid]).astype(np.float32)
-        elif valid.sum() == 1:
-            result[:, column_index] = float(values[valid][0])
-    result[~np.isfinite(result)] = 0.0
-    return result
+def _prepare_window_features(
+    source_times: np.ndarray, matrix: np.ndarray, valid_pose: np.ndarray,
+    target_times: np.ndarray, max_gap: float,
+) -> np.ndarray:
+    """Interpolate adjacent native observations together, preserving the zero fill for missing inputs."""
+    right = source_times.searchsorted(target_times).clip(0, len(source_times) - 1)
+    left = (right - 1).clip(0)
+    # Accept an exact sample from either side despite floating-point rounding.
+    exact_right = np.abs(target_times - source_times[right]) <= 1e-9
+    exact_left = np.abs(target_times - source_times[left]) <= 1e-9
+    right = np.where(exact_left & ~exact_right, left, right)
+    left = np.where(exact_left | exact_right, right, left)
+    elapsed = source_times[right] - source_times[left]
+    in_range = (target_times >= source_times[0] - 1e-9) & (target_times <= source_times[-1] + 1e-9)
+    valid_time = in_range & (elapsed <= max_gap) & valid_pose[left] & valid_pose[right]
+    fraction = np.divide(target_times - source_times[left], elapsed, out=np.zeros_like(target_times), where=elapsed > 0)
+    start, finish = matrix[left], matrix[right]
+    with np.errstate(invalid="ignore"):
+        samples = (1 - fraction[:, None]) * start + fraction[:, None] * finish
+    return np.where(valid_time[:, None] & np.isfinite(samples), samples, 0).astype(np.float32)
 
 
 def _nearest_sequence_labels(source_times: np.ndarray, values: list[str], target_times: np.ndarray) -> list[str]:
@@ -109,29 +111,42 @@ def generate_window_records(
     """
     if df.empty:
         return []
-    if window_seconds <= 0 or stride_seconds <= 0:
-        raise ValueError("window_seconds and stride_seconds must be positive.")
+    if not np.isfinite([window_seconds, stride_seconds]).all() or window_seconds <= 0 or stride_seconds <= 0:
+        raise ValueError("window_seconds and stride_seconds must be finite and positive.")
     if not feature_cols:
         raise ValueError("feature_cols cannot be empty.")
     if "timestamp_s" not in df.columns:
         raise ValueError("timestamp_s is required for window generation.")
 
-    df = df.sort_values("timestamp_s").reset_index(drop=True)
+    timestamps = pd.to_numeric(df["timestamp_s"], errors="coerce").to_numpy(dtype=float)
+    if not np.isfinite(timestamps).all():
+        raise ValueError("timestamps must be finite.")
+    if np.any(np.diff(timestamps) < 0):
+        order = np.argsort(timestamps, kind="stable")
+        timestamps = timestamps[order]
+        df = df.iloc[order]
+    if np.any(np.diff(timestamps) <= 0):
+        raise ValueError("timestamps must be strictly increasing after ordering.")
     source_fps = _infer_fps(df)
     canonical_fps = float(model_fps if model_fps is not None else source_fps)
-    if canonical_fps <= 0:
-        raise ValueError("model_fps must be positive when supplied.")
+    if not np.isfinite(canonical_fps) or canonical_fps <= 0:
+        raise ValueError("model_fps must be finite and positive when supplied.")
 
     window_frames = max(1, int(round(float(window_seconds) * canonical_fps)))
     stride_seconds = float(stride_seconds)
-    timestamps = pd.to_numeric(df["timestamp_s"], errors="coerce").to_numpy(dtype=float)
-    if not np.isfinite(timestamps).all() or not np.all(np.diff(timestamps) >= 0):
-        raise ValueError("timestamps must be finite and monotonic.")
     duration = float(timestamps[-1] - timestamps[0])
     if duration + 1e-9 < window_seconds:
         return []
 
     target_specs = target_specs or {}
+    features = df[feature_cols]
+    if not all(pd.api.types.is_numeric_dtype(dtype) for dtype in features.dtypes):
+        features = features.apply(pd.to_numeric, errors="coerce")
+    matrix = features.to_numpy(dtype=np.float32, na_value=np.nan)
+    valid_pose = (pd.to_numeric(df["pose_present"], errors="coerce").fillna(0).to_numpy() > 0
+                  if "pose_present" in df else np.ones(len(df), dtype=bool))
+    grid = np.arange(window_frames, dtype=float) / canonical_fps
+    max_gap = 3.0 / source_fps
     records: list[WindowRecord] = []
     last_start = float(timestamps[-1] - window_seconds)
     start_time = float(timestamps[0])
@@ -139,28 +154,26 @@ def generate_window_records(
 
     while start_time <= last_start + epsilon:
         end_time = start_time + float(window_seconds)
-        left = int(np.searchsorted(timestamps, start_time, side="left"))
-        right = int(np.searchsorted(timestamps, end_time, side="right"))
+        left = int(np.searchsorted(timestamps, start_time - 1e-9, side="left"))
+        right = int(np.searchsorted(timestamps, end_time + 1e-9, side="right"))
         chunk = df.iloc[left:right]
         if len(chunk) < 2:
             start_time += stride_seconds
             continue
 
-        valid_pose = pd.to_numeric(chunk.get("pose_present", 1), errors="coerce").fillna(0)
-        valid_fraction = float((valid_pose > 0).mean())
+        valid_fraction = float(valid_pose[left:right].mean())
         if valid_fraction < float(min_valid_pose_fraction):
             start_time += stride_seconds
             continue
 
         # Sample features at a fixed temporal grid. This guarantees every sample
         # has the same [T, F] shape even when source videos use different FPS.
-        target_times = start_time + np.arange(window_frames, dtype=float) / canonical_fps
-        target_times = np.minimum(target_times, end_time)
-        X = _prepare_window_features(chunk, feature_cols, target_times)
+        target_times = np.minimum(start_time + grid, end_time)
+        chunk_times = timestamps[left:right]
+        X = _prepare_window_features(chunk_times, matrix[left:right], valid_pose[left:right], target_times, max_gap)
 
         targets: dict[str, Any] = {}
         coverage: dict[str, float] = {}
-        chunk_times = pd.to_numeric(chunk["timestamp_s"], errors="coerce").to_numpy(dtype=float)
         for name, spec in target_specs.items():
             if not bool(spec.get("enabled", True)):
                 continue
@@ -176,7 +189,7 @@ def generate_window_records(
                 coverage[name] = 1.0
             elif task == "classification":
                 values = chunk[column] if column in chunk else pd.Series([UNKNOWN] * len(chunk), index=chunk.index)
-                string_values = values.astype(str)
+                string_values = values.fillna(UNKNOWN).astype(str)
                 targets[name] = _majority(values)
                 known = string_values != UNKNOWN
                 coverage[name] = float(known.mean())
@@ -187,8 +200,13 @@ def generate_window_records(
                     spec_consistency = 0.0
                 targets.setdefault("_consistency", {})[name] = spec_consistency
             elif task == "regression":
-                targets[name] = _finite_mean(chunk[column]) if column in chunk else None
-                coverage[name] = float(pd.to_numeric(chunk[column], errors="coerce").notna().mean()) if column in chunk else 0.0
+                if column in chunk:
+                    values = pd.to_numeric(chunk[column], errors="coerce").to_numpy(dtype=float)
+                    finite = np.isfinite(values)
+                    targets[name] = float(values[finite].mean()) if finite.any() else None
+                    coverage[name] = float(finite.mean())
+                else:
+                    targets[name], coverage[name] = None, 0.0
             elif task in {"identity", "evaluation_only"}:
                 continue
             else:

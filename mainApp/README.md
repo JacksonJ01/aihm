@@ -2,6 +2,11 @@
 
 AIHuMo is a modular computer-vision and machine-learning system for exercise recognition, repetition analysis, movement-phase detection, form analysis, and future real-time inference.
 
+The [GitHub releases page](https://github.com/JacksonJ01/aihm/releases)
+provides the portable Windows x64 download. Extract the full ZIP, then open
+`AIHuMo Data Studio.exe`. See [Windows build instructions](AI%20Humo%20EXE%20pipeline/BUILDING.md)
+to build it from source.
+
 ## Version 0.4 architecture
 
 ```text
@@ -346,7 +351,16 @@ The suggestion file is written as `*_rep_suggestions.json` and never overwrites 
 
 The default model window is five seconds with one-second stride and a canonical model FPS of 30. At 30 FPS this is 150 time steps, but the number is derived from configuration rather than hard-coded.
 
-Overlapping windows are never split across train/test by random row sampling. Grouped participant/session splitting prevents highly similar windows from the same person or recording from leaking into both training and evaluation.
+Overlapping windows stay with their recording. When participant IDs are complete,
+all recordings for a participant stay in one split. A manifest with some
+participant IDs missing must be corrected before export. Legacy manifests
+without participant IDs use session grouping.
+
+Window resampling interpolates between adjacent finite observations with a
+detected pose. It uses the model's existing zero fill for unavailable inputs,
+including tracking gaps and source intervals longer than three nominal frame
+intervals. The native feature Parquet retains its missing values and source
+timestamps.
 
 ## Validation and tests
 
@@ -396,32 +410,91 @@ not invalidate the processed feature data.
 Open **Interactive Graph Viewer** on the launcher and select the skeleton MP4
 and its matching feature Parquet. The viewer opens a read-only workspace with
 the video and frame controls on the left and the joint traces on the right.
-The graph viewer and Mode 1 open maximized with the operating system's window
-controls. Use **Back to menu** in either workspace to return to the launcher.
+The launcher, both Mode 0 dialogs, Mode 1, and the graph viewer open maximized
+with the operating system's title bar and window controls. Use **Back to menu**
+in Mode 1 or the graph viewer to return to the launcher.
 In Mode 1, **Interactive Graph Viewer** opens a preview at the annotation's
-current recording and frame. **Back to annotation** returns to Mode 1.
-Escape also goes back in the graph viewer. Launcher graph resume progress is separate.
+current recording and frame and carries over **Display Overlay**.
+**Back to annotation** returns to Mode 1. In the launcher-opened viewer,
+**Open annotations** opens the matching recording in Mode 1 at the graph frame.
+**Back to graph viewer** returns to that linked viewer. Escape also goes back
+in the graph viewer. Launcher graph resume progress is separate.
 
-Use the checkboxes in **Joint traces** to show or hide individual curves.
-Turn on **Display Overlay** to see angle values beside the joints, using the
-same colors as the visible traces. In Mode 1, the overlay starts with the
-neck and hip-midpoint angles. Turn on **Mirror selected graph angles** to
-use the traces and angle source selected in the graph preview opened from
-Mode 1. The selection stays with the annotation window when you return
-from the preview. Angle labels start hidden in both workspaces.
+Use **Angles**, **Landmarks**, or **Distances** in **Joint traces** to configure
+each set independently. The landmark list contains the left and right toe
+index, ankle, knee, hip, shoulder, elbow, wrist, and hand index. Each
+selection applies to its graphs in individual and combined views.
+Turn on **Display Overlay** to see angle values beside the joints. In Mode 1,
+the default overlay shows the left and right elbow, shoulder, hip, and knee
+angles when available. **Mirror selected graph angles** uses the graph's
+default checked traces and angle source immediately. If you change them in
+the graph preview, the overlay uses that selection after you return to Mode 1.
+Mirrored labels match the graph's trace colors. Angle labels start hidden in
+both workspaces.
 
-**Angle source** defaults to **Video plane (2D)** when available. Mode 0
+**Source values** defaults to **Torso-normalized 2D** when available. Mode 0
 scales X by video width and Y by video height before calculating angles in
 the video plane. These can be foreshortened when a limb moves toward the
 camera. **Estimated world (3D)** uses MediaPipe's monocular, hip-relative
 world XYZ estimates. **Legacy (normalized image)** uses the original
 normalized image XYZ angles and normalized XY torso tilt.
 
-New recordings store `angle_2d_*`, `angle_3d_*`, and the existing
-`angle_*` columns in the same feature Parquet. Mode 1 reads these
-automatically for the midpoint overlay and the graph viewer. Both workspaces
-can reconstruct missing families in memory for older recordings with the
-required landmarks. Missing observations remain gaps.
+Choose **Show All Graphs** under **Graph view** for angles, movement, and
+distances on one screen. **Show All** beside **Source values** compares
+sources in any view. With both controls on, scroll through the separated
+source groups inside the plot area. Use **Shift+scroll** to zoom in this
+combined view. Plots share elapsed time and the green video playhead.
+Movement can show individual components, overlaid XY or XYZ, and a speed
+strip with its own scale. **Frame points** starts off.
+
+Mode 0 stores legacy image, estimated world 3D, and torso-normalized 2D
+measurements in the same feature Parquet. Torso-normalized XY uses the hip
+midpoint as the origin and the projected shoulder-to-hip length as the scale.
+The comparison mean uses three valid angles from the same native frame.
+Mean position averages hip-relative XY after scaling each source by its
+shoulder-to-hip length in XY. Velocity and acceleration use consecutive
+native timestamps from that mean position. The viewer reads the saved
+values from Parquet.
+The graph menu also offers **Landmark movement** for left and right
+positions or speed, and **Landmarks Distances** for the spacing between
+elbows, wrists, knees, and ankles, plus shoulder-to-wrist and hip-to-ankle
+distances on each side. Use **Frame measurements** to inspect saved readings
+for a single frame. **Frame Details** groups the selected source's angle,
+motion, distance, signed distance-rate, and distance-acceleration readings.
+Mean-source distances use the saved torso-normalized mean XY positions.
+Distance derivatives use native frame timestamps. Missing features remain
+unavailable until prepared.
+
+Choose **Prepare existing recording** in the launcher to add these columns
+from saved landmarks. Select the feature Parquet and matching skeleton video.
+The same preparation is available from the command line:
+
+```powershell
+$env:PYTHONPATH = 'src'
+.\.venv\Scripts\python.exe scripts/prepare_viewer_features.py --features <feature-parquet> --video <skeleton-mp4>
+```
+
+Preparation keeps a backup of the feature file and leaves the videos and
+annotations intact. Both viewers have separate controls for the skeleton,
+saved midpoint centerline, and angle labels. If the saved source video
+cannot be verified, a baked skeleton video remains visible. Variable-rate
+clean sources use the saved frame timestamps for accurate seeks. During playback,
+the viewers preload up to 48 frames ahead and 16 behind, within a memory
+limit. In Mode 2 the selected camera targets 50 frames ahead and 50 behind
+within a 640 MiB decoded-frame budget. The two most recently viewed cameras
+reuse their loaded graph data and plots while the alignment and files match.
+The player draws the current frame in each visible camera pane and follows
+the source clock as frames become available. The graph renders the next zoomed
+window in the background. It swaps in the finished plot and draws the live
+cursor over it. If the render is still in progress, the video can continue
+while the graph holds its current window.
+You can still step to every native frame when annotating.
+Tap the frame or jump buttons to move once. Hold a button for three seconds
+to play in its direction, then release to pause. The frame buttons hold at
+normal speed. Play and held jump buttons use the selected playback multiplier.
+Switching review windows pauses playback and graph pre-rendering in the
+previous workspace. Linked windows catch up to the current frame when you
+return, with playback paused and annotation drafts still open.
 
 The default dataset input selection uses legacy angles for compatibility.
 To select the saved spatial angles for a new experiment, set
@@ -430,16 +503,24 @@ in the experiment's config. Use recordings with the requested families
 stored in their Parquet. The standalone feature builder gets source
 dimensions from the recording metadata or from `--width` and `--height`.
 
-Zoom with the mouse wheel or toolbar, or set **Detail window** to `1.00 s`
-and select **Zoom to window**. At close zoom, **Frame points** displays the
+Zoom with the mouse wheel, toolbar, or **+** and **−** buttons. The
+**Detail window** readout shows the visible time range and duration.
+At close zoom, **Frame points** displays the
 native frame samples. Hover near a trace to inspect its closest sample.
 Move away to see the last inspected joint at the current video frame.
+The Frame Details card reserves its height at the current viewer width.
 The card marks missing samples as unavailable. When valid samples are
-available, it also shows landmark coordinates and motion calculated from
-consecutive samples. World coordinates are relative to the hips.
+available, it also shows saved landmark coordinates and motion. World
+coordinates are relative to the hips.
 The video frame and vertical graph cursor stay linked. Click the plot to seek
-to the closest native frame, or pan to a new part of the recording to seek to
-the center of that view. Zoom keeps the frame selected if it is still visible.
+to the closest native frame, or pan the Interactive Graph Viewer to seek to
+the center of that view. **Zoom to Seek** starts off, so zoom stays
+anchored to the current video frame at the green playhead. Turn it on to
+seek to the timestamp under the pointer while zooming over a plot.
+Click **Zoom at Playhead** to restore the default. The
+**+ / −** buttons always use the selected frame. When all graph and source
+groups are visible, use **Shift+scroll** to zoom and regular scrolling to
+move through the panels.
 In both workspaces, Left/Right step one frame and Up/Down jump by the
 editable **Jump** value. The launcher **Settings** sets the starting value
 for new windows, initially 50 frames. A graph preview opened from Mode 1
@@ -449,18 +530,70 @@ the frame-step buttons and use the saved source timestamps for playback.
 Static PNG exports use the configured
 `graphs.export_dpi` value (220 by default).
 
-The launcher has separate **Resume Mode 1 Annotation** and **Resume Interactive
-Graph Viewer** lists. Graph resume reopens the saved video and feature Parquet
-at the last viewed frame. Annotation resume uses the annotation file's saved
-progress.
+The launcher has one **Resume** section for the selected mode. Click a
+Mode 1–5 tile to update **Resume**, or double-click it to open the workflow.
+Use the trash icon next to **Resume** to remove the selected history entry
+while keeping its files on disk. Open it manually to add it to **Resume** again.
+On a focused tile, Space selects and Enter opens. Hover over
+the Mode 0 tile to choose **New Video** or **Video Batch**. Mode 0 resume
+restores the processing inputs so the existing recovery flow can reopen the
+job. Mode 1 resumes from the annotation file's saved progress, and Mode 2
+reopens a saved alignment. Modes 3 and 4 keep separate video and feature
+Parquet histories with their last viewed frames.
 
-In launcher **Settings**, choose colors for the selected workflow, the current
-thumbnail, and the skeleton lines and joints rendered by Mode 0. A rendered
+**Mode 3 — Interactive Graph Viewer (2D)** shows the timeline graphs.
+**Mode 4 — Interactive Graph Viewer (3D)** opens a pose synchronized to
+the video frame. Left-drag on the world pose or its top-right orientation
+cube to rotate it during playback. Click a cube face, edge, or corner to
+snap to that view, or use the six signed axis buttons for a straight-on view.
+Use **Rotate** to return to rotation after using toolbar pan or zoom. The wheel, zoom
+buttons, and toolbar zoom around the displayed pose and keep the same frame.
+Use **Pose source**
+to switch to saved XY landmarks, or **Timeline graphs** to inspect the
+same time-series charts as Mode 3.
+
+In Mode 1, press **W** at the start of a new range, move to the end, and press
+**S** to save it. A click in the **Temporal annotations** table selects a row.
+Press **A** or **Edit selected** to load it for editing, then **S** to update it.
+Press **D** or **Cancel edit** to discard the edit and clear the selection.
+Use the on-screen buttons when a text field has keyboard focus.
+
+In launcher **Settings**, choose colors for the selected workflow and the
+skeleton lines and joints rendered by Mode 0. A rendered
 MP4 retains the colors it was created with. Add participant IDs in Settings
 or use **Save participant** beside the editable picker in either Mode 0 dialog.
 An optional default participant is prefilled when those dialogs open.
 
-A `Model Lab — Mode 2` placeholder is also present. It lists
+Open **Mode 2 — Session Alignment** to process two to four Mode 0 recordings
+or load an alignment JSON. Mode 2 matches the available saved angle traces
+on a shared timeline in seconds, using the shortest recording as its
+reference. The video area shows two cameras side by side, or a two-by-two
+grid for three or four cameras. The selection outline follows the video
+edges. Click anywhere in a camera tile to switch the annotation table,
+timing controls, and Interactive Graph Viewer to that camera. The camera view dropdown switches between **Show Multi View**
+and **Maximize Selected** in both windows while keeping the same playhead.
+The **Play/Pause** button in the player controls all cameras. The shared
+session scrubber and time readout sit directly above the playback buttons.
+Trim and selected camera timing controls sit below the buttons.
+**Compare all cameras** opens a joint-angle overlay on the
+shared timeline that follows the active player and uses the same zoom controls.
+
+Use **All aligned cameras** to save a new annotation into each recording's
+native annotation file, with its own frame numbers and source timestamps.
+Use **Selected camera only** for view-specific issues. Editing or deleting
+an existing row changes the selected recording.
+
+The temporal annotation table follows the editor's selected layer. Enable
+**Show all layers** to see the full table. The **Form interval** layer can
+store a form rating and any issue details or affected joints.
+
+The saved alignment references the original files and records each camera's
+native frame range. **Export trimmed clips** writes separate skeleton MP4
+copies for the cameras that need trimming and keeps the shortest recording
+whole. MP4 copies use each video's nominal frame rate and contain no audio.
+Use the alignment JSON for the original per-frame timing and clock correction.
+
+A `Model Suite — Mode 5` placeholder is also present. It lists
 the planned 1D CNN, TCN, LSTM, ST-GCN, GCN, and DNN experiment families, but it
 does not train or run a model yet.
 

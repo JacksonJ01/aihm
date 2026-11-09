@@ -16,26 +16,42 @@ def save_parquet(df: pd.DataFrame, path: str | Path) -> Path:
     return save_parquet_atomic(df, path)
 
 
-def save_parquet_atomic(df: pd.DataFrame, path: str | Path) -> Path:
+def save_parquet_atomic(df: pd.DataFrame, path: str | Path, *, metadata: dict[bytes, bytes] | None = None) -> Path:
     """Write a complete Parquet file and replace the destination atomically."""
-    path = Path(path)
-    path.parent.mkdir(parents=True, exist_ok=True)
     if df.columns.duplicated().any():
         raise ValueError(
             "Refusing to save Parquet with duplicate columns: "
             f"{df.columns[df.columns.duplicated()].tolist()}"
         )
 
+    table = pa.Table.from_pandas(df, preserve_index=False).replace_schema_metadata({
+        b"aihumo.storage": b"pyarrow",
+        b"aihumo.index": b"false",
+        **(metadata or {}),
+    })
+    return save_arrow_parquet_atomic(table, path)
+
+
+def save_arrow_parquet_atomic(table: pa.Table | pa.RecordBatchReader, path: str | Path, *,
+                              verify: bool = False, expected_rows: int | None = None) -> Path:
+    """Replace the destination with a complete Arrow table, preserving its schema."""
+    path = Path(path)
+    path.parent.mkdir(parents=True, exist_ok=True)
     fd, temp_name = tempfile.mkstemp(prefix=f".{path.name}.", suffix=".tmp", dir=path.parent)
     os.close(fd)
     temp_path = Path(temp_name)
     try:
-        table = pa.Table.from_pandas(df, preserve_index=False)
-        table = table.replace_schema_metadata({
-            b"aihumo.storage": b"pyarrow",
-            b"aihumo.index": b"false",
-        })
-        pq.write_table(table, temp_path, compression="snappy")
+        if isinstance(table, pa.RecordBatchReader):
+            with pq.ParquetWriter(temp_path, table.schema, compression="snappy") as writer:
+                for batch in table:
+                    writer.write_batch(batch)
+        else:
+            pq.write_table(table, temp_path, compression="snappy")
+            expected_rows = table.num_rows
+        if verify:
+            with pq.ParquetFile(temp_path) as written:
+                if written.metadata.num_rows != expected_rows or not written.schema_arrow.equals(table.schema, check_metadata=True):
+                    raise ValueError("The prepared Parquet failed its row-count or schema check.")
         with temp_path.open("rb") as handle:
             try:
                 os.fsync(handle.fileno())
@@ -55,6 +71,11 @@ def load_parquet(path: str | Path) -> pd.DataFrame:
     if not path.exists():
         raise FileNotFoundError(f"Parquet file does not exist: {path}")
     return pd.read_parquet(path)
+
+
+def annotation_json_for_features(features: Path) -> Path:
+    name = features.stem.replace("_features", "_annotations") + ".json"
+    return features.parent.parent / "annotations" / name
 
 
 def feature_parquet_candidates(directory: str | Path, video_id: str) -> list[Path]:

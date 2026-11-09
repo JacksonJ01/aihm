@@ -5,10 +5,10 @@ import sys
 from pathlib import Path
 from typing import Any
 
-from PyQt6.QtCore import QObject, QThread, pyqtSignal
+from PyQt6.QtCore import QObject, QThread, Qt, pyqtSignal
 from PyQt6.QtWidgets import (
     QCheckBox, QComboBox, QDialog, QDialogButtonBox, QFileDialog, QFormLayout, QHBoxLayout, QLabel,
-    QLineEdit, QMessageBox, QPushButton, QTextEdit, QVBoxLayout, QWidget,
+    QLineEdit, QMessageBox, QPushButton, QScrollArea, QTextEdit, QVBoxLayout, QWidget,
 )
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
@@ -19,6 +19,7 @@ if str(SRC_DIR) not in sys.path:
 from aihumo.config import load_config
 from aihumo.processing import process_video, processing_job_status
 from .preferences import ParticipantPicker, PreferenceStore
+from .processing_resume import restore_processing_fields
 
 LOGGER = logging.getLogger("AIHuMoDataStudio.Mode0")
 
@@ -70,7 +71,9 @@ class ProcessVideoDialog(QDialog):
     def __init__(self, parent=None, *, preferences: PreferenceStore | None = None):
         super().__init__(parent)
         self.setWindowTitle("AIHuMo — Process New Video")
+        self.setWindowFlag(Qt.WindowType.WindowMaximizeButtonHint)
         self.resize(800, 680)
+        self.setWindowState(Qt.WindowState.WindowMaximized)
         self.result = None
         self.thread: QThread | None = None
         self.worker: ProcessingWorker | None = None
@@ -78,7 +81,14 @@ class ProcessVideoDialog(QDialog):
         self.config_path = PROJECT_ROOT / "configs" / "config.json"
 
         layout = QVBoxLayout(self)
-        form = QFormLayout()
+        scroll = QScrollArea()
+        scroll.setWidgetResizable(True)
+        scroll.setFrameShape(QScrollArea.Shape.NoFrame)
+        content = QWidget()
+        form = QFormLayout(content)
+        form.setContentsMargins(0, 0, 0, 0)
+        scroll.setWidget(content)
+        layout.addWidget(scroll, 1)
         self.video_edit = QLineEdit()
         self.model_edit = QLineEdit()
         self.session_edit = QLineEdit("S001")
@@ -117,8 +127,6 @@ class ProcessVideoDialog(QDialog):
         form.addRow("MediaPipe model", self._browse_row(self.model_edit, self.browse_model, "MediaPipe Task (*.task);;All Files (*)"))
         form.addRow("Output root", self._browse_row(self.output_edit, self.browse_output, ""))
         form.addRow("Next step", self.open_mode1_check)
-        layout.addLayout(form)
-
         self.status = QLabel("Required: source video, participant ID, session ID, video ID, and camera ID.")
         self.status.setWordWrap(True)
         layout.addWidget(self.status)
@@ -156,6 +164,10 @@ class ProcessVideoDialog(QDialog):
             self.video_edit.setText(path)
             if self.video_id_edit.text() == "V001":
                 self.video_id_edit.setText(Path(path).stem)
+
+    def restore_setup(self, video, fields):
+        restore_processing_fields(self, fields)
+        self.video_edit.setText(str(video))
 
     def browse_model(self):
         path, _ = QFileDialog.getOpenFileName(self, "Select MediaPipe model", str(PROJECT_ROOT / "models"), "MediaPipe Task (*.task);;All Files (*)")

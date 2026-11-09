@@ -15,9 +15,9 @@ def grouped_split(video_manifest: pd.DataFrame, cfg: dict) -> dict[str, list[str
     """Split whole participants when complete IDs exist; otherwise split sessions.
 
     The unit of splitting is always the declared group, never a frame or window.
-    A participant split is used only when every video has a usable participant ID;
-    this prevents one person's unidentified recordings from becoming an accidental
-    cross-split leakage path.
+    Partially identified manifests are rejected because a session split could
+    put a known participant on both sides. Session grouping is a legacy fallback
+    for manifests with no participant IDs.
     """
     if "session_id" not in video_manifest.columns:
         raise ValueError("video_manifest must contain session_id")
@@ -29,6 +29,8 @@ def grouped_split(video_manifest: pd.DataFrame, cfg: dict) -> dict[str, list[str
     use_participant = False
     if "participant_id" in video_manifest.columns:
         participants = _nonempty(video_manifest["participant_id"])
+        if participants.ne("").any() and participants.eq("").any():
+            raise ValueError("Participant IDs are only partially filled. Complete them before building participant-disjoint splits.")
         use_participant = bool(participants.ne("").all())
     else:
         participants = pd.Series("", index=video_manifest.index)

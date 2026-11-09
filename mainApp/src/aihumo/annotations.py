@@ -119,7 +119,10 @@ class AnnotationState:
 
     @classmethod
     def load(cls, path: str | Path, metadata: dict[str, Any] | None = None) -> "AnnotationState":
-        document = load_json(path)
+        return cls.from_document(load_json(path), metadata)
+
+    @classmethod
+    def from_document(cls, document: dict[str, Any], metadata: dict[str, Any] | None = None) -> "AnnotationState":
         stored_metadata = dict(metadata or {})
         stored_metadata.update({
             key: document.get(key)
@@ -641,46 +644,68 @@ def validate_annotations(document: dict, frame_count: int) -> None:
                 )
 
 
-def annotation_warnings(document: dict, frame_count: int) -> list[str]:
-    """Return non-fatal annotation-quality warnings for the GUI and QA reports."""
-    warnings: list[str] = []
+@dataclass(frozen=True)
+class AnnotationWarning:
+    message: str
+    annotation_ids: tuple[str, ...]
+
+
+def annotation_warning_details(document: dict, frame_count: int) -> list[AnnotationWarning]:
+    """Return non-fatal warnings and the saved rows that can explain them."""
+    warnings: list[AnnotationWarning] = []
+
+    def warn(message: str, *rows: dict) -> None:
+        ids = tuple(str(row["annotation_id"]) for row in rows if row.get("annotation_id") is not None)
+        warnings.append(AnnotationWarning(message, ids))
+
     annotations = [_canonical_annotation(item) for item in document.get("annotations", [])]
     state_segments = sorted(
         [item for item in annotations if item.get("annotation_type") == "activity_state"],
         key=lambda item: int(item["start_frame"]),
     )
     if not state_segments:
-        warnings.append("No activity-state segments have been annotated yet.")
+        warn("No activity-state segments have been annotated yet.")
     else:
         if int(state_segments[0]["start_frame"]) > 0:
-            warnings.append("Activity-state coverage does not begin at frame 0.")
-        previous_end = int(state_segments[0]["end_frame"])
-        for item in state_segments[1:]:
+            warn("Activity-state coverage does not begin at frame 0.", state_segments[0])
+        for previous, item in zip(state_segments, state_segments[1:]):
+            previous_end = int(previous["end_frame"])
             start = int(item["start_frame"])
             if start > previous_end + 1:
-                warnings.append(f"Activity-state gap: frames {previous_end + 1}–{start - 1}.")
-            previous_end = int(item["end_frame"])
-        if previous_end < frame_count - 1:
-            warnings.append(f"Activity-state coverage ends at frame {previous_end}; {frame_count - 1} is the final frame.")
+                first_missing = previous_end + 1
+                last_missing = start - 1
+                gap = f"frame {first_missing}" if first_missing == last_missing else f"frames {first_missing}–{last_missing}"
+                warn(f"Activity-state gap: {gap}.", previous, item)
+        last_end = int(state_segments[-1]["end_frame"])
+        if last_end < frame_count - 1:
+            warn(f"Activity-state coverage ends at frame {last_end}; {frame_count - 1} is the final frame.",
+                 state_segments[-1])
 
     reps = [item for item in annotations if item.get("annotation_type") == "rep"]
-    by_set: dict[Any, list[int]] = {}
+    by_set: dict[Any, list[dict]] = {}
     for item in reps:
         set_id = item.get("set_id")
         rep_id = item.get("rep_id")
         if set_id is not None and rep_id is not None:
-            by_set.setdefault(set_id, []).append(int(rep_id))
-    for set_id, values in by_set.items():
-        unique = sorted(set(values))
-        expected = list(range(1, len(unique) + 1))
-        if unique != expected:
-            warnings.append(f"Set {set_id} repetition IDs are not sequential from 1: {unique}.")
+            by_set.setdefault(set_id, []).append(item)
+    for set_id, items in by_set.items():
+        unique = sorted({int(item["rep_id"]) for item in items})
+        after_gap = {current for previous, current in zip([0, *unique[:-1]], unique) if current != previous + 1}
+        if after_gap:
+            affected = [item for item in items if int(item["rep_id"]) in after_gap]
+            warn(f"Set {set_id} repetition IDs are not sequential from 1: {unique}.", *affected)
 
     active_rep_without_exercise = [
         item for item in reps
         if item.get("activity_state") == "active" and not str(item.get("exercise") or "").strip()
     ]
     if active_rep_without_exercise:
-        warnings.append(f"{len(active_rep_without_exercise)} rep annotation(s) have no exercise label.")
+        warn(f"{len(active_rep_without_exercise)} rep annotation(s) have no exercise label.",
+             *active_rep_without_exercise)
 
     return warnings
+
+
+def annotation_warnings(document: dict, frame_count: int) -> list[str]:
+    """Return non-fatal warning messages for session summaries and QA reports."""
+    return [warning.message for warning in annotation_warning_details(document, frame_count)]

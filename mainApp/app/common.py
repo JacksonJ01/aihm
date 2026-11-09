@@ -2,17 +2,48 @@ from __future__ import annotations
 
 import numpy as np
 import pandas as pd
-from PyQt6.QtCore import QAbstractTableModel, QModelIndex, Qt
-from PyQt6.QtWidgets import QWidget
+from PyQt6.QtCore import QAbstractTableModel, QEvent, QModelIndex, Qt
+from PyQt6.QtWidgets import QApplication, QMainWindow, QWidget
 
 
-def close_and_return(window: QWidget) -> None:
+class ReviewWindow(QMainWindow):
+    """Keep a workspace's state while another mode owns playback."""
+
+    review_suspended = False
+
+    def suspend_review(self):
+        self.review_suspended = True
+        self._pause_review()
+
+    def resume_review(self):
+        self.review_suspended = False
+        self._resume_review()
+
+    def activate_review(self):
+        suspend_other_reviews(self)
+        self.resume_review()
+
+    def changeEvent(self, event):
+        super().changeEvent(event)
+        if event.type() == QEvent.Type.ActivationChange and self.isWindow() and self.isActiveWindow():
+            self.activate_review()
+
+
+def suspend_other_reviews(target=None):
+    for window in QApplication.topLevelWidgets():
+        if isinstance(window, ReviewWindow) and window is not target and window.isVisible():
+            window.suspend_review()
+
+
+def close_and_return(window: QWidget, target: QWidget | None = None) -> None:
     """Return to the window that opened this one after an accepted close."""
-    parent = window.parentWidget()
+    parent = target if target is not None else window.parentWidget()
     if not window.close() or parent is None:
         return
     if parent.isMinimized():
         parent.setWindowState(parent.windowState() & ~Qt.WindowState.WindowMinimized)
+    if isinstance(parent, ReviewWindow):
+        parent.activate_review()
     parent.show()
     parent.raise_()
     parent.activateWindow()

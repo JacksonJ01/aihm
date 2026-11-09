@@ -6,21 +6,81 @@ from math import isfinite
 
 import pandas as pd
 from PyQt6.QtCore import QPoint, QRect, Qt
-from PyQt6.QtGui import QColor, QFont, QPainter, QPixmap
+from PyQt6.QtGui import QColor, QFont, QPainter, QPen, QPixmap
+from PyQt6.QtWidgets import QPushButton
 
 
-# Vertices are MediaPipe landmark IDs. Midpoint angles use both landmarks.
-ANGLE_VERTICES = {
-    "angle_left_shoulder": (11,), "angle_right_shoulder": (12,),
-    "angle_left_elbow": (13,), "angle_right_elbow": (14,),
-    "angle_left_wrist": (15,), "angle_right_wrist": (16,),
-    "angle_left_hip": (23,), "angle_right_hip": (24,),
-    "angle_left_knee": (25,), "angle_right_knee": (26,),
-    "angle_left_ankle": (27,), "angle_right_ankle": (28,),
-    "angle_torso_nose_shoulder_hip": (11, 12),
-    "angle_torso_vertical": (23, 24),
-    "angle_shoulder_midpoint_hip_midpoint_knee_midpoint": (23, 24),
+from aihumo.features import ANGLE_VERTICES
+from aihumo.geometry import POSE_CONNECTIONS
+
+
+MIDPOINTS = ("shoulder", "hip", "knee", "ankle")
+MIDPOINT_PREFIXES = ("review_legacy_", "")
+SKELETON_COLUMNS = {
+    *(f"lm{i}_{axis}" for i in range(33) for axis in "xy"),
+    *(f"{prefix}{point}_midpoint_{axis}" for prefix in MIDPOINT_PREFIXES for point in MIDPOINTS for axis in "xy"),
 }
+
+
+def midpoint_overlay_button(columns, *, baked: bool) -> QPushButton:
+    available = any(all(f"{prefix}{point}_midpoint_{axis}" in columns for axis in "xy")
+                    for prefix in MIDPOINT_PREFIXES for point in MIDPOINTS)
+    button = QPushButton("Show Midpoint Overlay")
+    button.setCheckable(True)
+    button.setChecked(baked or available)
+    button.setEnabled(available and not baked)
+    if baked:
+        button.setToolTip("The midpoint overlay is part of this video. A matching clean video is needed to hide it.")
+    elif available:
+        button.setToolTip("Draw the saved normalized-image midpoints and centerline.")
+    else:
+        button.setToolTip("No saved image midpoints. Use Prepare existing recording in the launcher.")
+    return button
+
+
+def paint_skeleton(pixmap: QPixmap, row: pd.Series, *, draw_body: bool, draw_centerline: bool) -> None:
+    """Render saved normalized image positions onto the displayed video."""
+    if pixmap.isNull() or not (draw_body or draw_centerline):
+        return
+
+    def point(prefix):
+        try:
+            x, y = float(row.get(f"{prefix}_x")), float(row.get(f"{prefix}_y"))
+        except (TypeError, ValueError):
+            return None
+        if not (isfinite(x) and isfinite(y) and -2 <= x <= 3 and -2 <= y <= 3):
+            return None
+        return QPoint(round(x * (pixmap.width() - 1)), round(y * (pixmap.height() - 1)))
+
+    painter = QPainter(pixmap)
+    try:
+        painter.setRenderHint(QPainter.RenderHint.Antialiasing)
+        if draw_body:
+            points = [point(f"lm{i}") for i in range(33)]
+            painter.setPen(QPen(QColor("#00cc44"), 2))
+            for first, last in POSE_CONNECTIONS:
+                if points[first] is not None and points[last] is not None:
+                    painter.drawLine(points[first], points[last])
+            painter.setPen(QPen(QColor("#ed3434"), 4))
+            for landmark in points:
+                if landmark is not None:
+                    painter.drawPoint(landmark)
+        if draw_centerline:
+            chain = [point("lm0")]
+            for name in MIDPOINTS:
+                saved = next((f"{prefix}{name}_midpoint" for prefix in MIDPOINT_PREFIXES
+                              if all(f"{prefix}{name}_midpoint_{axis}" in row for axis in "xy")), None)
+                chain.append(point(saved) if saved is not None else None)
+            painter.setPen(QPen(QColor("#00bfe8"), 2))
+            for first, last in zip(chain, chain[1:]):
+                if first is not None and last is not None:
+                    painter.drawLine(first, last)
+            for label, landmark in zip(("SM", "HM", "KM", "AM"), chain[1:]):
+                if landmark is not None:
+                    painter.drawEllipse(landmark, 3, 3)
+                    painter.drawText(landmark + QPoint(5, -4), label)
+    finally:
+        painter.end()
 
 
 @dataclass(frozen=True)

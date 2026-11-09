@@ -7,7 +7,7 @@ from typing import Any
 import numpy as np
 import pandas as pd
 
-from .annotations import annotation_to_frame_targets, load_annotation_file
+from .annotations import annotation_to_frame_targets, load_annotation_file, validate_annotations
 from .config import resolve_path
 from .features import select_model_features
 from .splits import grouped_split, save_splits
@@ -16,6 +16,7 @@ from .windowing import UNKNOWN, WindowRecord, generate_window_records
 
 CATEGORICAL_TASKS = {"classification", "sequence_classification"}
 IGNORED_TASKS = {"identity", "evaluation_only"}
+IDENTITY_COLUMNS = ("session_id", "video_id", "participant_id", "camera_id")
 
 
 def _target_specs(cfg: dict[str, Any]) -> dict[str, dict[str, Any]]:
@@ -46,6 +47,16 @@ def _resolve_artifact(root: Path, row: pd.Series, key: str, default: str) -> Pat
     value = row.get(key)
     value = "" if pd.isna(value) else str(value)
     return resolve_path(root, value or default)
+
+
+def _validate_recording_identity(row: pd.Series, features: pd.DataFrame, annotations: dict) -> None:
+    for column in IDENTITY_COLUMNS:
+        values = [row.get(column), annotations.get(column)]
+        if column in features:
+            values.extend(features[column].unique())
+        identities = {str(value).strip() for value in values if not pd.isna(value) and str(value).strip()}
+        if len(identities) > 1:
+            raise ValueError(f"Dataset manifest, features, and annotations disagree on {column}.")
 
 
 def _passes_target_coverage(record: WindowRecord, specs: dict[str, dict[str, Any]]) -> bool:
@@ -174,7 +185,7 @@ def build_dataset_experiment(
     manifest_path = Path(manifest_path)
     if not manifest_path.is_absolute():
         manifest_path = root / manifest_path
-    manifest = pd.read_csv(manifest_path)
+    manifest = pd.read_csv(manifest_path, dtype={column: "string" for column in IDENTITY_COLUMNS})
     if manifest.empty:
         raise ValueError("Video manifest contains no rows.")
 
@@ -195,6 +206,7 @@ def build_dataset_experiment(
     feature_columns: list[str] | None = None
     source_videos = 0
     source_details: list[dict[str, Any]] = []
+    seen_features: set[Path] = set()
     require_completed = bool(cfg.get("dataset", {}).get("require_completed_annotations", True))
     boundary_radius = int(cfg.get("dataset", {}).get("rep_boundary_radius_frames", 0))
 
@@ -208,17 +220,22 @@ def build_dataset_experiment(
         video_id = str(row["video_id"])
         default_feature = f"data/processed/{session_id}/{video_id}/parquet/{video_id}_features.parquet"
         default_annotation = f"data/processed/{session_id}/{video_id}/annotations/{video_id}_annotations.json"
-        feature_path = _resolve_artifact(root, row, "features_path", default_feature)
+        feature_path = _resolve_artifact(root, row, "features_path", default_feature).resolve()
         annotation_path = _resolve_artifact(root, row, "annotation_json", default_annotation)
         if not feature_path.exists() or not annotation_path.exists():
             raise FileNotFoundError(
                 f"Missing dataset artifacts for {session_id}/{video_id}: "
                 f"{feature_path}, {annotation_path}"
             )
+        if feature_path in seen_features:
+            raise ValueError(f"The dataset manifest repeats the same feature Parquet: {feature_path}")
+        seen_features.add(feature_path)
 
         df = pd.read_parquet(feature_path)
         validate_frame_dataframe(df)
         annotation_document = load_annotation_file(annotation_path)
+        _validate_recording_identity(row, df, annotation_document)
+        validate_annotations(annotation_document, len(df))
         annotation_session = annotation_document.get("annotation_session", {})
         if require_completed and annotation_session.get("status") != "completed":
             raise ValueError(
@@ -254,7 +271,7 @@ def build_dataset_experiment(
         source_details.append({
             "session_id": session_id,
             "video_id": video_id,
-            "participant_id": str(row.get("participant_id", "") or ""),
+            "participant_id": "" if pd.isna(row.get("participant_id")) else str(row.get("participant_id", "")),
             "split": split,
             "source_fps": float(video_records[0].metadata["source_fps"]) if video_records else None,
             "windows_before_filter": len(video_records),

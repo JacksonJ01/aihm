@@ -3,13 +3,29 @@ from __future__ import annotations
 from pathlib import Path
 
 import cv2
+import numpy as np
 import pandas as pd
+import pyarrow.parquet as pq
 
 LANDMARK_COUNT = 33
+RECORDING_IDS = ("session_id", "video_id", "camera_id")
+
+
+def _read_validation_frame_table(path: Path) -> pd.DataFrame:
+    """Read only columns used by frame validation, not the full feature table."""
+    with pq.ParquetFile(path) as parquet:
+        available = set(parquet.schema_arrow.names)
+        required = [*RECORDING_IDS, "frame_id", "timestamp_s"]
+        landmarks = [f"lm{i}_{axis}" for i in range(LANDMARK_COUNT) for axis in ("x", "y", "z")]
+        optional = ["participant_id", "source_frame_index", "delta_time_s", "timestamp_source",
+                    "target_status", "pose_present", "target_confidence"]
+        return parquet.read(columns=[
+            column for column in (*required, *landmarks, *optional) if column in available
+        ]).to_pandas()
 
 
 def validate_frame_dataframe(df: pd.DataFrame) -> None:
-    required = ["session_id", "video_id", "camera_id", "frame_id", "timestamp_s"]
+    required = [*RECORDING_IDS, "frame_id", "timestamp_s"]
     missing = [column for column in required if column not in df.columns]
     if missing:
         raise ValueError(f"Missing required identifiers: {missing}")
@@ -18,28 +34,31 @@ def validate_frame_dataframe(df: pd.DataFrame) -> None:
     if df.columns.duplicated().any():
         duplicates = df.columns[df.columns.duplicated()].tolist()
         raise ValueError(f"Duplicate feature columns detected: {duplicates}")
-    frame_ids = pd.to_numeric(df["frame_id"], errors="coerce")
-    if frame_ids.isna().any():
-        raise ValueError("frame_id contains invalid values.")
-    if not frame_ids.is_unique:
-        raise ValueError("frame_id values are not unique.")
-    if not frame_ids.is_monotonic_increasing:
-        raise ValueError("frame_id is not ordered increasingly.")
-    expected = pd.RangeIndex(start=0, stop=len(df), step=1)
-    if not frame_ids.astype(int).reset_index(drop=True).equals(pd.Series(expected, name="frame_id")):
-        raise ValueError("frame_id must be contiguous from 0 to frame_count-1.")
+    for column in RECORDING_IDS:
+        values = df[column].astype("string").str.strip().fillna("")
+        if values.eq("").any() or values.nunique() != 1:
+            raise ValueError(f"{column} must identify one recording consistently.")
+    frame_ids = pd.to_numeric(df["frame_id"], errors="coerce").to_numpy(dtype=float, na_value=np.nan)
+    if not np.array_equal(frame_ids, np.arange(len(df))):
+        raise ValueError("frame_id must contain contiguous integers from 0 to frame_count-1.")
+    if "source_frame_index" in df:
+        source_frames = pd.to_numeric(df["source_frame_index"], errors="coerce").to_numpy(dtype=float, na_value=np.nan)
+        if (not np.isfinite(source_frames).all() or (source_frames < 0).any()
+                or (source_frames != np.floor(source_frames)).any() or (np.diff(source_frames) <= 0).any()):
+            raise ValueError("source_frame_index must contain increasing nonnegative integers.")
 
-    timestamps = pd.to_numeric(df["timestamp_s"], errors="coerce")
-    if timestamps.isna().any():
-        raise ValueError("timestamp_s contains invalid values.")
-    if not timestamps.is_monotonic_increasing:
-        raise ValueError("timestamp_s is not monotonic.")
+    timestamps = pd.to_numeric(df["timestamp_s"], errors="coerce").to_numpy(dtype=float, na_value=np.nan)
+    if not np.isfinite(timestamps).all() or (timestamps < 0).any():
+        raise ValueError("timestamp_s must be finite and nonnegative.")
+    intervals = np.diff(timestamps)
+    if (intervals <= 0).any():
+        raise ValueError("timestamp_s must be strictly increasing.")
     if "delta_time_s" in df.columns:
-        delta = pd.to_numeric(df["delta_time_s"], errors="coerce")
-        if len(delta) and not pd.isna(delta.iloc[0]):
+        if not pd.isna(df["delta_time_s"].iloc[0]):
             raise ValueError("delta_time_s must be null/NaN for the first frame.")
-        if (delta.iloc[1:].dropna() <= 0).any():
-            raise ValueError("delta_time_s must be positive for subsequent valid frames.")
+        delta = pd.to_numeric(df["delta_time_s"], errors="coerce").to_numpy(dtype=float, na_value=np.nan)[1:]
+        if (delta <= 0).any() or not np.allclose(delta, intervals, rtol=1e-6, atol=1e-9):
+            raise ValueError("delta_time_s must match elapsed time between source frames.")
     if "timestamp_source" in df.columns:
         allowed_sources = {"decoder", "fps_estimate"}
         observed_sources = set(df["timestamp_source"].dropna().astype(str).unique())
@@ -60,7 +79,8 @@ def validate_frame_dataframe(df: pd.DataFrame) -> None:
         if invalid_statuses:
             raise ValueError(f"Invalid target_status values: {sorted(invalid_statuses)}")
         tracked = df["target_status"].isin({"tracked", "reacquired"})
-        if (tracked & (pd.to_numeric(df["pose_present"], errors="coerce").fillna(0) != 1)).any():
+        if tracked.any() and ("pose_present" not in df
+                              or (pd.to_numeric(df.loc[tracked, "pose_present"], errors="coerce").fillna(0) != 1).any()):
             raise ValueError("Tracked/reacquired frames must contain a valid target pose.")
         if "target_confidence" in df.columns:
             confidence = pd.to_numeric(df["target_confidence"], errors="coerce")
@@ -92,14 +112,22 @@ def validate_artifacts(
         if not path.exists() or path.stat().st_size == 0:
             raise ValueError(f"Expected {label} was not created: {path}")
 
-    landmarks = pd.read_parquet(landmarks_path)
-    features = pd.read_parquet(features_path)
+    landmarks = _read_validation_frame_table(landmarks_path)
+    features = _read_validation_frame_table(features_path)
     validate_frame_dataframe(landmarks)
     validate_frame_dataframe(features)
     if len(landmarks) != len(features):
         raise ValueError(
             f"Row-count mismatch: landmarks={len(landmarks)}, features={len(features)}"
         )
+    for column in (*RECORDING_IDS, "participant_id"):
+        if column in landmarks and column in features:
+            if not landmarks[column].astype("string").fillna("").equals(features[column].astype("string").fillna("")):
+                raise ValueError(f"Landmarks and features disagree on {column}.")
+    for column in ("timestamp_s", "source_frame_index"):
+        if column in landmarks and column in features:
+            if not np.array_equal(pd.to_numeric(landmarks[column]), pd.to_numeric(features[column])):
+                raise ValueError(f"Landmarks and features disagree on {column}.")
     cap = cv2.VideoCapture(str(processed_video))
     try:
         if not cap.isOpened():

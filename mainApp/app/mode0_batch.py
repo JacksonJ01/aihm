@@ -32,6 +32,7 @@ from PyQt6.QtWidgets import (
     QMessageBox,
     QPushButton,
     QProgressBar,
+    QScrollArea,
     QTableWidget,
     QTableWidgetItem,
     QTextEdit,
@@ -47,6 +48,7 @@ if str(SRC_DIR) not in sys.path:
 from aihumo.config import load_config
 from aihumo.processing import process_video, processing_job_status
 from .preferences import ParticipantPicker, PreferenceStore
+from .processing_resume import processing_fields, restore_processing_fields
 
 LOGGER = logging.getLogger("AIHuMoDataStudio.Mode0Batch")
 
@@ -169,7 +171,9 @@ class BatchSessionDialog(QDialog):
     def __init__(self, parent=None, *, preferences: PreferenceStore | None = None):
         super().__init__(parent)
         self.setWindowTitle("AIHuMo — Process Multiple Session Folders")
+        self.setWindowFlag(Qt.WindowType.WindowMaximizeButtonHint)
         self.resize(900, 820)
+        self.setWindowState(Qt.WindowState.WindowMaximized)
         self.results: list[Any] = []
         self.thread: QThread | None = None
         self.worker: BatchProcessingWorker | None = None
@@ -180,10 +184,21 @@ class BatchSessionDialog(QDialog):
         self._recordings: list[BatchRecording] = []
 
         layout = QVBoxLayout(self)
-        layout.addWidget(QLabel(
+        scroll = QScrollArea()
+        scroll.setWidgetResizable(True)
+        scroll.setFrameShape(QScrollArea.Shape.NoFrame)
+        content = QWidget()
+        body = QVBoxLayout(content)
+        body.setContentsMargins(0, 0, 0, 0)
+        scroll.setWidget(content)
+        layout.addWidget(scroll, 1)
+
+        description = QLabel(
             "Each selected folder becomes one session. Videos inside a folder are "
             "processed independently; participant and camera metadata below is shared."
-        ))
+        )
+        description.setWordWrap(True)
+        body.addWidget(description)
 
         folder_buttons = QHBoxLayout()
         self.add_folder_button = QPushButton("Add session folder…")
@@ -193,17 +208,19 @@ class BatchSessionDialog(QDialog):
         folder_buttons.addWidget(self.add_folder_button)
         folder_buttons.addWidget(self.remove_folder_button)
         folder_buttons.addStretch(1)
-        layout.addLayout(folder_buttons)
+        body.addLayout(folder_buttons)
 
         self.folder_list = QListWidget()
         self.folder_list.setMinimumHeight(130)
-        layout.addWidget(self.folder_list)
+        body.addWidget(self.folder_list)
 
-        layout.addWidget(QLabel(
+        recordings_description = QLabel(
             "Recordings found. Each row is processed separately. For multiple camera angles "
             "in one session, set the Camera ID and Camera angle on each row. Rows default to "
             "distinct camera IDs; obvious filename hints such as front/side are detected."
-        ))
+        )
+        recordings_description.setWordWrap(True)
+        body.addWidget(recordings_description)
         self.recording_table = QTableWidget(0, 5)
         self.recording_table.setHorizontalHeaderLabels([
             "Session", "Video ID", "Source video", "Camera ID", "Camera angle"
@@ -221,7 +238,7 @@ class BatchSessionDialog(QDialog):
         header.setSectionResizeMode(2, QHeaderView.ResizeMode.Stretch)
         header.setSectionResizeMode(3, QHeaderView.ResizeMode.ResizeToContents)
         header.setSectionResizeMode(4, QHeaderView.ResizeMode.ResizeToContents)
-        layout.addWidget(self.recording_table)
+        body.addWidget(self.recording_table)
 
         form = QFormLayout()
         self.preferences = preferences or PreferenceStore(PROJECT_ROOT / ".aihumo" / "settings.json")
@@ -255,7 +272,7 @@ class BatchSessionDialog(QDialog):
         form.addRow("MediaPipe model", self._browse_row(self.model_edit, self.browse_model, "MediaPipe Task (*.task);;All Files (*)"))
         form.addRow("Output root", self._browse_row(self.output_edit, self.browse_output, ""))
         form.addRow("Next step", self.open_mode1_check)
-        layout.addLayout(form)
+        body.addLayout(form)
 
         self.status = QLabel("Add at least one session folder and provide the participant ID.")
         self.status.setWordWrap(True)
@@ -306,6 +323,27 @@ class BatchSessionDialog(QDialog):
         if row < 0:
             return
         self._folders.pop(row)
+        self.refresh_folder_list()
+
+    def resume_setup(self):
+        fields = processing_fields(self)
+        fields["folders"] = [{"path": str(path), "session": self._session_ids[path]} for path in self._folders]
+        fields["recordings"] = [
+            {"folder": str(row.folder), "session": row.session_id, "source": str(row.source_video),
+             "videoId": row.video_id, "cameraId": row.camera_id, "cameraAngle": row.camera_angle}
+            for row in self._recordings_from_table()
+        ]
+        return fields
+
+    def restore_setup(self, fields):
+        restore_processing_fields(self, fields)
+        self._session_ids = {Path(folder["path"]): folder["session"] for folder in fields["folders"]}
+        self._folders = list(self._session_ids)
+        self._recordings = [
+            BatchRecording(Path(row["folder"]), row["session"], Path(row["source"]), row["videoId"],
+                           row["cameraId"], row["cameraAngle"])
+            for row in fields["recordings"]
+        ]
         self.refresh_folder_list()
 
     def refresh_folder_list(self) -> None:
