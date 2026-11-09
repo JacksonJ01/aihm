@@ -1,10 +1,15 @@
 from pathlib import Path
+import sys
 
 from PyInstaller.utils.hooks import collect_all, collect_submodules
 
 
 bundle_dir = Path(SPECPATH)
 project_root = bundle_dir.parent
+if not (project_root / "aihumo_data_studio.py").is_file():
+    nested_project = project_root / "mainApp"
+    if (nested_project / "aihumo_data_studio.py").is_file():
+        project_root = nested_project
 
 datas = [
     (str(project_root / "configs" / "config.json"), "configs"),
@@ -66,3 +71,18 @@ coll = COLLECT(
     upx_exclude=[],
     name="AIHuMo Data Studio",
 )
+
+# macOS users expect an application bundle. Windows and Linux keep the regular
+# one-folder COLLECT output.
+if sys.platform == "darwin":
+    app = BUNDLE(
+        coll,
+        name="AIHuMo Data Studio.app",
+        icon=None,
+        bundle_identifier="org.aihumo.datastudio",
+        info_plist={
+            "CFBundleDisplayName": "AIHuMo Data Studio",
+            "CFBundleName": "AIHuMo Data Studio",
+            "NSHighResolutionCapable": True,
+        },
+    )
