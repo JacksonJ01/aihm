@@ -1,6 +1,6 @@
 param(
     [ValidatePattern('^[0-9]+\.[0-9]+\.[0-9]+$')]
-    [string]$Version = "0.1.3",
+    [string]$Version = "0.1.4",
     [string]$PythonExe
 )
 
