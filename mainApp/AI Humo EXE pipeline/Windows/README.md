@@ -7,7 +7,7 @@ extract the complete ZIP, and run `AIHuMo Data Studio.exe`.
 To rebuild on Windows, open PowerShell in this directory and run:
 
 ```powershell
-.\build_portable.ps1 -Version 0.1.2
+.\build_portable.ps1 -Version 0.1.3
 ```
 
 The wrapper calls the maintained Windows recipe in the parent directory.

@@ -19,7 +19,7 @@ Use Python 3.11 on the target Mac. From this directory:
 
 ```bash
 chmod +x build_portable.sh
-./build_portable.sh 0.1.2
+./build_portable.sh 0.1.3
 ```
 
 The script detects `x86_64` or `arm64`, builds a native `.app`, packages it with

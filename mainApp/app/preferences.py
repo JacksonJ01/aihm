@@ -8,8 +8,9 @@ import re
 
 from PyQt6.QtGui import QColor
 from PyQt6.QtWidgets import (
-    QCheckBox, QColorDialog, QComboBox, QDialog, QDialogButtonBox, QFormLayout, QHBoxLayout,
-    QInputDialog, QLabel, QListWidget, QMessageBox, QPushButton, QSpinBox, QTabWidget, QVBoxLayout, QWidget,
+    QCheckBox, QColorDialog, QComboBox, QDialog, QDialogButtonBox, QFileDialog, QFormLayout,
+    QHBoxLayout, QInputDialog, QLabel, QListWidget, QLineEdit, QMessageBox, QPushButton, QSpinBox,
+    QTabWidget, QVBoxLayout, QWidget,
 )
 
 from aihumo.storage import load_json, save_json_atomic
@@ -32,6 +33,8 @@ class DesktopPreferences:
     skeleton_joint: str = "#ff0000"
     participants: tuple[str, ...] = ()
     default_participant: str = ""
+    starter_video: str = ""
+    setup_completed: bool = False
     default_frame_jump: int = DEFAULT_FRAME_JUMP
     timeline: dict = field(default_factory=timeline_preferences)
 
@@ -55,10 +58,15 @@ class PreferenceStore:
                 value.strip() for value in raw if isinstance(value, str) and value.strip()
             )) if isinstance(raw, list) else ()
             default = data.get("default_participant")
+            starter_video = data.get("starter_video")
             jump = data.get("default_frame_jump")
             self.values = DesktopPreferences(
                 **colors, participants=participants,
                 default_participant=default if default in participants else "",
+                starter_video=starter_video.strip() if isinstance(starter_video, str) else "",
+                # Existing settings files are already configured users. Only a
+                # brand-new settings file should show the optional first-run flow.
+                setup_completed=bool(data.get("setup_completed", True)),
                 default_frame_jump=jump if type(jump) is int and 1 <= jump <= MAX_FRAME_JUMP else DEFAULT_FRAME_JUMP,
                 timeline=timeline_preferences(data.get("timeline")),
             )
@@ -73,6 +81,107 @@ class PreferenceStore:
         participant = participant.strip()
         if participant and participant not in self.values.participants:
             self.save(replace(self.values, participants=(*self.values.participants, participant)))
+
+
+class StartupSetupDialog(QDialog):
+    """Optional first-run setup for a participant and an opening video.
+
+    The selected video is only bookmarked; it is never copied or uploaded.
+    When it has a matching processed feature Parquet, the launcher opens the
+    graph viewer. Otherwise it opens Mode 0 with the source video prefilled.
+    """
+
+    def __init__(self, store: PreferenceStore, parent=None):
+        super().__init__(parent)
+        self.store = store
+        self.setWindowTitle("AIHuMo first-run setup")
+        self.resize(560, 260)
+        outer = QVBoxLayout(self)
+        intro = QLabel(
+            "This optional setup remembers a participant ID and an opening video "
+            "for this computer. You can skip it and configure everything later."
+        )
+        intro.setWordWrap(True)
+        outer.addWidget(intro)
+
+        form = QFormLayout()
+        self.participant_edit = QLineEdit(store.values.default_participant)
+        self.participant_edit.setPlaceholderText("e.g. P001 or Alex")
+        form.addRow("Participant ID (optional)", self.participant_edit)
+
+        video_row = QWidget()
+        video_layout = QHBoxLayout(video_row)
+        video_layout.setContentsMargins(0, 0, 0, 0)
+        self.video_edit = QLineEdit(store.values.starter_video)
+        self.video_edit.setPlaceholderText("Choose a source or processed skeleton video")
+        browse = QPushButton("Browse…")
+        browse.clicked.connect(self._browse_video)
+        video_layout.addWidget(self.video_edit, 1)
+        video_layout.addWidget(browse)
+        form.addRow("Starter video (optional)", video_row)
+        outer.addLayout(form)
+
+        self.open_video = QCheckBox("Open the starter video after setup")
+        self.open_video.setChecked(bool(store.values.starter_video))
+        self.open_video.setEnabled(bool(store.values.starter_video))
+        self.video_edit.textChanged.connect(self._starter_video_changed)
+        outer.addWidget(self.open_video)
+
+        actions = QHBoxLayout()
+        skip = QPushButton("Skip setup")
+        skip.clicked.connect(self._skip)
+        actions.addWidget(skip)
+        actions.addStretch(1)
+        save = QPushButton("Save and continue")
+        save.setDefault(True)
+        save.clicked.connect(self._save)
+        actions.addWidget(save)
+        outer.addLayout(actions)
+        self.setup = {}
+
+    def _starter_video_changed(self, text: str) -> None:
+        has_video = bool(text.strip())
+        if has_video and not self.open_video.isEnabled():
+            self.open_video.setChecked(True)
+        self.open_video.setEnabled(has_video)
+
+    def _browse_video(self) -> None:
+        path, _ = QFileDialog.getOpenFileName(
+            self, "Choose starter video", "",
+            "Video Files (*.mp4 *.mov *.avi *.mkv *.webm);;All Files (*)",
+        )
+        if path:
+            self.video_edit.setText(path)
+
+    def _persist(self) -> None:
+        participant = self.participant_edit.text().strip()
+        participants = tuple(dict.fromkeys((*self.store.values.participants, participant))) if participant else self.store.values.participants
+        video = self.video_edit.text().strip()
+        self.store.save(replace(
+            self.store.values,
+            participants=participants,
+            default_participant=participant if participant else self.store.values.default_participant,
+            starter_video=video,
+            setup_completed=True,
+        ))
+        self.setup = {"participant": participant, "video": video, "open_video": bool(video and self.open_video.isChecked())}
+
+    def _save(self) -> None:
+        try:
+            self._persist()
+        except OSError as exc:
+            QMessageBox.warning(self, "Could not save setup", str(exc))
+            return
+        self.accept()
+
+    def _skip(self) -> None:
+        try:
+            self.store.save(replace(self.store.values, setup_completed=True))
+        except OSError as exc:
+            QMessageBox.warning(self, "Could not save setup", str(exc))
+            return
+        self.setup = {}
+        self.reject()
 
 
 class ParticipantPicker(QWidget):

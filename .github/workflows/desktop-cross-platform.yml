@@ -6,11 +6,11 @@ on:
       version:
         description: Package version without the leading v
         required: true
-        default: 0.1.2
+        default: 0.1.3
       release_tag:
         description: GitHub release tag to create or update
         required: true
-        default: desktop-v0.1.2
+        default: desktop-v0.1.3
   push:
     tags:
       - desktop-v*

@@ -4,7 +4,7 @@ import logging
 import sys
 from pathlib import Path
 
-from PyQt6.QtCore import QProcess, Qt, pyqtSignal
+from PyQt6.QtCore import QProcess, QTimer, Qt, pyqtSignal
 from PyQt6.QtWidgets import (
     QApplication, QButtonGroup, QComboBox, QDialog, QFileDialog, QGridLayout, QGroupBox,
     QHBoxLayout, QLabel, QMainWindow, QMessageBox, QPushButton, QSizePolicy, QStackedWidget, QStyle, QToolButton,
@@ -28,7 +28,7 @@ from .mode2_alignment import SessionAlignmentWindow
 from .graph_viewer import open_graph_viewer
 from .common import suspend_other_reviews
 from .pose_viewer import PoseGraphViewer
-from .preferences import PreferencesDialog, PreferenceStore
+from .preferences import PreferencesDialog, PreferenceStore, StartupSetupDialog
 from .processing_resume import processing_fields
 from aihumo.recent_work import RecentWorkStore
 
@@ -107,6 +107,7 @@ class HomeWindow(QMainWindow):
         self.graph_window = None
         self._graph_mode = 3
         self.alignment_window = None
+        self._using_default_state = state_dir is None
         self.processed_root = processed_root if processed_root is not None else PROJECT_ROOT / "data" / "processed"
         state_dir = state_dir if state_dir is not None else PROJECT_ROOT / ".aihumo"
         self.recent_work = RecentWorkStore(state_dir / "recent_work.json")
@@ -128,10 +129,14 @@ class HomeWindow(QMainWindow):
         title.setStyleSheet("font-size: 28px; font-weight: 700;")
         title.setAlignment(Qt.AlignmentFlag.AlignCenter)
         header = QHBoxLayout()
+        self.setup_button = QPushButton("Setup…")
+        self.setup_button.setToolTip("Run the optional participant and starter-video setup again.")
+        self.setup_button.clicked.connect(self.open_startup_setup)
         self.settings_button = QPushButton("⚙ Settings")
         self.settings_button.clicked.connect(self.open_settings)
-        header.addSpacing(self.settings_button.sizeHint().width())
+        header.addSpacing(self.setup_button.sizeHint().width() + self.settings_button.sizeHint().width())
         header.addWidget(title, 1)
+        header.addWidget(self.setup_button)
         header.addWidget(self.settings_button)
         layout.addLayout(header)
 
@@ -191,6 +196,8 @@ class HomeWindow(QMainWindow):
         self.resume_group, self.resume_combo, self.resume_button, self.resume_remove_button = self._resume_controls()
         layout.addWidget(self.resume_group)
         self._select_mode(self._selected_mode)
+        if self._using_default_state and not self.preferences.values.setup_completed:
+            QTimer.singleShot(0, self.open_startup_setup)
 
         workflow = QLabel(
             "Mode 0 — Process a new video or a batch of session folders.\n"
@@ -296,6 +303,43 @@ class HomeWindow(QMainWindow):
     def open_settings(self):
         if PreferencesDialog(self.preferences, self).exec() == QDialog.DialogCode.Accepted:
             self._apply_launcher_accent()
+
+    def open_startup_setup(self):
+        dialog = StartupSetupDialog(self.preferences, self)
+        if dialog.exec() != QDialog.DialogCode.Accepted:
+            return
+        setup = dialog.setup
+        if setup.get("open_video") and setup.get("video"):
+            QTimer.singleShot(0, lambda: self.open_starter_video(setup["video"]))
+
+    @staticmethod
+    def _starter_artifacts(video: Path) -> tuple[Path | None, Path | None]:
+        """Find the processed-video/feature pair associated with a starter video."""
+        stem = video.stem.removesuffix("_skeleton")
+        candidates = (
+            (video, video.parent.parent / "features" / f"{stem}_features.parquet"),
+            (video, video.with_name(f"{stem}_features.parquet")),
+            (video, video.parent / f"{stem}_features.parquet"),
+        )
+        for processed_video, parquet in candidates:
+            if processed_video.is_file() and parquet.is_file():
+                return processed_video, parquet
+        return video, None
+
+    def open_starter_video(self, raw_path: str):
+        video, parquet = self._starter_artifacts(Path(raw_path).expanduser())
+        if video is None or not video.is_file():
+            QMessageBox.warning(self, "Starter video unavailable", "The saved starter video no longer exists.")
+            return
+        if parquet is not None:
+            self._show_graph_viewer(mode=3, video_path=video, parquet_path=parquet)
+            return
+        # A raw video is not processed silently: open Mode 0 with it prefilled
+        # so the user can review the participant/output choices before running.
+        self.open_process(setup={
+            "files": {"sourceVideo": str(video)},
+            "identifiers": {"participant": self.preferences.values.default_participant},
+        })
 
     def open_process(self, *, setup=None):
         self._select_mode(0)
