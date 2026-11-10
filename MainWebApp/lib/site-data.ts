@@ -272,15 +272,22 @@ async function getAuthContext(): Promise<AuthContext> {
     return { viewerState: "guest" };
   }
 
-  const supabase = await createClient();
-  const { data } = await supabase.auth.getClaims();
+  // Supabase is an optional personalization layer. A missing, misconfigured, or
+  // temporarily unavailable deployment must not turn the public app into a
+  // login wall; it should simply continue in guest mode.
+  try {
+    const supabase = await createClient();
+    const { data } = await supabase.auth.getClaims();
 
-  return {
-    supabase,
-    userId: data?.claims?.sub,
-    email: data?.claims?.email,
-    viewerState: data?.claims?.sub ? "authenticated" : "guest",
-  };
+    return {
+      supabase,
+      userId: data?.claims?.sub,
+      email: data?.claims?.email,
+      viewerState: data?.claims?.sub ? "authenticated" : "guest",
+    };
+  } catch {
+    return { viewerState: "guest" };
+  }
 }
 
 async function withFallback<T>(

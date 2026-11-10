@@ -124,10 +124,10 @@ export function DataSourceNotice({ source, viewerState, viewerEmail }: DataSourc
           ? "This section is ready for your activity and will fill in as you use the app."
           : "Your account is connected and this section will update as new activity comes in."
       : source === "live"
-        ? "This section is currently showing shared activity. Sign in for a personalized view where available."
+        ? "This section is available in guest mode. Sign in only when you want personalized data saved to your account."
         : source === "empty"
-          ? "Sign in to personalize this section."
-          : "Sign in to unlock a more personalized view in this section.";
+          ? "Guest mode is available now. Create an account when you want this section personalized and saved."
+          : "You can continue as a guest. Create an account later to unlock personalized saved data.";
 
   return (
     <div className="rounded-[24px] border border-black/10 bg-black px-5 py-5 text-white shadow-[0_18px_50px_rgba(15,23,42,0.24)]">

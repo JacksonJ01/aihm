@@ -115,8 +115,8 @@ const networkCards = [
 
 const flow = [
   "Use the home page as the broad overview of how workouts, programs, progress, and accountability fit together.",
-  "Sign in to move from the overview into your own sessions, plans, alerts, and profile details.",
-  "Treat each routed page as your personal working view rather than a public preview of the product.",
+  "Open the workout and annotation tools immediately as a guest, without creating an account first.",
+  "Create an account only when you want sessions, plans, alerts, and profile details saved across devices.",
 ];
 
 export default function Home() {
@@ -131,20 +131,20 @@ export default function Home() {
 
             <div className="space-y-4">
               <h1 className="max-w-3xl text-5xl font-semibold tracking-[-0.04em] text-foreground md:text-6xl">
-                One homepage for the full system, with the deeper pages reserved for your own training data.
+                One homepage for the full system, with guest access first and saved training data when you want it.
               </h1>
 
               <p className="max-w-2xl text-base leading-7 text-muted-foreground md:text-lg">
-                AIHM now uses the homepage as the public overview of workouts, programs, progress, community, and account tools. Once you sign in, the routed pages become your personalized working views.
+                AIHM lets you explore workouts, annotation, programs, progress, and community without signing in. Create an account later if you want Supabase to save your personal data and carry it between devices.
               </p>
             </div>
 
             <div className="flex flex-col gap-3 sm:flex-row">
-              <Link href="/auth/login" className="button-primary">
-                Sign in
-              </Link>
-              <Link href="/workouts" className="button-secondary">
+              <Link href="/workouts" className="button-primary">
                 Open the app
+              </Link>
+              <Link href="/auth/sign-up" className="button-secondary">
+                Create an account
               </Link>
             </div>
 
@@ -286,30 +286,30 @@ export default function Home() {
             </div>
             <div className="rounded-[24px] border border-black/10 bg-white/70 px-5 py-5">
               <div className="text-xs font-semibold uppercase tracking-[0.16em] text-muted-foreground">Account</div>
-              <div className="mt-3 text-2xl font-semibold tracking-[-0.03em] text-foreground">Personal after sign-in</div>
-              <p className="mt-3 text-sm leading-6 text-muted-foreground">Once signed in, the dedicated pages switch from overview mode into your own data, settings, and activity.</p>
+              <div className="mt-3 text-2xl font-semibold tracking-[-0.03em] text-foreground">Optional account</div>
+              <p className="mt-3 text-sm leading-6 text-muted-foreground">Guest mode works immediately. An account adds saved profile, program, session, notification, and social data.</p>
             </div>
           </div>
         </SectionCard>
 
         <SectionCard
           eyebrow="Next step"
-          title="Use the homepage as the map, then go straight into your account view"
-          description="The deeper routes are still where the real work happens. The difference is that they now feel like personal destinations instead of public teaser pages."
+          title="Start as a guest, save when you are ready"
+          description="The deeper routes work without a login. Supabase becomes the optional account layer instead of a prerequisite for using the app."
         >
           <div className="space-y-4">
             <div className="rounded-[24px] border border-black/10 bg-slate-950 px-5 py-5 text-white">
               <div className="text-sm font-semibold uppercase tracking-[0.2em] text-white/55">Recommended path</div>
               <p className="mt-3 text-sm leading-6 text-white/80">
-                Sign in, open the section you actually need, and let that page populate from your own sessions, programs, notifications, friendships, and profile settings.
+                Open the section you need now. When you want your sessions, programs, notifications, friendships, and profile settings to persist, create an account and sign in.
               </p>
             </div>
             <div className="flex flex-col gap-3 sm:flex-row">
-              <Link href="/auth/login" className="button-primary">
-                Continue to sign in
+              <Link href="/workouts" className="button-primary">
+                Open the app
               </Link>
-              <Link href="/profile" className="button-secondary">
-                Open profile
+              <Link href="/auth/sign-up" className="button-secondary">
+                Create an account
               </Link>
             </div>
           </div>
