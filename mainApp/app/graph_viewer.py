@@ -1,8 +1,9 @@
 """Read-only desktop workspace for synchronized skeleton video and joint traces."""
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 import json
+import logging
 from pathlib import Path
 import re
 
@@ -21,13 +22,15 @@ from aihumo.features import (
     CROSS_MEAN_PREFIX, CROSS_MEAN_SOURCE, LEGACY_ANGLE_PREFIX, MEAN_ANGLE_PREFIX, REVIEW_LANDMARKS,
     TIME_COLUMNS, VIEWER_FEATURE_PREFIX,
 )
-from aihumo.storage import load_json
+from aihumo.annotations import AnnotationState
+from aihumo.storage import annotation_json_for_features, load_json
 
 from .angle_overlay import SKELETON_COLUMNS, AngleLabel, frame_angle_labels, midpoint_overlay_button, paint_angle_labels, paint_skeleton
 from .common import ReviewWindow, close_and_return
 from .joint_graph import GRAPH_MODES, MEAN_SOURCE, JointGraphWidget, SAVED_SOURCE, TORSO_SOURCE, WORLD_SOURCE
 from .playback import FrameBuffer, FrameNavigationButton, FramePlayback, open_review_video, review_window_is_covered
 from .preferences import DEFAULT_FRAME_JUMP, MAX_FRAME_JUMP
+from .timeline_layers import QUALITY_COLUMNS
 
 
 ARROW_FRAME_STEPS = {
@@ -91,7 +94,7 @@ class SkeletonPreview(QLabel):
 
 
 class InteractiveGraphViewer(ReviewWindow):
-    """Browse feature samples without loading or saving any annotation state."""
+    """Browse feature samples and saved annotations without modifying them."""
 
     position_checkpoint = pyqtSignal(int)
     frame_changed = pyqtSignal(int)
@@ -101,13 +104,21 @@ class InteractiveGraphViewer(ReviewWindow):
 
     def __init__(self, video_path: str | Path, parquet_path: str | Path, parent=None, *,
                  annotation_preview: bool = False,
-                 frame_jump: int = DEFAULT_FRAME_JUMP, initial_frame: int | None = 0):
+                 frame_jump: int = DEFAULT_FRAME_JUMP, initial_frame: int | None = 0,
+                 annotation_json_path=None):
         super().__init__(parent, Qt.WindowType.Window)
         self.setAttribute(Qt.WidgetAttribute.WA_DeleteOnClose)
         self.setWindowTitle(f"{self.viewer_title} — {Path(video_path).stem}")
         self.current_frame = 0
         self._deferred_linked_frame = None
         self.annotation_preview = annotation_preview
+        self._annotation_path_override = annotation_json_path
+        self._annotation_revision = None
+        self._annotation_graph = None
+        owner = parent
+        while owner is not None and not hasattr(owner, "preferences"):
+            owner = owner.parentWidget()
+        self._preference_store = getattr(owner, "preferences", None)
         self._checkpoint_timer = QTimer(self)
         self._checkpoint_timer.setSingleShot(True)
         self._checkpoint_timer.setInterval(750)
@@ -152,7 +163,7 @@ class InteractiveGraphViewer(ReviewWindow):
                           or re.fullmatch(reading_pattern, name)
                           or re.fullmatch(r"review_(?:legacy|world|torso2d|cross_mean)_distance_.+", name)]
         wanted = list(dict.fromkeys(["frame_id", time_column, *angles, *overlay_columns, *viewer_columns,
-                                    *extra_columns]))
+                                    *extra_columns, *(name for name in QUALITY_COLUMNS if name in names)]))
         frames = pd.read_parquet(parquet_path, columns=wanted)
         mean_columns = [name for name in viewer_columns if name.startswith((f"{CROSS_MEAN_PREFIX}angle_", f"{MEAN_ANGLE_PREFIX}angle_"))
                         and not name.endswith("_source_count")]
@@ -309,7 +320,11 @@ class InteractiveGraphViewer(ReviewWindow):
         )
 
     def _new_graph(self, frames, **timeline):
-        graph = JointGraphWidget(frames, link_video=True, **timeline)
+        settings = self._preference_store.values.timeline if self._preference_store is not None else None
+        graph = JointGraphWidget(frames, link_video=True, annotation_settings=settings, **timeline)
+        if self._preference_store is not None:
+            graph.annotationOptionsChanged.connect(self._save_graph_options)
+        self._refresh_graph_annotations(graph)
         graph.navigationStarted.connect(self.playback.pause)
         graph.frameSelected.connect(self.goto_frame)
         graph.traceSelectionChanged.connect(self._refresh_angle_overlay)
@@ -317,8 +332,39 @@ class InteractiveGraphViewer(ReviewWindow):
         measurements.setEnabled(bool(self._measurements))
         measurements.setToolTip("Inspect saved midpoint positions and distances at the current frame.")
         measurements.clicked.connect(self._show_measurements)
-        graph.layout().insertWidget(3, measurements, alignment=Qt.AlignmentFlag.AlignLeft)
+        graph.annotation_controls.addWidget(measurements)
         return graph
+
+    def _save_graph_options(self, options):
+        store = self._preference_store
+        current = store.values
+        layers = {key: {**layer, "visible": options["visible"][key]}
+                  for key, layer in current.timeline["layers"].items()}
+        timeline = {**current.timeline, "style": options["style"], "auto": options["auto"], "layers": layers}
+        try:
+            store.save(replace(current, timeline=timeline))
+        except OSError:
+            logging.getLogger(__name__).exception("Could not save timeline preferences")
+
+    def _refresh_graph_annotations(self, graph):
+        path = (Path(self._annotation_path_override) if self._annotation_path_override
+                else annotation_json_for_features(self.parquet_path))
+        try:
+            try:
+                stat = path.stat()
+                version = path, stat.st_mtime_ns, stat.st_size
+            except FileNotFoundError:
+                version = path, None
+            if graph is self._annotation_graph and version == self._annotation_revision:
+                return
+            rows = AnnotationState.load(path, self.metadata).annotations if len(version) == 3 else []
+            graph.set_annotations(rows)
+            self._annotation_graph = graph
+            self._annotation_revision = version
+        except (OSError, ValueError, TypeError, KeyError):
+            logging.getLogger(__name__).exception("Could not read graph annotations from %s", path)
+            graph.set_annotations([])
+            graph.annotation_hint.setText("Could not read saved annotations")
 
     def _decode(self, index: int) -> QPixmap:
         ok, frame = self._frame_buffer.read(self.cap, index)
@@ -350,6 +396,7 @@ class InteractiveGraphViewer(ReviewWindow):
         self.graph.cancel_playback_render()
 
     def _resume_review(self):
+        self._refresh_graph_annotations(self.graph)
         self._flush_linked_frame()
 
     def _show_frame(self, frame: int) -> bool:
@@ -462,6 +509,7 @@ class InteractiveGraphViewer(ReviewWindow):
         self.annotation_requested.emit()
 
     def _refresh_paused_frame(self) -> None:
+        self._frame_buffer.request(self.current_frame)
         self.graph.finish_playback()
 
     def closeEvent(self, event):
@@ -480,7 +528,8 @@ class InteractiveGraphViewer(ReviewWindow):
 
 def open_graph_viewer(parent=None, *, video_path=None, parquet_path=None, frame: int = 0,
                       annotation_preview: bool = False,
-                      frame_jump: int = DEFAULT_FRAME_JUMP, viewer_class=InteractiveGraphViewer):
+                      frame_jump: int = DEFAULT_FRAME_JUMP, viewer_class=InteractiveGraphViewer,
+                      annotation_json_path=None):
     if video_path is None:
         video_path, _ = QFileDialog.getOpenFileName(
             parent, "Select processed skeleton video", "", "Video Files (*.mp4 *.mov *.avi *.mkv);;All Files (*)",
@@ -499,7 +548,7 @@ def open_graph_viewer(parent=None, *, video_path=None, parquet_path=None, frame:
             return None
     viewer = viewer_class(
         video_path, parquet_path, parent,
-        annotation_preview=annotation_preview, frame_jump=frame_jump,
+        annotation_preview=annotation_preview, frame_jump=frame_jump, annotation_json_path=annotation_json_path,
     )
     if frame > 0:
         if not viewer.goto_frame(frame) and annotation_preview:

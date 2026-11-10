@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 from bisect import bisect_left, bisect_right
+import logging
 from math import isfinite
 from pathlib import Path
 from threading import Condition, Thread
@@ -14,10 +15,13 @@ from PyQt6.QtCore import QObject, QTimer, Qt, pyqtSignal
 from PyQt6.QtGui import QImage, QPixmap
 from PyQt6.QtWidgets import QApplication, QComboBox, QPushButton, QWidget
 
+LOGGER = logging.getLogger(__name__)
+
 
 class PlaybackSpeed(QObject):
     changed = pyqtSignal(int)
-    OPTIONS = tuple(i / 10 for i in range(1, 10)) + tuple(range(1, 11))
+    MAX_RATE = 5.0
+    OPTIONS = tuple(i / 10 for i in range(1, 10)) + tuple(range(1, int(MAX_RATE) + 1))
 
     def __init__(self, parent):
         super().__init__(parent)
@@ -228,6 +232,7 @@ class FrameBuffer:
         self._center = 0
         self._playback_direction = 0
         self._urgent_index: int | None = None
+        self._catch_up_index: int | None = None
         self._decoder_unavailable = False
         self._closed = False
         self._worker = Thread(target=self._decode, name="AIHuMo frame prefetch", daemon=True)
@@ -255,11 +260,13 @@ class FrameBuffer:
     def request(self, index: int, *, playback: bool = False, direction: int = 1) -> None:
         with self._condition:
             self._set_playback_direction(direction if playback else 0)
+            self._catch_up_index = None
             self._move_window(index)
 
     def _set_playback_direction(self, direction):
         if self._playback_direction != direction:
             self._playback_direction = direction
+            self._catch_up_index = None
             if direction:
                 self._failed.clear()
             self._condition.notify()
@@ -315,6 +322,16 @@ class FrameBuffer:
                 return None
             direction = 1 if target > displayed else -1
             self._set_playback_direction(direction)
+            if self._catch_up_index is not None:
+                pending = self._catch_up_index
+                if (target - pending) * direction < 0:
+                    # A speed change rebased the clock behind the old seek.
+                    self._catch_up_index = None
+                    self._move_window(displayed)
+                else:
+                    if pending in self._frames or pending in self._failed or self._decoder_unavailable:
+                        return pending
+                    return None
             capacity = self.ahead if direction > 0 else self.behind
             if self._decoder_unavailable or target in self._failed or capacity == 0:
                 return target
@@ -326,6 +343,7 @@ class FrameBuffer:
             ready = next((index for index in candidates if index in self._frames), None)
             latest = displayed if ready is None else ready
             if self._center == displayed and abs(target - latest) > max(12, capacity // 2):
+                self._catch_up_index = target
                 self._move_window(target)
                 return None
             return ready
@@ -359,13 +377,12 @@ class FrameBuffer:
     def _decode(self):
         # The prefetch decoder does the sustained sequential work. Foreground
         # captures remain single-threaded exact-seek fallbacks.
-        capture = _open_playback_capture(self.path, decoder_threads=2)
-        if self._timestamps is not None:
-            capture = TimestampedCapture(capture, self._timestamps)
+        capture = None
         try:
+            capture = _open_playback_capture(self.path, decoder_threads=2)
+            if self._timestamps is not None:
+                capture = TimestampedCapture(capture, self._timestamps)
             if not capture.isOpened():
-                with self._condition:
-                    self._decoder_unavailable = True
                 return
             while True:
                 with self._condition:
@@ -373,7 +390,11 @@ class FrameBuffer:
                         self._condition.wait()
                     if self._closed:
                         return
-                ok, frame = decode_frame(capture, index)
+                try:
+                    ok, frame = decode_frame(capture, index)
+                except cv2.error:
+                    LOGGER.warning("Background decoder could not read frame %d", index, exc_info=True)
+                    ok, frame = False, None
                 with self._condition:
                     if self._closed:
                         return
@@ -387,7 +408,11 @@ class FrameBuffer:
                         self._urgent_index = None
                     self._condition.notify_all()
         finally:
-            capture.release()
+            with self._condition:
+                self._decoder_unavailable = True
+                self._condition.notify_all()
+            if capture is not None:
+                capture.release()
 
 
 class FramePlayback(QObject):
@@ -441,7 +466,7 @@ class FramePlayback(QObject):
         if self.position() == boundary and (hold or direction < 0 or not self.display_frame(0)):
             return
         self.direction, self.holding, self._fixed_speed = direction, hold, speed
-        self._rate = self.speed.value if speed is None else speed
+        self._rate = self.speed.value if speed is None else min(PlaybackSpeed.MAX_RATE, max(0.1, speed))
         self.playing = True
         self.button.setText("Pause")
         self._rebase_clock()

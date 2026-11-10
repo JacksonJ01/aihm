@@ -1145,8 +1145,10 @@ class AnnotationStudio(ReviewWindow):
                     self, video_path=self.video_path, parquet_path=self.parquet_path,
                     frame=self.current_frame,
                     annotation_preview=True, frame_jump=self.frame_jump,
+                    annotation_json_path=self.annotation_json_path,
                 )
                 self.annotation_graph_window = viewer
+                viewer.graph.select_annotation(self._selected_annotation_id())
                 viewer.closed.connect(self._clear_annotation_graph_window)
                 viewer.frame_changed.connect(self._follow_graph_frame)
                 viewer.playback.starting.connect(self._pause_review)
@@ -1435,6 +1437,9 @@ class AnnotationStudio(ReviewWindow):
 
     def _refresh_annotation_actions(self) -> None:
         selected_id = self._selected_annotation_id()
+        viewer = self.annotation_graph_window or self._linked_graph_viewer
+        if viewer is not None:
+            viewer.graph.select_annotation(selected_id)
         if self.annotation_edit_id is not None and selected_id != self.annotation_edit_id:
             self._discard_annotation_edit()
             self.annotation_status.setText("Edit cancelled. Press A to edit the selected row or W for a new range.")
@@ -2316,6 +2321,9 @@ class AnnotationStudio(ReviewWindow):
             return False
         self._saved_annotation_document = deepcopy(document)
         self._annotation_save_failed = False
+        viewer = self.annotation_graph_window or self._linked_graph_viewer
+        if viewer is not None:
+            viewer._refresh_graph_annotations(viewer.graph)
         self._export_annotation_derivatives(document, show_error=show_error)
         return True
 

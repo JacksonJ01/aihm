@@ -242,3 +242,5 @@ class PoseGraphViewer(InteractiveGraphViewer):
     def _refresh_paused_frame(self):
         if self.pose_tabs.currentWidget() is not self.pose_plot:
             super()._refresh_paused_frame()
+        else:
+            self._frame_buffer.request(self.current_frame)

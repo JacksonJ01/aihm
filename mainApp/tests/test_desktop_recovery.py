@@ -397,7 +397,9 @@ def test_desktop_viewer_all_graphs_motion_components_and_frame_details(qt_app, t
         graph.canvas.draw()
         assert graph.source_label.text() == "Source values"
         assert graph.landmark_component.currentText() == "X, Y, Z + speed"
-        angle, position, speed, distance = graph.figure.axes
+        angle, position, distance, speed = graph.figure.axes
+        assert position.get_position().x0 == pytest.approx(speed.get_position().x0)
+        assert distance.get_position().y0 == pytest.approx(speed.get_position().y0)
         assert set(graph._panels[position].lines) == {"landmark_26|x", "landmark_26|y", "landmark_26|z"}
         assert position.get_ylim() != speed.get_ylim()
         assert all(axis.get_xlim() == angle.get_xlim() and axis.get_ylabel() for axis in graph.figure.axes)
@@ -702,7 +704,8 @@ def test_launcher_graph_opens_matching_annotation_at_current_frame(qt_app, tmp_p
         home.close()
 
 
-def test_graph_viewer_links_playback_pan_and_zoom_to_native_frames(qt_app, tmp_path, detail):
+def test_graph_viewer_links_playback_pan_and_zoom_to_native_frames(qt_app, tmp_path, detail, monkeypatch):
+    monkeypatch.setattr("app.playback.monotonic", lambda: 0.0)
     detail(input="60 video frames with irregular Parquet timestamps",
            expected="Playback follows the cursor, pan seeks on release, and zoom preserves the current frame")
     video = tmp_path / "clip_skeleton.mp4"
@@ -803,6 +806,8 @@ def test_graph_viewer_links_playback_pan_and_zoom_to_native_frames(qt_app, tmp_p
 
         viewer.play_button.click()
         assert viewer.playback.timer.isActive()
+        # Test cursor synchronization without depending on decoder thread timing.
+        viewer.playback.ready_frame = None
         for _ in range(4):
             viewer.playback.advance()
         viewer.play_button.click()

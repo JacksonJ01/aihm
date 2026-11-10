@@ -1,7 +1,7 @@
 """Timestamp-aware joint-angle graphs shared by the desktop workspaces."""
 from __future__ import annotations
 
-from collections import OrderedDict
+from collections import OrderedDict, defaultdict
 from collections.abc import Iterable
 from concurrent.futures import Future, ThreadPoolExecutor
 from dataclasses import dataclass, field
@@ -24,9 +24,11 @@ from PyQt6.QtWidgets import (
     QGroupBox,
     QHBoxLayout,
     QLabel,
+    QMenu,
     QPushButton,
     QScrollArea,
     QSizePolicy,
+    QToolButton,
     QVBoxLayout,
     QWidget,
 )
@@ -37,6 +39,7 @@ from matplotlib.axes import Axes
 from matplotlib.figure import Figure
 from matplotlib import colormaps
 from matplotlib.colors import to_hex
+from matplotlib.collections import PolyCollection
 from matplotlib.gridspec import GridSpecBase
 from matplotlib.lines import Line2D
 from matplotlib.ticker import MaxNLocator
@@ -49,6 +52,7 @@ from aihumo.features import (
 
 from .angle_overlay import OverlayTrace, angle_name
 from .graph_navigation import FrameZoomToolbar, centered_time_limits, wheel_zoom_factor, zoom_to_seek_button
+from .timeline_layers import LAYERS, interval_color, project_intervals, timeline_preferences, tracking_intervals, visible_layers
 
 TORSO_SOURCE = "Torso-normalized 2D"
 WORLD_SOURCE = "Estimated world (3D)"
@@ -59,6 +63,16 @@ LANDMARK_MODE = "Landmark movement"
 DISTANCE_MODE = "Landmarks Distances"
 ALL_GRAPHS_MODE = "Show All Graphs"
 GRAPH_MODES = (ANGLE_MODE, LANDMARK_MODE, DISTANCE_MODE, ALL_GRAPHS_MODE)
+OVERVIEW_MEASUREMENTS = (
+    (ANGLE_MODE, ANGLE_MODE, "angles", True),
+    (LANDMARK_MODE, LANDMARK_MODE, "positions", True),
+    (DISTANCE_MODE, DISTANCE_MODE, "distance", True),
+    ("Landmark speed", LANDMARK_MODE, "speed", True),
+    ("Angular velocity", ANGLE_MODE, "omega", False),
+    ("Angular acceleration", ANGLE_MODE, "alpha", False),
+    ("Linear velocity", LANDMARK_MODE, "velocity", False),
+    ("Linear acceleration", LANDMARK_MODE, "acceleration", False),
+)
 MOTION_SOURCES = {TORSO_SOURCE: ("torso2d", "torso lengths"), WORLD_SOURCE: ("world", "m"),
                   SAVED_SOURCE: ("legacy", "normalized image units"), MEAN_SOURCE: ("cross_mean", "torso lengths")}
 POSITION_STYLES = {"x": "-", "y": "--", "z": ":"}
@@ -124,8 +138,7 @@ class _AnglePanel:
 class _TraceWindow:
     limits: tuple[float, float]
     samples: int
-    times: np.ndarray
-    values: dict[Axes, dict[str, np.ndarray]]
+    values: dict[Axes, dict[str, tuple[np.ndarray, np.ndarray]]]
     y_bounds: dict[tuple[str, str, str], tuple[float, float]]
 
 
@@ -136,7 +149,7 @@ class _PanelImage:
     ylabel: str
     ylim: tuple[float, float]
     message: str
-    traces: tuple[tuple[str, str, np.ndarray], ...]
+    traces: tuple[tuple[str, str, np.ndarray, np.ndarray], ...]
     compact: bool
     time_axis: str
     position_axes: str
@@ -175,6 +188,31 @@ def _plot_divider(figure: Figure, x, y, width: float) -> Line2D:
                                     color=_DIVIDER_COLOR, linewidth=width))
 
 
+def extrema_samples(values: np.ndarray, budget: int = 2400) -> slice | np.ndarray:
+    """Keep extrema in time order and leave a visible break for missing buckets."""
+    if len(values) <= budget:
+        return slice(None)
+    width = ceil(len(values) / (budget // 3))
+    full, remainder = divmod(len(values), width)
+    buckets = values[:full * width].reshape(full, width)
+    finite = np.isfinite(buckets)
+    base = np.arange(full) * width
+    minimum = base + np.where(finite, buckets, np.inf).argmin(axis=1)
+    maximum = base + np.where(finite, buckets, -np.inf).argmax(axis=1)
+    gaps = ~finite.all(axis=1)
+    missing = base[gaps] + (~finite[gaps]).argmax(axis=1)
+    tail = values[-remainder:] if remainder else np.array([])
+    tail_finite = np.flatnonzero(np.isfinite(tail))
+    tail_missing = np.flatnonzero(~np.isfinite(tail))
+    tail_kept = []
+    if len(tail_finite):
+        tail_kept.extend(tail_finite[[tail[tail_finite].argmin(), tail[tail_finite].argmax()]])
+    if len(tail_missing):
+        tail_kept.append(tail_missing[0])
+    return np.unique(np.r_[0, minimum, maximum, missing, np.asarray(tail_kept, dtype=int) + full * width,
+                           len(values) - 1])
+
+
 def _frame_details_html(title, angle_lines, motion_lines, distance_lines) -> str:
     sections = (("Joint angles", angle_lines, 24), ("Landmark movement", motion_lines, 53),
                 ("Landmark distances", distance_lines, 23))
@@ -204,7 +242,7 @@ _FRAME_DETAILS_RESERVATION = _frame_details_html(
 )
 
 
-def _draw_window_image(size, dpi, facecolor, limits, times, panels, marker, dividers):
+def _draw_window_image(size, dpi, facecolor, limits, panels, marker, dividers):
     # The worker owns this entire Agg figure. Only its finished pixels leave
     # the worker, and the live Qt canvas and artists stay on the main thread.
     figure = Figure(figsize=size, dpi=dpi, facecolor=facecolor)
@@ -219,7 +257,7 @@ def _draw_window_image(size, dpi, facecolor, limits, times, panels, marker, divi
         if panel.message:
             axis.text(0.5, 0.5, panel.message, transform=axis.transAxes, ha="center", va="center",
                       fontsize=9, wrap=True)
-        for color, linestyle, values in panel.traces:
+        for color, linestyle, times, values in panel.traces:
             axis.plot(times, values, color=color, linestyle=linestyle, marker=marker, **_TRACE_STYLE)
     try:
         canvas.draw()
@@ -240,9 +278,11 @@ class JointGraphWidget(QWidget):
     frameSelected = pyqtSignal(int)
     navigationStarted = pyqtSignal()
     traceSelectionChanged = pyqtSignal()
+    annotationOptionsChanged = pyqtSignal(object)
 
     def __init__(self, dataframe: pd.DataFrame, parent=None, *, link_video: bool = False,
-                 timeline: np.ndarray | None = None, time_bounds: tuple[float, float] | None = None):
+                 timeline: np.ndarray | None = None, time_bounds: tuple[float, float] | None = None,
+                 annotation_settings=None):
         super().__init__(parent)
         # The frame table belongs to the caller. This widget only reads it.
         self.dataframe = dataframe
@@ -280,6 +320,13 @@ class JointGraphWidget(QWidget):
         self._times = self._source_times if timeline is None else timeline
         self._time_label = "Elapsed source time (s)" if timeline is None else "Session time (s)"
         self._frame_ids = self._numeric_column(self.frame_column) if self.frame_column else np.arange(len(dataframe))
+        self._annotation_settings = timeline_preferences(annotation_settings)
+        self._annotation_intervals = ()
+        self._quality_intervals = tracking_intervals(dataframe, self._times)
+        self._annotation_artists = []
+        self._annotation_key = None
+        self._selected_annotation = ""
+        self._scroll_graphs = False
         self._native_time_order = bool(
             np.isfinite(self._times).all() and (self._times[1:] >= self._times[:-1]).all()
         )
@@ -418,6 +465,52 @@ class JointGraphWidget(QWidget):
         layout.addLayout(controls)
         layout.addLayout(detail_controls)
         layout.addLayout(angle_controls)
+        self.annotation_controls = annotation_controls = QHBoxLayout()
+        annotation_controls.addWidget(QLabel("Annotations"))
+        self.annotation_style = QComboBox()
+        self.annotation_style.addItems(("Off", "Overlay", "Timeline"))
+        self.annotation_style.setCurrentText(self._annotation_settings["style"])
+        self.annotation_style.setToolTip("Show saved annotations beneath the curves, or on a separate timeline.")
+        annotation_controls.addWidget(self.annotation_style)
+        layers = QToolButton(text="Layers")
+        layers.setPopupMode(QToolButton.ToolButtonPopupMode.InstantPopup)
+        menu = QMenu(layers)
+        self._semantic_zoom = menu.addAction("Automatic semantic zoom")
+        self._semantic_zoom.setCheckable(True)
+        self._semantic_zoom.setChecked(self._annotation_settings["auto"])
+        self._semantic_zoom.toggled.connect(self._change_annotation_options)
+        menu.addSeparator()
+        self._layer_actions = {}
+        for key, label in LAYERS.items():
+            action = menu.addAction(label)
+            action.setCheckable(True)
+            action.setChecked(self._annotation_settings["layers"][key]["visible"])
+            action.toggled.connect(self._change_annotation_options)
+            self._layer_actions[key] = action
+        layers.setMenu(menu)
+        annotation_controls.addWidget(layers)
+        self.annotation_hint = QLabel()
+        self.annotation_hint.setSizePolicy(QSizePolicy.Policy.Ignored, QSizePolicy.Policy.Preferred)
+        annotation_controls.addWidget(self.annotation_hint, 1)
+        self.overview_button = QToolButton(text="Measurements")
+        self.overview_button.setToolTip("Choose which measurements appear in Show All Graphs.")
+        self.overview_button.setPopupMode(QToolButton.ToolButtonPopupMode.InstantPopup)
+        measurement_menu = QMenu(self.overview_button)
+        self._measurement_actions = {}
+        for label, _, part, checked in OVERVIEW_MEASUREMENTS:
+            action = measurement_menu.addAction(label)
+            action.setCheckable(True)
+            action.setChecked(checked)
+            action.toggled.connect(lambda: self._redraw_series())
+            self._measurement_actions[part] = action
+        self.overview_button.setMenu(measurement_menu)
+        annotation_controls.addWidget(self.overview_button)
+        self.overview_traces = QCheckBox("Traces")
+        self.overview_traces.setToolTip("Show individual trace checkboxes beside the overview.")
+        self.overview_traces.toggled.connect(self._update_legend_visibility)
+        annotation_controls.addWidget(self.overview_traces)
+        layout.addLayout(annotation_controls)
+        self.annotation_style.currentTextChanged.connect(self._change_annotation_style)
         missing_sources = [source for source in (TORSO_SOURCE, WORLD_SOURCE, SAVED_SOURCE)
                            if not any(np.isfinite(values).any() for values in self._angle_sources.get(source, {}).values())]
         if missing_sources:
@@ -445,7 +538,7 @@ class JointGraphWidget(QWidget):
         if watched is self.sample_card and event.type() in (QEvent.Type.Resize, QEvent.Type.FontChange):
             self._reserve_sample_card_height()
         if (watched is self.canvas and event.type() == QEvent.Type.Wheel
-                and self._graph_mode == ALL_GRAPHS_MODE and self.show_all_sources.isChecked()
+                and self._scroll_graphs and self.chart_scroll.verticalScrollBar().maximum() > 0
                 and not event.modifiers() & (Qt.KeyboardModifier.ControlModifier | Qt.KeyboardModifier.ShiftModifier)):
             bar = self.chart_scroll.verticalScrollBar()
             pixels = event.pixelDelta().y()
@@ -609,7 +702,9 @@ class JointGraphWidget(QWidget):
         def plot_options():
             return (self._graph_mode, self.angle_source.currentText(), self.show_all_sources.isChecked(),
                     self.show_points.isChecked(), self.auto_y.isChecked(), self.landmark_component.currentData(),
-                    tuple(checkbox.isChecked() for checkbox in self.trace_checks.values()))
+                    tuple(checkbox.isChecked() for checkbox in self.trace_checks.values()),
+                    tuple(action.isChecked() for action in self._measurement_actions.values()),
+                    self.annotation_style.currentText())
 
         previous_options = plot_options()
         self.set_graph_mode(other._graph_mode, redraw=False)
@@ -629,6 +724,11 @@ class JointGraphWidget(QWidget):
                 with QSignalBlocker(checkbox):
                     checkbox.setChecked(other.trace_checks[key].isChecked())
         self._selected_trace = other._selected_trace
+        for key, action in self._measurement_actions.items():
+            with QSignalBlocker(action):
+                action.setChecked(other._measurement_actions[key].isChecked())
+        with QSignalBlocker(self.annotation_style):
+            self.annotation_style.setCurrentText(other.annotation_style.currentText())
         self.trace_configuration.setCurrentIndex(self.trace_configuration.findData(other.trace_configuration.currentData()))
         self._update_component_options()
         left, right = other.axis.get_xlim()
@@ -642,11 +742,27 @@ class JointGraphWidget(QWidget):
             self.axis.set_xlim(*limits)
 
     def _plot_values(self, source: str, kind: str, component: str) -> dict[str, np.ndarray]:
+        if kind == "empty":
+            return {}
         if kind == ANGLE_MODE:
+            if component in ("omega", "alpha"):
+                result = {}
+                for trace in self._traces_by_source.get(source, ()):
+                    for prefix in ("review", "viewer"):
+                        name = f"{prefix}_{component}_{trace.column}"
+                        if name in self._viewer_values:
+                            result[trace.joint] = self._viewer_values[name]
+                            break
+                return result
             return self._angle_sources.get(source, {})
         space = MOTION_SOURCES.get(source, ("", ""))[0]
         if kind == LANDMARK_MODE:
             axes = self._motion_axes(source)
+            if component in ("velocity", "acceleration"):
+                prefix = "v" if component == "velocity" else "a"
+                return {f"landmark_{index}|{axis}": self._viewer_values[name]
+                        for index in REVIEW_LANDMARKS for axis in axes
+                        if (name := f"review_{space}_lm{index}_{prefix}{axis}") in self._viewer_values}
             suffixes = axes if component == "positions" else (component,)
             if component == "z" and "z" not in axes:
                 return {}
@@ -707,6 +823,8 @@ class JointGraphWidget(QWidget):
         if xlim is None:
             xlim = self.axis.get_xlim() if self._panels else self._full_xlim
         self.figure.clear()
+        self._annotation_artists.clear()
+        self._annotation_key = None
         self._panels.clear()
         self._source_groups.clear()
         self._source_dividers.clear()
@@ -716,11 +834,17 @@ class JointGraphWidget(QWidget):
         all_graphs = self._graph_mode == ALL_GRAPHS_MODE
         selected_source = self.angle_source.currentText()
         sources = tuple(MOTION_SOURCES) if compare else (selected_source,)
-        self.trace_legend.setHidden(compare or all_graphs)
+        self._update_legend_visibility()
         component = self.landmark_component.currentData()
         grouped_height = 485 if component == "positions-speed" else 382
         gap_space = 92 * (len(sources) - 1)
-        scroll_groups = all_graphs and compare
+        timeline_only = self.annotation_style.currentText() == "Timeline"
+        self.overview_button.setEnabled(all_graphs and not timeline_only)
+        measurements = [(title, kind, part) for title, kind, part, _ in OVERVIEW_MEASUREMENTS
+                        if self._measurement_actions[part].isChecked()]
+        row_count = max(1, ceil(len(measurements) / 2))
+        scroll_groups = all_graphs and not timeline_only
+        self._scroll_graphs = scroll_groups
         self.chart_scroll.setVerticalScrollBarPolicy(
             Qt.ScrollBarPolicy.ScrollBarAsNeeded if scroll_groups else Qt.ScrollBarPolicy.ScrollBarAlwaysOff
         )
@@ -729,14 +853,17 @@ class JointGraphWidget(QWidget):
              "Turn on Zoom to Seek to move the playhead when zooming.")
             if scroll_groups else "Scroll to zoom. Turn on Zoom to Seek to move the playhead when zooming."
         )
-        self.canvas.setMinimumHeight(grouped_height * len(sources) + gap_space if scroll_groups else 0)
+        graph_height = grouped_height if compare else 330
+        self.canvas.setMinimumHeight(
+            round(graph_height * row_count / 2) * len(sources) + gap_space if scroll_groups else 0
+        )
 
-        def add_panel(slot, source, kind, title, compact, time_axis="full"):
-            if kind == LANDMARK_MODE and component == "positions-speed":
+        def add_panel(slot, source, kind, title, compact, time_axis="full", *, part=None):
+            if kind == LANDMARK_MODE and component == "positions-speed" and part is None:
                 split = slot.subgridspec(2, 1, height_ratios=(2, 1), hspace=0.20)
                 entries = ((split[0], "positions", title, "hidden"), (split[1], "speed", "", time_axis))
             else:
-                entries = ((slot, component if kind == LANDMARK_MODE else "", title, time_axis),)
+                entries = ((slot, part or (component if kind == LANDMARK_MODE else ""), title, time_axis),)
             for cell, part, heading, time_labels in entries:
                 axis = self.figure.add_subplot(cell)
                 values = self._plot_values(source, kind, part)
@@ -744,17 +871,37 @@ class JointGraphWidget(QWidget):
                 self._draw_panel(panel, xlim, heading)
                 axis.callbacks.connect("xlim_changed", self._on_xlim_changed)
 
-        if all_graphs:
+        if timeline_only:
+            self.trace_legend.hide()
+            axis = self.figure.add_subplot(111)
+            axis.set_xlim(*xlim)
+            axis.set_xlabel(self._time_label)
+            axis.set_title("Saved annotation timeline")
+            panel = _AnglePanel(axis, selected_source, {}, "timeline")
+            panel.cursor = axis.axvline(self._last_current_time or self._full_xlim[0],
+                                       color="#20c55a", linewidth=1.5, animated=True)
+            self._panels[axis] = panel
+            axis.callbacks.connect("xlim_changed", self._on_xlim_changed)
+        elif all_graphs:
             groups = self.figure.add_gridspec(len(sources), 1, hspace=0.35)
             for i, source in enumerate(sources):
-                grid = groups[i].subgridspec(2, 2, wspace=0.52, hspace=0.78)
-                heading = f"{source}\n{ANGLE_MODE}" if compare else ANGLE_MODE
-                add_panel(grid[0, 0], source, ANGLE_MODE, heading, True)
-                top_axis = self.figure.axes[-1]
-                add_panel(grid[0, 1], source, LANDMARK_MODE, LANDMARK_MODE, True)
-                add_panel(grid[1, 0], source, DISTANCE_MODE, DISTANCE_MODE, True)
-                self._source_groups.append((top_axis, self.figure.axes[-1]))
-                self._add_panel_dividers(grid, _PANEL_DIVIDER_WIDTH if compare else _GROUP_DIVIDER_WIDTH)
+                grid = groups[i].subgridspec(row_count, 2, wspace=0.52, hspace=0.78)
+                axes = {}
+                if measurements:
+                    for index, (title, kind, part) in enumerate(measurements):
+                        row, col = divmod(index, 2)
+                        heading = f"{source}\n{title}" if compare and index == 0 else title
+                        if part == "positions" and component not in ("positions-speed", "speed"):
+                            part = component
+                        add_panel(grid[row, col], source, kind, heading, True,
+                                  "full" if row == row_count - 1 else "ticks", part=part)
+                        axes[index] = self.figure.axes[-1]
+                else:
+                    add_panel(grid[0, :], source, "empty", "Enable measurements to show traces", False, part="none")
+                    axes[0] = self.figure.axes[-1]
+                self._source_groups.append((axes[0], axes[max(axes)]))
+                if row_count == 2:
+                    self._add_panel_dividers(grid, _PANEL_DIVIDER_WIDTH if compare else _GROUP_DIVIDER_WIDTH)
             self._source_dividers = [
                 _plot_divider(self.figure, [0.04, 0.96], [0, 0], _GROUP_DIVIDER_WIDTH) for _ in sources[1:]
             ]
@@ -779,12 +926,122 @@ class JointGraphWidget(QWidget):
         vertical = _plot_divider(self.figure, [], [], width)
         self._panel_dividers.append((grid, horizontal, vertical))
 
+    def _update_legend_visibility(self) -> None:
+        overview = self._graph_mode == ALL_GRAPHS_MODE or self.show_all_sources.isChecked()
+        timeline_only = self.annotation_style.currentText() == "Timeline"
+        self.overview_traces.setVisible(overview and not timeline_only)
+        self.trace_legend.setHidden(timeline_only or (overview and not self.overview_traces.isChecked()))
+
+    def set_annotations(self, rows) -> None:
+        self._annotation_intervals = project_intervals(rows, self._times, self._frame_ids)
+        self._refresh_annotations()
+
+    def select_annotation(self, annotation_id) -> None:
+        annotation_id = annotation_id or ""
+        if annotation_id != self._selected_annotation:
+            self._selected_annotation = annotation_id
+            self._refresh_annotations()
+
+    def _refresh_annotations(self) -> None:
+        self._annotation_key = None
+        if self.annotation_style.currentText() != "Off":
+            self._draw_annotation_layers(self.axis.get_xlim())
+            self._plot_background = None
+            self.canvas.draw_idle()
+
+    def _change_annotation_style(self) -> None:
+        self._redraw_series()
+        self._change_annotation_options()
+
+    def _change_annotation_options(self) -> None:
+        self._refresh_annotations()
+        self.annotationOptionsChanged.emit({
+            "style": self.annotation_style.currentText(),
+            "auto": self._semantic_zoom.isChecked(),
+            "visible": {key: action.isChecked() for key, action in self._layer_actions.items()},
+        })
+
+    def _visible_annotation_layers(self, duration, *, include_selected=True):
+        settings = {**self._annotation_settings, "auto": self._semantic_zoom.isChecked(),
+                    "layers": {key: {**layer, "visible": self._layer_actions[key].isChecked()}
+                               for key, layer in self._annotation_settings["layers"].items()}}
+        shown = visible_layers(settings, duration)
+        if not include_selected or not self._selected_annotation:
+            return shown
+        selected = {item.layer for item in self._annotation_intervals
+                    if item.annotation_id == self._selected_annotation}
+        return tuple(key for key in LAYERS
+                     if key in shown or (key in selected and self._layer_actions[key].isChecked()))
+
+    def _draw_annotation_layers(self, limits) -> None:
+        style = self.annotation_style.currentText()
+        low, high = limits
+        key = style, limits
+        if key == self._annotation_key:
+            return
+        self._annotation_key = key
+        for artist in self._annotation_artists:
+            artist.remove()
+        self._annotation_artists.clear()
+        intervals = (*self._annotation_intervals, *self._quality_intervals)
+        if style == "Off":
+            self.annotation_hint.setText("")
+            return
+        layers = self._visible_annotation_layers(high - low)
+        timeline = style == "Timeline"
+        if timeline:
+            self.axis.set_ylim(len(layers) - 0.5 if layers else 0.5, -0.5)
+            self.axis.set_yticks(range(len(layers)), [LAYERS[layer] for layer in layers], fontsize=8)
+        self.annotation_hint.setText(
+            "No saved annotations or tracking spans" if not intervals
+            else "Zoom in for finer layers" if not layers else f"{len(layers)} layers enabled at this zoom"
+        )
+        self.annotation_hint.setToolTip(self.annotation_hint.text())
+        by_layer = defaultdict(list)
+        regular_layers = set(self._visible_annotation_layers(high - low, include_selected=False))
+        for item in intervals:
+            selected = bool(item.annotation_id and item.annotation_id == self._selected_annotation)
+            if (item.layer in layers and (selected or item.layer in regular_layers)
+                    and item.end > low and item.start <= high):
+                by_layer[item.layer].append(item)
+        for row, layer in enumerate(layers):
+            appearance = self._annotation_settings["layers"][layer]
+            depth = tuple(LAYERS).index(layer)
+            groups = defaultdict(list)
+            for item in by_layer[layer]:
+                selected = bool(item.annotation_id and item.annotation_id == self._selected_annotation)
+                groups[interval_color(item, appearance), selected].append(item)
+            for axis in self._panels:
+                y = (row - 0.35, 0.7) if timeline else (0.04 + depth * 0.045, 0.92 - depth * 0.09)
+                transform = axis.transData if timeline else axis.get_xaxis_transform()
+                for (color, selected), spans in groups.items():
+                    bottom, height = y
+                    vertices = [[(item.start, bottom), (item.end, bottom),
+                                 (item.end, bottom + height), (item.start, bottom + height)] for item in spans]
+                    artist = PolyCollection(
+                        vertices,
+                        transform=transform, facecolor=color, alpha=0.85 if timeline else appearance["opacity"],
+                        edgecolor="#242424" if selected else color,
+                        linewidth=1.5 if selected else 0.45,
+                        zorder=0.15 + depth * 0.09 + (0.02 if selected else 0),
+                    )
+                    axis.add_collection(artist, autolim=False)
+                    self._annotation_artists.append(artist)
+                    if timeline:
+                        for item in spans:
+                            start, end = max(item.start, low), min(item.end, high)
+                            if end - start > (high - low) * max(0.04, len(item.label) * 0.009):
+                                self._annotation_artists.append(axis.text(
+                                    (start + end) / 2, row, item.label, ha="center", va="center",
+                                    fontsize=8, color="white", clip_on=True,
+                                ))
+
     def _adjust_plot_margins(self) -> None:
         width = max(1, self.canvas.width())
         height = max(1, self.canvas.height())
         top_space = 54 if len(self.figure.axes) > 1 else 38
         self.figure.subplots_adjust(
-            left=min(0.29, max(0.11, 72 / width)), right=0.96,
+            left=min(0.33, max(0.11, (118 if self.annotation_style.currentText() == "Timeline" else 72) / width)), right=0.96,
             bottom=min(0.24, 45 / height), top=1 - min(0.22, top_space / height),
             wspace=0.52, hspace=0.78,
         )
@@ -797,8 +1054,7 @@ class JointGraphWidget(QWidget):
             bottom_left = grid[1, 0].get_position(self.figure)
             # Leave space for right-hand Y labels and any upper-row time caption.
             x = top_left.x1 + (top_right.x0 - top_left.x1) / 3
-            gutter = 3 if self._graph_mode == ALL_GRAPHS_MODE else 2
-            y = bottom_left.y1 + (top_left.y0 - bottom_left.y1) / gutter
+            y = (bottom_left.y1 + top_left.y0) / 2
             horizontal.set_data([0.04, 0.96], [y, y])
             vertical.set_data([x, x], [bottom_left.y0, top_left.y1])
 
@@ -817,9 +1073,9 @@ class JointGraphWidget(QWidget):
     def _draw_panel(self, panel: _AnglePanel, xlim: tuple[float, float], title: str) -> None:
         axis = panel.axis
         self._panels[axis] = panel
-        position_axes = self._motion_axes(panel.source) if panel.component == "positions" and panel.values else ""
+        position_axes = self._motion_axes(panel.source) if panel.component in ("positions", "velocity", "acceleration") and panel.values else ""
         _style_panel(axis, title, self._axis_label(panel), panel.compact, panel.time_axis, position_axes, self._time_label)
-        if panel.kind == ANGLE_MODE:
+        if panel.kind == ANGLE_MODE and panel.component in ("", "angles"):
             axis.set_ylim(0, 180)
         axis.set_xlim(*xlim)
         if not any(np.isfinite(values).any() for values in panel.values.values()):
@@ -1004,7 +1260,8 @@ class JointGraphWidget(QWidget):
 
     def _can_render_ahead(self) -> bool:
         return (
-            self._link_video and self.canvas.isVisible() and not self.window().isMinimized()
+            self._link_video and self.annotation_style.currentText() == "Off"
+            and self.canvas.isVisible() and not self.window().isMinimized()
             and self._plot_background is not None
             and all(axis.get_xscale() == axis.get_yscale() == "linear" for axis in self._panels)
         )
@@ -1030,10 +1287,10 @@ class JointGraphWidget(QWidget):
                     position, axis.get_title(), axis.get_ylabel(),
                     (self._window_y_limits(window, panel) or axis.get_ylim()) if self.auto_y.isChecked() else axis.get_ylim(),
                     axis.texts[0].get_text() if axis.texts else "",
-                    tuple((line.get_color(), line.get_linestyle(), window.values[axis][column])
+                    tuple((line.get_color(), line.get_linestyle(), *window.values[axis][column])
                           for column, line in panel.lines.items() if line.get_visible()),
                     panel.compact, panel.time_axis,
-                    self._motion_axes(panel.source) if panel.component == "positions" and panel.values else "",
+                    self._motion_axes(panel.source) if panel.component in ("positions", "velocity", "acceleration") and panel.values else "",
                     self._time_label,
                 )
                 for (axis, panel), position in zip(self._panels.items(), positions)
@@ -1043,7 +1300,7 @@ class JointGraphWidget(QWidget):
             try:
                 self._window_image = _PLOT_RENDERER.submit(
                     _draw_window_image, size, dpi, self.figure.get_facecolor(), window.limits,
-                    window.times, panels, self._window_marker(window),
+                    panels, self._window_marker(window),
                     tuple((line.get_xdata(), line.get_ydata(), line.get_linewidth())
                           for line in self.figure.artists if isinstance(line, Line2D)),
                 )
@@ -1058,10 +1315,10 @@ class JointGraphWidget(QWidget):
              tuple(column for column, line in panel.lines.items() if line.get_visible()))
             for panel in self._panels.values()
         )
-        key = (tuple(float(value) for value in limits), visibility)
-        cached = self._trace_window_cache.get(key)
+        cache_key = (tuple(float(value) for value in limits), visibility)
+        cached = self._trace_window_cache.get(cache_key)
         if cached is not None:
-            self._trace_window_cache.move_to_end(key)
+            self._trace_window_cache.move_to_end(cache_key)
             return cached
         start = self._ordered_times.searchsorted(limits[0], side="left")
         stop = self._ordered_times.searchsorted(limits[1], side="right")
@@ -1073,18 +1330,24 @@ class JointGraphWidget(QWidget):
             drawing_rows = self._time_rows[drawing_rows]
         slices = {}
         bounds = {}
+        times = self._times[drawing_rows]
         for axis, panel in self._panels.items():
-            slices[axis] = {column: panel.values[column][drawing_rows] for column in panel.lines}
+            slices[axis] = {}
             for column, line in panel.lines.items():
-                if line.get_visible() and stop > start:
+                if not line.get_visible():
+                    continue
+                values = panel.values[column][drawing_rows]
+                kept = extrema_samples(values)
+                slices[axis][column] = times[kept], values[kept]
+                if stop > start:
                     values = panel.values[column][rows]
                     finite = values[np.isfinite(values)]
                     if len(finite):
                         key = self._scale_group(panel)
                         low, high = bounds.get(key, (np.inf, -np.inf))
                         bounds[key] = (min(low, float(finite.min())), max(high, float(finite.max())))
-        result = _TraceWindow(limits, stop - start, self._times[drawing_rows], slices, bounds)
-        self._trace_window_cache[key] = result
+        result = _TraceWindow(limits, stop - start, slices, bounds)
+        self._trace_window_cache[cache_key] = result
         while len(self._trace_window_cache) > 6:
             self._trace_window_cache.popitem(last=False)
         return result
@@ -1149,6 +1412,7 @@ class JointGraphWidget(QWidget):
         duration = high - low
         self.detail_window_label.setText(f"{low:.3f}–{high:.3f} s ({duration:.3f} s visible)")
         limits = (low, high)
+        self._draw_annotation_layers(limits)
         window = self._next_window
         image = None
         if window is None or window.limits != limits:
@@ -1166,7 +1430,7 @@ class JointGraphWidget(QWidget):
         for axis, panel in self._panels.items():
             trace_count += len(panel.lines)
             for column, line in panel.lines.items():
-                line.set_data(window.times, window.values[axis][column])
+                line.set_data(*window.values[axis].get(column, ([], [])))
                 line.set_marker(marker)
                 if line.get_visible():
                     active_count += 1
@@ -1307,7 +1571,13 @@ class JointGraphWidget(QWidget):
         return "(" + ", ".join(f"{value:.3f}" for value in values) + ")"
 
     def _axis_label(self, panel: _AnglePanel) -> str:
+        if panel.kind == "empty":
+            return ""
         if panel.kind == ANGLE_MODE:
+            if panel.component == "omega":
+                return "Angular velocity (°/s)"
+            if panel.component == "alpha":
+                return "Angular acceleration (°/s²)"
             return "Angle (°)" if panel.compact else ANGLE_AXIS_LABELS.get(panel.source, "Joint angle (°)")
         unit = MOTION_SOURCES.get(panel.source, ("", ""))[1]
         if panel.compact and panel.source == SAVED_SOURCE:
@@ -1316,6 +1586,10 @@ class JointGraphWidget(QWidget):
             return f"Distance ({unit})"
         if panel.component == "speed":
             return f"Speed ({unit}/s)"
+        if panel.component == "velocity":
+            return f"Velocity ({unit}/s)"
+        if panel.component == "acceleration":
+            return f"Acceleration ({unit}/s²)"
         axes = self._motion_axes(panel.source).upper() if panel.component == "positions" else panel.component.upper()
         return f"{axes} position ({unit})"
 
@@ -1419,6 +1693,13 @@ class JointGraphWidget(QWidget):
                 self.navigationStarted.emit()
             return
         if event.button == 1:
+            if self.annotation_style.currentText() == "Timeline" and event.ydata is not None:
+                layers = self._visible_annotation_layers(np.ptp(self.axis.get_xlim()))
+                row = round(event.ydata)
+                if 0 <= row < len(layers):
+                    item = next((span for span in reversed(self._annotation_intervals)
+                                 if span.layer == layers[row] and span.start <= event.xdata < span.end), None)
+                    self.select_annotation(item.annotation_id if item else None)
             self._seek_timestamp(event.xdata)
 
     def _seek_timestamp(self, time: float) -> None:

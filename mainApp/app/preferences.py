@@ -1,18 +1,19 @@
 """Local desktop preferences and the shared Mode 0 participant picker."""
 from __future__ import annotations
 
-from dataclasses import asdict, dataclass, replace
+from dataclasses import asdict, dataclass, field, replace
 import logging
 from pathlib import Path
 import re
 
 from PyQt6.QtGui import QColor
 from PyQt6.QtWidgets import (
-    QColorDialog, QComboBox, QDialog, QDialogButtonBox, QFormLayout, QHBoxLayout,
-    QInputDialog, QLabel, QListWidget, QMessageBox, QPushButton, QSpinBox, QVBoxLayout, QWidget,
+    QCheckBox, QColorDialog, QComboBox, QDialog, QDialogButtonBox, QFormLayout, QHBoxLayout,
+    QInputDialog, QLabel, QListWidget, QMessageBox, QPushButton, QSpinBox, QTabWidget, QVBoxLayout, QWidget,
 )
 
 from aihumo.storage import load_json, save_json_atomic
+from .timeline_layers import LAYERS, SEMANTIC_COLORS, timeline_preferences, valid_thresholds
 
 LOGGER = logging.getLogger(__name__)
 DEFAULT_FRAME_JUMP = 50
@@ -32,6 +33,7 @@ class DesktopPreferences:
     participants: tuple[str, ...] = ()
     default_participant: str = ""
     default_frame_jump: int = DEFAULT_FRAME_JUMP
+    timeline: dict = field(default_factory=timeline_preferences)
 
 
 class PreferenceStore:
@@ -58,6 +60,7 @@ class PreferenceStore:
                 **colors, participants=participants,
                 default_participant=default if default in participants else "",
                 default_frame_jump=jump if type(jump) is int and 1 <= jump <= MAX_FRAME_JUMP else DEFAULT_FRAME_JUMP,
+                timeline=timeline_preferences(data.get("timeline")),
             )
         except (OSError, ValueError):
             LOGGER.exception("Could not read desktop settings from %s", path)
@@ -114,7 +117,14 @@ class PreferencesDialog(QDialog):
         self.store = store
         self.setWindowTitle("AIHuMo Settings")
         self.resize(490, 470)
-        layout = QVBoxLayout(self)
+        outer = QVBoxLayout(self)
+        tabs = QTabWidget()
+        outer.addWidget(tabs)
+        general = QWidget()
+        tabs.addTab(general, "General")
+        layout = QVBoxLayout(general)
+        self.timeline = TimelineSettingsPanel(store.values.timeline)
+        tabs.addTab(self.timeline, "Timeline & graphs")
         colors = QFormLayout()
         self.color_buttons = {}
         for name, title in COLOR_FIELDS.items():
@@ -151,7 +161,7 @@ class PreferencesDialog(QDialog):
         buttons = QDialogButtonBox(QDialogButtonBox.StandardButton.Save | QDialogButtonBox.StandardButton.Cancel)
         buttons.accepted.connect(self._save)
         buttons.rejected.connect(self.reject)
-        layout.addWidget(buttons)
+        outer.addWidget(buttons)
 
     def _set_color(self, field: str, color: str) -> None:
         button = self.color_buttons[field]
@@ -187,10 +197,15 @@ class PreferencesDialog(QDialog):
             self._refresh_defaults(self.default_participant.currentData())
 
     def _save(self) -> None:
+        timeline = self.timeline.values()
+        if not valid_thresholds(timeline["thresholds"]):
+            QMessageBox.warning(self, "Semantic zoom", "Use Activity/Exercise ≥ Set ≥ Repetition ≥ Phase.")
+            return
         values = DesktopPreferences(
             **{name: button.text() for name, button in self.color_buttons.items()},
             participants=self._ids(), default_participant=self.default_participant.currentData(),
             default_frame_jump=self.default_frame_jump.value(),
+            timeline=timeline,
         )
         try:
             self.store.save(values)
@@ -198,3 +213,97 @@ class PreferencesDialog(QDialog):
             QMessageBox.warning(self, "Could not save settings", str(exc))
             return
         self.accept()
+
+
+class TimelineSettingsPanel(QWidget):
+    def __init__(self, settings):
+        super().__init__()
+        layout = QVBoxLayout(self)
+        form = QFormLayout()
+        layout.addLayout(form)
+        self.style = QComboBox()
+        self.style.addItems(("Off", "Overlay", "Timeline"))
+        form.addRow("Default view", self.style)
+        self.auto = QCheckBox("Use visible duration")
+        form.addRow("Semantic zoom", self.auto)
+        self.thresholds = []
+        for label in ("Activity / Exercise", "Set", "Repetition", "Phase / Form / Quality"):
+            field = QSpinBox()
+            field.setRange(1, 86400)
+            field.setSuffix(" s")
+            form.addRow(label, field)
+            self.thresholds.append(field)
+        self.category = QComboBox()
+        for key, label in LAYERS.items():
+            self.category.addItem(label, key)
+        form.addRow("Layer appearance", self.category)
+        self.layer_stack = QTabWidget()
+        self.layer_stack.tabBar().hide()
+        layout.addWidget(self.layer_stack, 1)
+        self.fields = {}
+        for key, label in LAYERS.items():
+            page = QWidget()
+            rows = QFormLayout(page)
+            visible, alternate = QCheckBox("Show layer"), QCheckBox("Alternate neighboring intervals")
+            rows.addRow(visible)
+            rows.addRow(alternate)
+            primary, secondary = self._color_button(), self._color_button()
+            rows.addRow("Primary", primary)
+            rows.addRow("Alternate", secondary)
+            alternate.toggled.connect(secondary.setEnabled)
+            opacity = QSpinBox()
+            opacity.setRange(0, 100)
+            opacity.setSuffix(" %")
+            rows.addRow("Overlay opacity", opacity)
+            semantic = {}
+            for state in SEMANTIC_COLORS.get(key, {}):
+                semantic[state] = button = self._color_button()
+                rows.addRow(state.replace("_", " ").title(), button)
+            self.fields[key] = visible, alternate, primary, secondary, opacity, semantic
+            self.layer_stack.addTab(page, label)
+        self.category.currentIndexChanged.connect(self.layer_stack.setCurrentIndex)
+        layout.addWidget(QPushButton("Reset timeline settings", clicked=lambda: self._load(timeline_preferences())))
+        self._load(timeline_preferences(settings))
+
+    def _color_button(self):
+        button = QPushButton()
+
+        def choose():
+            color = QColorDialog.getColor(QColor(button.text()), self, "Timeline color")
+            if color.isValid():
+                self._set_color(button, color.name())
+
+        button.clicked.connect(choose)
+        return button
+
+    @staticmethod
+    def _set_color(button, color):
+        button.setText(color)
+        button.setStyleSheet(f"border-left: 16px solid {color}; padding-left: 5px;")
+
+    def _load(self, settings):
+        self.style.setCurrentText(settings["style"])
+        self.auto.setChecked(settings["auto"])
+        for spin, seconds in zip(self.thresholds, settings["thresholds"]):
+            spin.setValue(seconds)
+        for key, (visible, alternate, primary, secondary, opacity, semantic) in self.fields.items():
+            layer = settings["layers"][key]
+            visible.setChecked(layer["visible"])
+            alternate.setChecked(layer["alternate"])
+            secondary.setEnabled(layer["alternate"])
+            self._set_color(primary, layer["color"])
+            self._set_color(secondary, layer["alternate_color"])
+            opacity.setValue(round(layer["opacity"] * 100))
+            for name, button in semantic.items():
+                self._set_color(button, layer["semantic"][name])
+
+    def values(self):
+        return {
+            "style": self.style.currentText(), "auto": self.auto.isChecked(),
+            "thresholds": [field.value() for field in self.thresholds],
+            "layers": {key: {"visible": visible.isChecked(), "alternate": alternate.isChecked(),
+                             "color": primary.text(), "alternate_color": secondary.text(),
+                             "opacity": opacity.value() / 100,
+                             "semantic": {name: button.text() for name, button in semantic.items()}}
+                       for key, (visible, alternate, primary, secondary, opacity, semantic) in self.fields.items()},
+        }
