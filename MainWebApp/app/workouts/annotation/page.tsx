@@ -16,7 +16,7 @@ export default function WorkoutAnnotationPage() {
       <PageHero
         eyebrow="Workout annotation"
         title="Turn workout footage into structured training data."
-        description="Load a video locally, mark activity, sets, repetitions, phases, and form intervals, then export the same portable annotation JSON used by the mobile workflow."
+        description="Load a video locally from desktop or phone, mark activity, sets, repetitions, phases, and form intervals, then export portable AIHuMo annotation JSON."
         actions={[{ href: "/workouts", label: "Back to workout studio", secondary: true }]}
         aside={
           <div className="grid gap-3 sm:grid-cols-3 lg:grid-cols-1">

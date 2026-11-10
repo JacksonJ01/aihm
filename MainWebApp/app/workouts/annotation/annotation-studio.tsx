@@ -10,6 +10,7 @@ import {
   Play,
   RotateCcw,
   Save,
+  Search,
   Trash2,
   Upload,
 } from "lucide-react";
@@ -199,7 +200,9 @@ export default function AnnotationStudio() {
   const [sessionMetadata, setSessionMetadata] = useState<Record<string, unknown>>({});
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [rangeStart, setRangeStart] = useState<number | null>(null);
-  const [jumpFrames, setJumpFrames] = useState(15);
+  const [jumpFrames, setJumpFrames] = useState(50);
+  const [playbackSpeed, setPlaybackSpeed] = useState(1);
+  const [timelineFilter, setTimelineFilter] = useState("");
   const [isPlaying, setIsPlaying] = useState(false);
   const [dirty, setDirty] = useState(false);
   const [status, setStatus] = useState("No video loaded. Select a custom video to begin.");
@@ -209,6 +212,21 @@ export default function AnnotationStudio() {
     () => [...annotations].sort((left, right) => left.startFrame - right.startFrame || LAYER_ORDER[left.layer] - LAYER_ORDER[right.layer] || left.endFrameExclusive - right.endFrameExclusive),
     [annotations],
   );
+
+  const frameRowsByFrame = useMemo(() => new Map(frameRows.map((row, index) => [toFrame(row.frameIndex ?? row.frame_id ?? index), row])), [frameRows]);
+  const timeSortedRows = useMemo(
+    () => [...frameRows].sort((left, right) => readNumber(left.timeElapsedS ?? left.timestampS ?? left.timestamp_s) - readNumber(right.timeElapsedS ?? right.timestampS ?? right.timestamp_s)),
+    [frameRows],
+  );
+  const visibleAnnotations = useMemo(() => {
+    const query = timelineFilter.trim().toLowerCase();
+    if (!query) return sortedAnnotations;
+    return sortedAnnotations.filter((annotation) => [
+      annotation.annotationId, LAYER_LABELS[annotation.layer], annotation.boundary, annotation.activity,
+      annotation.movementType, annotation.exercise, annotation.setNumber, annotation.repNumber,
+      annotation.phase, ...annotation.issueTypes, ...annotation.issueCategories, ...annotation.affectedJoints, annotation.notes,
+    ].join(" ").toLowerCase().includes(query));
+  }, [sortedAnnotations, timelineFilter]);
 
   const currentContext = useMemo(() => {
     const context = { activity: "N/A", movementType: "N/A", exercise: "N/A", setNumber: "N/A", repNumber: "N/A", phase: "N/A" };
@@ -225,10 +243,10 @@ export default function AnnotationStudio() {
   }, [currentFrame, sortedAnnotations]);
 
   const frameTime = useCallback((frame: number) => {
-    const row = frameRows[frame];
+    const row = frameRowsByFrame.get(toFrame(frame));
     if (row) return readNumber(row.timeElapsedS ?? row.timestampS ?? row.timestamp_s, frame / fps);
     return frame / fps;
-  }, [fps, frameRows]);
+  }, [fps, frameRowsByFrame]);
 
   const seekFrame = useCallback((requested: number) => {
     const maxFrame = Math.max(0, frameCount - 1 || Math.floor(durationS * fps));
@@ -368,7 +386,8 @@ export default function AnnotationStudio() {
   useEffect(() => {
     const handleKey = (event: KeyboardEvent) => {
       const target = event.target as HTMLElement | null;
-      if (target && (["INPUT", "TEXTAREA", "SELECT"].includes(target.tagName) || target.isContentEditable)) return;
+      const editingText = target && (["INPUT", "TEXTAREA", "SELECT"].includes(target.tagName) || target.isContentEditable);
+      if (editingText && !["ArrowLeft", "ArrowRight", "ArrowUp", "ArrowDown"].includes(event.key)) return;
       if (event.key === "ArrowLeft") { event.preventDefault(); seekFrame(currentFrame - 1); }
       if (event.key === "ArrowRight") { event.preventDefault(); seekFrame(currentFrame + 1); }
       if (event.key === "ArrowUp") { event.preventDefault(); seekFrame(currentFrame - jumpFrames); }
@@ -377,12 +396,19 @@ export default function AnnotationStudio() {
       if (event.key.toLowerCase() === "s") { event.preventDefault(); saveRange(); }
       if (event.key === " ") {
         event.preventDefault();
-        if (videoRef.current?.paused) void videoRef.current.play(); else videoRef.current?.pause();
+        if (videoRef.current?.paused) {
+          videoRef.current.playbackRate = playbackSpeed;
+          void videoRef.current.play();
+        } else videoRef.current?.pause();
       }
     };
     window.addEventListener("keydown", handleKey);
     return () => window.removeEventListener("keydown", handleKey);
-  }, [currentFrame, jumpFrames, saveRange, seekFrame]);
+  }, [currentFrame, jumpFrames, playbackSpeed, saveRange, seekFrame]);
+
+  useEffect(() => {
+    if (videoRef.current) videoRef.current.playbackRate = playbackSpeed;
+  }, [playbackSpeed]);
 
   useEffect(() => () => {
     if (videoUrlRef.current) URL.revokeObjectURL(videoUrlRef.current);
@@ -415,27 +441,31 @@ export default function AnnotationStudio() {
   const handleMetadata = useCallback(() => {
     const duration = Number(videoRef.current?.duration) || 0;
     setDurationS(duration);
-    setFrameCount(frameRows.length ? frameRows.length : Math.max(1, Math.ceil(duration * fps)));
+    const highestFrame = frameRows.reduce((highest, row, index) => Math.max(highest, toFrame(row.frameIndex ?? row.frame_id ?? index)), -1);
+    setFrameCount(highestFrame >= 0 ? highestFrame + 1 : Math.max(1, Math.ceil(duration * fps)));
     setCurrentFrame(0);
-  }, [fps, frameRows.length]);
+  }, [fps, frameRows]);
 
   const handleTimeUpdate = useCallback(() => {
     const video = videoRef.current;
     if (!video) return;
     const time = Number(video.currentTime) || 0;
     if (frameRows.length) {
-      let nearestIndex = 0;
-      let nearestDistance = Number.POSITIVE_INFINITY;
-      frameRows.forEach((row, index) => {
-        const rowTime = readNumber(row.timeElapsedS ?? row.timestampS ?? row.timestamp_s);
-        const distance = Math.abs(rowTime - time);
-        if (distance < nearestDistance) { nearestDistance = distance; nearestIndex = toFrame(row.frameIndex ?? row.frame_id ?? index); }
-      });
-      setCurrentFrame(nearestIndex);
+      let low = 0;
+      let high = timeSortedRows.length - 1;
+      while (low < high) {
+        const middle = Math.floor((low + high) / 2);
+        if (readNumber(timeSortedRows[middle].timeElapsedS ?? timeSortedRows[middle].timestampS ?? timeSortedRows[middle].timestamp_s) < time) low = middle + 1;
+        else high = middle;
+      }
+      const before = timeSortedRows[Math.max(0, low - 1)];
+      const after = timeSortedRows[low];
+      const nearest = before && Math.abs(readNumber(before.timeElapsedS ?? before.timestampS ?? before.timestamp_s) - time) <= Math.abs(readNumber(after.timeElapsedS ?? after.timestampS ?? after.timestamp_s) - time) ? before : after;
+      setCurrentFrame(toFrame(nearest.frameIndex ?? nearest.frame_id ?? 0));
     } else {
       setCurrentFrame(Math.max(0, Math.round(time * fps)));
     }
-  }, [fps, frameRows]);
+  }, [fps, frameRows.length, timeSortedRows]);
 
   const resetWorkspace = useCallback(() => {
     if (videoUrlRef.current) URL.revokeObjectURL(videoUrlRef.current);
@@ -531,6 +561,7 @@ export default function AnnotationStudio() {
             <button type="button" className="button-primary gap-2 !px-5 !py-2" onClick={() => videoRef.current?.paused ? void videoRef.current.play() : videoRef.current?.pause()} disabled={!videoName}>{isPlaying ? <Pause className="h-4 w-4" /> : <Play className="h-4 w-4" />}{isPlaying ? "Pause" : "Play"}</button>
             <button type="button" className="button-secondary !px-4 !py-2" onClick={() => seekFrame(currentFrame + 1)}><ChevronRight className="h-4 w-4" /></button>
             <label className="ml-0 flex items-center gap-2 text-sm text-muted-foreground sm:ml-2">Jump<input className="w-20 rounded-xl border border-black/10 bg-background/70 px-3 py-2 text-foreground outline-none" type="number" min={1} value={jumpFrames} onChange={(event) => setJumpFrames(Math.max(1, Number(event.target.value) || 1))} /></label>
+            <label className="flex items-center gap-2 text-sm text-muted-foreground">Speed<select className="rounded-xl border border-black/10 bg-background/70 px-3 py-2 text-foreground outline-none" value={playbackSpeed} onChange={(event) => setPlaybackSpeed(Math.max(0.1, Math.min(5, Number(event.target.value) || 1)))}><option value={0.25}>0.25×</option><option value={0.5}>0.5×</option><option value={1}>1×</option><option value={2}>2×</option><option value={3}>3×</option><option value={5}>5×</option></select></label>
             <button type="button" className="button-secondary !px-4 !py-2" onClick={() => seekFrame(currentFrame - jumpFrames)}>− Jump</button>
             <button type="button" className="button-secondary !px-4 !py-2" onClick={() => seekFrame(currentFrame + jumpFrames)}>+ Jump</button>
           </div>
@@ -570,13 +601,13 @@ export default function AnnotationStudio() {
       </section>
 
       <section className="surface-card px-5 py-6 md:px-8">
-        <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between"><div><div className="text-sm font-semibold uppercase tracking-[0.2em] text-muted-foreground">Temporal annotations</div><h2 className="mt-2 text-2xl font-semibold tracking-[-0.03em] text-foreground">Review and edit the timeline.</h2></div><span className="text-sm text-muted-foreground">Rows are ordered by frame and layer.</span></div>
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between"><div><div className="text-sm font-semibold uppercase tracking-[0.2em] text-muted-foreground">Temporal annotations</div><h2 className="mt-2 text-2xl font-semibold tracking-[-0.03em] text-foreground">Review and edit the timeline.</h2></div><div className="flex flex-wrap items-center gap-2"><label className="flex items-center gap-2 rounded-full border border-black/10 bg-background/70 px-3 py-2 text-sm text-muted-foreground"><Search className="h-4 w-4" /><input className="w-36 bg-transparent text-foreground outline-none placeholder:text-muted-foreground sm:w-52" value={timelineFilter} onChange={(event) => setTimelineFilter(event.target.value)} placeholder="Filter timeline" aria-label="Filter timeline" /></label><span className="text-sm text-muted-foreground">{visibleAnnotations.length} shown</span></div></div>
         <div className="mt-5 max-h-[55vh] overflow-auto rounded-[22px] border border-black/10">
           <table className="min-w-[1240px] w-full border-collapse text-left text-xs">
             <thead className="sticky top-0 z-10 bg-secondary text-muted-foreground"><tr>{["ID","Layer","Boundary","Frames","Activity","Movement","Exercise","Set","Rep","Phase","Issue type","Affected joints","Notes"].map((heading) => <th key={heading} className="border-b border-black/10 px-3 py-3 font-semibold uppercase tracking-[0.12em]">{heading}</th>)}</tr></thead>
-            <tbody>{sortedAnnotations.length ? sortedAnnotations.map((annotation) => <tr key={annotation.annotationId} onClick={() => loadAnnotation(annotation)} className={`cursor-pointer transition-colors hover:bg-primary/5 ${selectedId === annotation.annotationId ? "bg-primary/10 shadow-[inset_3px_0_0_hsl(var(--primary))]" : ""}`}>{[
+            <tbody>{visibleAnnotations.length ? visibleAnnotations.map((annotation) => <tr key={annotation.annotationId} onClick={() => loadAnnotation(annotation)} className={`cursor-pointer transition-colors hover:bg-primary/5 ${selectedId === annotation.annotationId ? "bg-primary/10 shadow-[inset_3px_0_0_hsl(var(--primary))]" : ""}`}>{[
               annotation.annotationId, LAYER_LABELS[annotation.layer], annotation.boundary === "single_frame" ? "Single frame" : "Frame interval", `${annotation.startFrame}–${annotation.endFrameExclusive - 1}`, annotation.activity, annotation.movementType, formatExercise(annotation.exercise), annotation.setNumber, annotation.repNumber, annotation.phase, annotation.issueTypes.join(", "), annotation.affectedJoints.join(", "), annotation.notes,
-            ].map((value,index) => <td key={`${annotation.annotationId}-${index}`} className="whitespace-nowrap border-b border-black/10 px-3 py-3 text-foreground/80">{value || ""}</td>)}</tr>) : <tr><td colSpan={13} className="px-5 py-10 text-center text-sm text-muted-foreground">No annotations yet. Load a video, mark a range, and save the first layer.</td></tr>}</tbody>
+            ].map((value,index) => <td key={`${annotation.annotationId}-${index}`} className="whitespace-nowrap border-b border-black/10 px-3 py-3 text-foreground/80">{value || ""}</td>)}</tr>) : <tr><td colSpan={13} className="px-5 py-10 text-center text-sm text-muted-foreground">{annotations.length ? "No annotations match this filter." : "No annotations yet. Load a video, mark a range, and save the first layer."}</td></tr>}</tbody>
           </table>
         </div>
       </section>
