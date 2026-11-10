@@ -18,12 +18,31 @@
       </div>
       <div class="header-actions">
         <span id="saveState" class="status-pill">Not saved</span>
+        <button id="settingsButton" class="secondary-button header-button" type="button">Settings</button>
         <button id="installButton" class="secondary-button hidden" type="button">Install app</button>
       </div>
     </header>
 
     <main class="page-shell">
-      <section class="card import-card">
+      <nav class="mobile-nav" aria-label="Workspace sections">
+        <button class="mobile-nav-button active" type="button" data-scroll-target="openWorkCard">Open</button>
+        <button class="mobile-nav-button" type="button" data-scroll-target="videoCard">Annotate</button>
+        <button class="mobile-nav-button" type="button" data-scroll-target="tableCard">Timeline</button>
+        <button class="mobile-nav-button" type="button" id="resumeNavButton">Resume</button>
+      </nav>
+
+      <section id="resumeCard" class="card resume-card hidden">
+        <div class="section-heading">
+          <div>
+            <h2>Resume mobile work</h2>
+            <p class="helper-text">The browser remembers annotation state and timing metadata. For privacy, it does not store the video file itself.</p>
+          </div>
+          <button id="clearResumeButton" class="ghost-button" type="button">Clear history</button>
+        </div>
+        <div id="resumeList" class="resume-list"></div>
+      </section>
+
+      <section id="openWorkCard" class="card import-card">
         <div class="section-heading">
           <div>
             <h2>Open work</h2>
@@ -48,8 +67,19 @@
         <p id="importStatus" class="helper-text">No video loaded. Select a video to begin.</p>
       </section>
 
+      <section class="context-card card">
+        <div class="context-metrics">
+          <span><strong id="annotationCount">0</strong> annotations</span>
+          <span><strong id="activeLayerCount">0</strong> active at frame</span>
+          <span><strong id="contextExercise">N/A</strong> exercise</span>
+          <span><strong id="contextSet">N/A</strong> set</span>
+          <span><strong id="contextRep">N/A</strong> rep</span>
+        </div>
+        <p id="contextSummary" class="helper-text">Load a video or session to see the current annotation context.</p>
+      </section>
+
       <section class="workspace-grid">
-        <section class="card video-card">
+        <section id="videoCard" class="card video-card">
           <div class="card-title-row">
             <h2>Video and frame navigation</h2>
             <span id="frameBadge" class="frame-badge">Frame —</span>
@@ -68,6 +98,16 @@
             <button id="nextFrameButton" class="icon-button" type="button" aria-label="Next frame">▶</button>
             <label class="compact-field">Jump
               <input id="jumpFramesInput" type="number" min="1" step="1" value="15" />
+            </label>
+            <label class="compact-field">Speed
+              <select id="playbackSpeedSelect">
+                <option value="0.25">0.25×</option>
+                <option value="0.5">0.5×</option>
+                <option value="1" selected>1×</option>
+                <option value="2">2×</option>
+                <option value="3">3×</option>
+                <option value="5">5×</option>
+              </select>
             </label>
             <button id="backJumpButton" class="secondary-button" type="button">− Jump</button>
             <button id="forwardJumpButton" class="secondary-button" type="button">+ Jump</button>
@@ -179,13 +219,14 @@
         </section>
       </section>
 
-      <section class="card table-card">
+      <section id="tableCard" class="card table-card">
         <div class="card-title-row">
           <div>
             <h2>Temporal annotations</h2>
             <p class="helper-text">Rows are grouped by frame order and layer. Tap a row to edit it.</p>
           </div>
           <div class="table-actions">
+            <input id="annotationFilterInput" class="table-filter" type="search" placeholder="Filter timeline" aria-label="Filter timeline" />
             <button id="saveJsonButton" class="secondary-button" type="button">Save JSON</button>
             <button id="downloadSessionButton" class="secondary-button" type="button">Export session</button>
           </div>
@@ -215,6 +256,41 @@
           </table>
         </div>
       </section>
+
+      <dialog id="settingsDialog" class="settings-dialog">
+        <form method="dialog" id="settingsForm">
+          <div class="dialog-heading">
+            <div>
+              <p class="eyebrow dark-eyebrow">AIHuMo</p>
+              <h2>Mobile settings</h2>
+              <p class="helper-text">These preferences stay on this device and do not change the desktop feature data.</p>
+            </div>
+            <button class="icon-button" value="cancel" aria-label="Close settings">×</button>
+          </div>
+          <div class="settings-grid">
+            <label>Default jump size
+              <input id="settingsJumpInput" type="number" min="1" max="5000" step="1" />
+            </label>
+            <label>Default playback speed
+              <select id="settingsSpeedSelect"><option value="0.25">0.25×</option><option value="0.5">0.5×</option><option value="1">1×</option><option value="2">2×</option><option value="3">3×</option><option value="5">5×</option></select>
+            </label>
+            <label>Theme
+              <select id="settingsThemeSelect"><option value="light">Light</option><option value="dark">Dark</option><option value="high-contrast">High contrast</option></select>
+            </label>
+            <label class="checkbox-field"><input id="settingsLoopInput" type="checkbox" /> Loop video</label>
+            <label class="checkbox-field"><input id="settingsArrowInput" type="checkbox" /> Arrow keys always navigate</label>
+            <label class="checkbox-field"><input id="settingsAutosaveInput" type="checkbox" /> Autosave mobile workspace</label>
+          </div>
+          <div class="color-settings">
+            <label>Current-frame border <input id="settingsFrameColorInput" type="color" /></label>
+            <label>Annotation accent <input id="settingsAnnotationColorInput" type="color" /></label>
+          </div>
+          <div class="dialog-actions">
+            <button id="resetSettingsButton" class="ghost-button" value="reset" type="button">Reset defaults</button>
+            <button class="primary-button" value="save" type="submit">Save settings</button>
+          </div>
+        </form>
+      </dialog>
 
       <section class="card limitation-card">
         <h2>Mobile data note</h2>

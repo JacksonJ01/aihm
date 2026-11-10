@@ -14,6 +14,11 @@ This is a browser/PWA client for annotating a custom video from a phone or table
 - Editing and clearing an existing temporal annotation row.
 - JSON import for existing annotations or an optional session/feature timing export.
 - Separate annotation/session JSON export so the original feature Parquet remains unchanged.
+- Touch-first navigation with compact Open / Annotate / Timeline / Resume sections.
+- Device-local settings for jump size, playback speed (capped at 5×), loop behavior, arrow-key navigation, theme, and annotation colors.
+- Local resume history with autosaved annotation state and frame timing metadata. The browser never stores the source video in local storage.
+- Timeline search/filter and a current-frame context summary showing the active layers, exercise, set, and repetition.
+- Variable-timestamp navigation uses the imported frame timing rows when available rather than assuming a fixed 30 FPS.
 - PWA installation and app-shell caching when hosted over HTTPS.
 
 ## Run locally
@@ -34,6 +39,12 @@ Then open `http://localhost:4173` in a browser. Service workers and install prom
 4. Choose a video from the phone's files/photos.
 5. Optionally choose a session JSON or existing annotation JSON.
 6. Save or export the annotation JSON when finished.
+
+The **Settings** button controls the phone workflow independently of the desktop preferences. If you return later, choose the same video and use **Resume** to restore the locally saved annotations and frame position. Browsers intentionally do not allow a web app to silently reopen a previously selected video file, so the video must be selected again after a browser restart.
+
+## Hosting on a phone
+
+`localhost` means the device running the server. A phone cannot normally open the laptop's `localhost` directly. For a quick same-network test, run the static server bound to the laptop's network interface, then open the laptop's local IP and port from the phone. For regular use, deploy this folder to an HTTPS static host; the HTTPS URL is the address that becomes the installed phone app. MediaPipe processing and canonical Parquet creation remain desktop/server responsibilities in this mobile-first design.
 
 ## Data boundary
 

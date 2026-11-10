@@ -1,4 +1,4 @@
-const CACHE_NAME = "aihumo-mobile-annotation-v1";
+const CACHE_NAME = "aihumo-mobile-annotation-v2";
 const APP_SHELL = ["./", "./index.html", "./styles.css", "./app.js", "./manifest.webmanifest", "./icon.svg"];
 
 self.addEventListener("install", (event) => {
