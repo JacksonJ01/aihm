@@ -8,23 +8,54 @@ on:
         required: true
         default: 0.1.2
       release_tag:
-        description: Existing GitHub release tag to receive the packages
+        description: GitHub release tag to create or update
         required: true
         default: desktop-v0.1.2
+  push:
+    tags:
+      - desktop-v*
 
 permissions:
   contents: read
 
-env:
-  PACKAGE_VERSION: ${{ inputs.version }}
-  RELEASE_TAG: ${{ inputs.release_tag }}
-
 concurrency:
-  group: desktop-release-${{ inputs.release_tag }}
+  group: desktop-release-${{ github.ref_name }}
 
 jobs:
+  prepare:
+    name: Resolve release metadata
+    runs-on: ubuntu-22.04
+    outputs:
+      version: ${{ steps.metadata.outputs.version }}
+      tag: ${{ steps.metadata.outputs.tag }}
+    steps:
+      - name: Resolve and validate version and tag
+        id: metadata
+        shell: bash
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          REF_NAME: ${{ github.ref_name }}
+          INPUT_VERSION: ${{ inputs.version }}
+          INPUT_TAG: ${{ inputs.release_tag }}
+        run: |
+          if [[ "$EVENT_NAME" == "workflow_dispatch" ]]; then
+            version="$INPUT_VERSION"
+            tag="$INPUT_TAG"
+          else
+            tag="$REF_NAME"
+            version="${tag#desktop-v}"
+          fi
+
+          [[ "$version" =~ ^[0-9]+\.[0-9]+\.[0-9]+([.-][0-9A-Za-z.-]+)?$ ]]
+          [[ "$tag" == "desktop-v$version" ]]
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+          echo "tag=$tag" >> "$GITHUB_OUTPUT"
+
   build:
     name: ${{ matrix.name }}
+    needs: prepare
+    env:
+      PACKAGE_VERSION: ${{ needs.prepare.outputs.version }}
     strategy:
       fail-fast: false
       matrix:
@@ -91,7 +122,7 @@ jobs:
           from urllib.request import urlopen
 
           url = ("https://storage.googleapis.com/mediapipe-models/pose_landmarker/"
-                 "pose_landmarker_full/float16/latest/pose_landmarker_full.task")
+                 "pose_landmarker_full/float16/1/pose_landmarker_full.task")
           with urlopen(url, timeout=60) as response:
               model = response.read()
           assert sha256(model).hexdigest() == "4eaa5eb7a98365221087693fcc286334cf0858e2eb6e15b506aa4a7ecdcec4ad"
@@ -136,15 +167,18 @@ jobs:
       - name: Upload workflow package
         uses: actions/upload-artifact@v4
         with:
-          name: aihumo-${{ matrix.platform }}-${{ matrix.architecture }}-v${{ inputs.version }}
+          name: aihumo-${{ matrix.platform }}-${{ matrix.architecture }}-v${{ needs.prepare.outputs.version }}
           path: mainApp/AI Humo EXE pipeline/${{ matrix.platform }}/release/*
           if-no-files-found: error
           retention-days: 14
 
   windows:
     name: Windows x64
+    needs: prepare
     runs-on: windows-2022
     timeout-minutes: 60
+    env:
+      PACKAGE_VERSION: ${{ needs.prepare.outputs.version }}
     steps:
       - name: Check out source
         uses: actions/checkout@v4
@@ -204,35 +238,41 @@ jobs:
       - name: Upload workflow package
         uses: actions/upload-artifact@v4
         with:
-          name: aihumo-Windows-x64-v${{ inputs.version }}
+          name: aihumo-Windows-x64-v${{ needs.prepare.outputs.version }}
           path: mainApp/AI Humo EXE pipeline/release/*
           if-no-files-found: error
           retention-days: 14
 
   publish:
     name: Attach packages to release
-    needs: [build, windows]
+    needs: [prepare, build, windows]
     runs-on: ubuntu-22.04
     permissions:
       contents: write
+    env:
+      PACKAGE_VERSION: ${{ needs.prepare.outputs.version }}
+      RELEASE_TAG: ${{ needs.prepare.outputs.tag }}
     steps:
       - name: Download native packages
         uses: actions/download-artifact@v4
         with:
-          pattern: aihumo-*-v${{ inputs.version }}
+          pattern: aihumo-*-v${{ needs.prepare.outputs.version }}
           path: release-assets
           merge-multiple: true
 
-      - name: Confirm target release exists
+      - name: Create or confirm target release
         env:
           GH_TOKEN: ${{ github.token }}
           GH_REPO: ${{ github.repository }}
         run: |
           [[ "$RELEASE_TAG" == "desktop-v$PACKAGE_VERSION" ]]
-          gh release view "$RELEASE_TAG"
+          gh release view "$RELEASE_TAG" || gh release create "$RELEASE_TAG" \
+            --target "$GITHUB_SHA" \
+            --title "AIHuMo Data Studio v$PACKAGE_VERSION" \
+            --generate-notes
 
       - name: Publish native packages
         env:
           GH_TOKEN: ${{ github.token }}
           GH_REPO: ${{ github.repository }}
-        run: gh release upload "$RELEASE_TAG" release-assets/*
+        run: gh release upload "$RELEASE_TAG" release-assets/* --clobber
