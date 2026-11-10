@@ -2,11 +2,11 @@
 
 AIHuMo provides separate native packages for:
 
-- Intel Mac x64: `AIHuMo-Data-Studio-macOS-Intel-v0.1.1.zip`
-- Apple Silicon arm64: `AIHuMo-Data-Studio-macOS-Apple-Silicon-v0.1.1.zip`
+- Intel Mac x64: `AIHuMo-Data-Studio-macOS-Intel-v<VERSION>.zip`
+- Apple Silicon arm64: `AIHuMo-Data-Studio-macOS-Apple-Silicon-v<VERSION>.zip`
 
 Download the matching file from the
-[v0.1.1 release](https://github.com/JacksonJ01/aihm/releases/tag/desktop-v0.1.1),
+[AIHuMo releases page](https://github.com/JacksonJ01/aihumo/releases),
 extract it, and open `AIHuMo Data Studio.app`.
 
 These preview packages are not yet signed or notarized. If macOS blocks the
@@ -19,7 +19,7 @@ Use Python 3.11 on the target Mac. From this directory:
 
 ```bash
 chmod +x build_portable.sh
-./build_portable.sh 0.1.1
+./build_portable.sh 0.1.2
 ```
 
 The script detects `x86_64` or `arm64`, builds a native `.app`, packages it with

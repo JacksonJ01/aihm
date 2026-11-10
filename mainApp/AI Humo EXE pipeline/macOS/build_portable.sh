@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-version="${1:-0.1.1}"
+version="${1:-0.1.2}"
 if [[ ! "$version" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
   echo "Version must use MAJOR.MINOR.PATCH." >&2
   exit 2
@@ -10,7 +10,7 @@ fi
 script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 pipeline_dir="$(cd "$script_dir/.." && pwd)"
 project_root="$(cd "$pipeline_dir/.." && pwd)"
-if [[ ! -f "$project_root/aihumo_data_studio.py" && -f "$project_root/mainApp/aihumo_data_studio.py" ]]; then
+if [[ ! -f "$project_root/main.py" && -f "$project_root/mainApp/main.py" ]]; then
   project_root="$project_root/mainApp"
 fi
 python_bin="${PYTHON_BIN:-python3}"

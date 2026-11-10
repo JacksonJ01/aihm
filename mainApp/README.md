@@ -2,11 +2,19 @@
 
 AIHuMo is a modular computer-vision and machine-learning system for exercise recognition, repetition analysis, movement-phase detection, form analysis, and future real-time inference.
 
-The [GitHub releases page](https://github.com/JacksonJ01/aihm/releases)
+The [GitHub releases page](https://github.com/JacksonJ01/aihumo/releases)
 provides portable Windows x64, macOS Intel x64, macOS Apple Silicon arm64, and
 Linux x64 downloads. See the
 [platform packaging guide](AI%20Humo%20EXE%20pipeline/README.md) to choose a
 download or build it from source.
+
+Launch the source application only through the canonical root entry point:
+
+```powershell
+.\.venv\Scripts\python.exe main.py
+```
+
+Files inside `app/` are package modules and should not be run directly.
 
 ## Version 0.4 architecture
 

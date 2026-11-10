@@ -1,7 +1,7 @@
 # Linux x64
 
-Download `AIHuMo-Data-Studio-Linux-x64-v0.1.1.tar.gz` from the
-[v0.1.1 release](https://github.com/JacksonJ01/aihm/releases/tag/desktop-v0.1.1),
+Download the current Linux x64 tarball from the
+[AIHuMo releases page](https://github.com/JacksonJ01/aihumo/releases),
 verify its SHA-256 sidecar, and extract it. Then run:
 
 ```bash
@@ -19,7 +19,7 @@ Use Python 3.11 on Linux x64. From this directory:
 
 ```bash
 chmod +x build_portable.sh
-./build_portable.sh 0.1.1
+./build_portable.sh 0.1.2
 ```
 
 GitHub Actions builds and smoke-tests the package on Ubuntu 22.04 x64.

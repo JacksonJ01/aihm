@@ -9,7 +9,7 @@ artifacts, and local settings are intentionally excluded.
 From PowerShell in this directory:
 
 ```powershell
-.\build_portable.ps1 -Version 0.1.1
+.\build_portable.ps1 -Version 0.1.2
 ```
 
 The script uses `..\.venv` by default. Pass `-PythonExe` to use a separate build

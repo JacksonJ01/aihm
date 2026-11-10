@@ -12,7 +12,7 @@ AI Humo EXE pipeline/
 ```
 
 Published downloads and SHA-256 files are available on the
-[AIHuMo releases page](https://github.com/JacksonJ01/aihm/releases).
+[AIHuMo releases page](https://github.com/JacksonJ01/aihumo/releases).
 The platform folders contain the native build recipe and platform-specific
 instructions. Large generated packages are ignored by Git and remain release
 assets rather than source files.
