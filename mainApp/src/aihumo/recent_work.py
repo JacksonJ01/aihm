@@ -46,7 +46,7 @@ class RecentWorkStore:
 
     def add(
         self, *, name: str, files: dict[str, str], identifiers: dict[str, Any] | None = None,
-        last_frame: int | None = None,
+        last_frame: int | None = None, state: dict[str, Any] | None = None,
     ) -> dict[str, Any]:
         entry = {
             "name": str(name),
@@ -55,6 +55,8 @@ class RecentWorkStore:
         }
         if last_frame is not None:
             entry["lastFrame"] = last_frame
+        if state:
+            entry["workspaceState"] = dict(state)
         identity = self._identity(entry["files"])
         self.items = [
             item for item in self.items
@@ -89,10 +91,19 @@ class RecentWorkStore:
                 return False
             previous = entry.get("lastFrame")
             entry["lastFrame"] = frame
+            state = entry.get("workspaceState")
+            previous_state_frame = state.get("currentFrame") if isinstance(state, dict) else None
+            if isinstance(state, dict):
+                state["currentFrame"] = frame
             try:
                 self.save()
             except OSError:
                 entry["lastFrame"] = previous
+                if isinstance(state, dict):
+                    if previous_state_frame is None:
+                        state.pop("currentFrame", None)
+                    else:
+                        state["currentFrame"] = previous_state_frame
                 raise
             return True
         return False

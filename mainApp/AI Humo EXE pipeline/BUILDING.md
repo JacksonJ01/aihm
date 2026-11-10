@@ -9,7 +9,7 @@ checkpoints, test artifacts, and local settings are intentionally excluded.
 From PowerShell in this directory:
 
 ```powershell
-.\build_portable.ps1 -Version 0.1.4
+.\build_portable.ps1 -Version 0.1.5
 ```
 
 The script uses `..\.venv` by default. Pass `-PythonExe` to use a separate build
@@ -28,7 +28,7 @@ Each Unix platform has its own native script and README:
 
 PyInstaller packages must be built on the operating system they target. The
 GitHub Actions workflow `.github/workflows/desktop-cross-platform.yml` runs all
-four native builds. Pushing a tag such as `desktop-v0.1.4` validates the version,
+four native builds. Pushing a tag such as `desktop-v0.1.5` validates the version,
 builds and smoke-tests every package, creates the matching GitHub Release, and
 uploads each package with its SHA-256 checksum.
 

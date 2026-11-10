@@ -9,7 +9,7 @@ import re
 from PyQt6.QtGui import QColor
 from PyQt6.QtWidgets import (
     QCheckBox, QColorDialog, QComboBox, QDialog, QDialogButtonBox, QFileDialog, QFormLayout,
-    QHBoxLayout, QInputDialog, QLabel, QListWidget, QLineEdit, QMessageBox, QPushButton, QSpinBox,
+    QDoubleSpinBox, QHBoxLayout, QInputDialog, QLabel, QListWidget, QLineEdit, QMessageBox, QPushButton, QSpinBox,
     QTabWidget, QVBoxLayout, QWidget,
 )
 
@@ -36,6 +36,37 @@ class DesktopPreferences:
     starter_video: str = ""
     setup_completed: bool = False
     default_frame_jump: int = DEFAULT_FRAME_JUMP
+    default_camera_name: str = "camera_01"
+    default_viewpoint: str = ""
+    default_playback_speed: float = 1.0
+    playback_loop: bool = False
+    autosave_interval_s: int = 30
+    interface_scale: float = 1.0
+    theme: str = "System"
+    arrow_keys_navigate: bool = True
+    loop_selected_interval: bool = False
+    pause_at_annotation_boundary: bool = False
+    default_visualization_mode: str = "2D"
+    show_skeleton_by_default: bool = True
+    show_midpoint_overlay: bool = False
+    show_angle_overlay: bool = False
+    raw_curves_by_default: bool = True
+    graph_time_window_s: float = 1.0
+    zoom_to_annotation: bool = True
+    smoothing_method: str = "None"
+    smoothing_window: int = 5
+    confidence_threshold: float = 0.5
+    missing_landmark_policy: str = "Show gaps"
+    derivative_gap_policy: str = "Do not cross gaps"
+    generate_graph_previews: bool = True
+    export_graph_images: bool = False
+    output_versioning: str = "Create new version"
+    default_annotation_layer: str = "activity_state"
+    default_activity_state: str = "active"
+    default_phase_schema: str = "eccentric, concentric, hold"
+    auto_update_context: bool = True
+    inherit_annotation_context: bool = True
+    default_form_label: str = "unlabeled"
     timeline: dict = field(default_factory=timeline_preferences)
 
 
@@ -60,6 +91,21 @@ class PreferenceStore:
             default = data.get("default_participant")
             starter_video = data.get("starter_video")
             jump = data.get("default_frame_jump")
+            def text(name, fallback=""):
+                value = data.get(name, fallback)
+                return value.strip() if isinstance(value, str) else fallback
+
+            def bounded_number(name, fallback, low, high, integer=False):
+                value = data.get(name, fallback)
+                if integer and type(value) is int:
+                    return max(low, min(high, value))
+                if not integer and isinstance(value, (int, float)) and not isinstance(value, bool):
+                    return max(low, min(high, float(value)))
+                return fallback
+
+            def flag(name, fallback):
+                return data.get(name, fallback) if type(data.get(name, fallback)) is bool else fallback
+
             self.values = DesktopPreferences(
                 **colors, participants=participants,
                 default_participant=default if default in participants else "",
@@ -68,6 +114,37 @@ class PreferenceStore:
                 # brand-new settings file should show the optional first-run flow.
                 setup_completed=bool(data.get("setup_completed", True)),
                 default_frame_jump=jump if type(jump) is int and 1 <= jump <= MAX_FRAME_JUMP else DEFAULT_FRAME_JUMP,
+                default_camera_name=text("default_camera_name", "camera_01"),
+                default_viewpoint=text("default_viewpoint"),
+                default_playback_speed=bounded_number("default_playback_speed", 1.0, 0.1, 5.0),
+                playback_loop=flag("playback_loop", False),
+                autosave_interval_s=bounded_number("autosave_interval_s", 30, 0, 3600, integer=True),
+                interface_scale=bounded_number("interface_scale", 1.0, 0.75, 2.0),
+                theme=text("theme", "System") if text("theme", "System") in {"System", "Light", "Dark", "High contrast"} else "System",
+                arrow_keys_navigate=flag("arrow_keys_navigate", True),
+                loop_selected_interval=flag("loop_selected_interval", False),
+                pause_at_annotation_boundary=flag("pause_at_annotation_boundary", False),
+                default_visualization_mode=text("default_visualization_mode", "2D") if text("default_visualization_mode", "2D") in {"2D", "3D"} else "2D",
+                show_skeleton_by_default=flag("show_skeleton_by_default", True),
+                show_midpoint_overlay=flag("show_midpoint_overlay", False),
+                show_angle_overlay=flag("show_angle_overlay", False),
+                raw_curves_by_default=flag("raw_curves_by_default", True),
+                graph_time_window_s=bounded_number("graph_time_window_s", 1.0, 0.05, 86400.0),
+                zoom_to_annotation=flag("zoom_to_annotation", True),
+                smoothing_method=text("smoothing_method", "None") if text("smoothing_method", "None") in {"None", "Moving average", "Exponential moving average", "Savitzky-Golay"} else "None",
+                smoothing_window=bounded_number("smoothing_window", 5, 3, 101, integer=True),
+                confidence_threshold=bounded_number("confidence_threshold", 0.5, 0.0, 1.0),
+                missing_landmark_policy=text("missing_landmark_policy", "Show gaps"),
+                derivative_gap_policy=text("derivative_gap_policy", "Do not cross gaps"),
+                generate_graph_previews=flag("generate_graph_previews", True),
+                export_graph_images=flag("export_graph_images", False),
+                output_versioning=text("output_versioning", "Create new version"),
+                default_annotation_layer=text("default_annotation_layer", "activity_state"),
+                default_activity_state=text("default_activity_state", "active"),
+                default_phase_schema=text("default_phase_schema", "eccentric, concentric, hold"),
+                auto_update_context=flag("auto_update_context", True),
+                inherit_annotation_context=flag("inherit_annotation_context", True),
+                default_form_label=text("default_form_label", "unlabeled"),
                 timeline=timeline_preferences(data.get("timeline")),
             )
         except (OSError, ValueError):
@@ -267,6 +344,80 @@ class PreferencesDialog(QDialog):
         self.default_frame_jump.setToolTip("Starting Up/Down jump in Mode 1 and the Interactive Graph Viewer.")
         defaults.addRow("Default frame jump", self.default_frame_jump)
         layout.addLayout(defaults)
+
+        # Keep the existing General and Timeline pages stable while exposing
+        # the broader desktop controls as additive preference pages.  Every
+        # control has a safe default so older settings files remain valid.
+        playback = QWidget(); tabs.addTab(playback, "Playback")
+        playback_form = QFormLayout(playback)
+        self.default_camera_name = QLineEdit(store.values.default_camera_name)
+        self.default_viewpoint = QLineEdit(store.values.default_viewpoint)
+        self.default_playback_speed = QDoubleSpinBox(); self.default_playback_speed.setRange(0.1, 5.0); self.default_playback_speed.setSingleStep(0.1); self.default_playback_speed.setValue(store.values.default_playback_speed); self.default_playback_speed.setSuffix("×")
+        self.playback_loop = QCheckBox("Loop playback"); self.playback_loop.setChecked(store.values.playback_loop)
+        self.autosave_interval_s = QSpinBox(); self.autosave_interval_s.setRange(0, 3600); self.autosave_interval_s.setValue(store.values.autosave_interval_s); self.autosave_interval_s.setSuffix(" s")
+        self.interface_scale = QDoubleSpinBox(); self.interface_scale.setRange(0.75, 2.0); self.interface_scale.setSingleStep(0.05); self.interface_scale.setValue(store.values.interface_scale); self.interface_scale.setSuffix("×")
+        self.theme = QComboBox(); self.theme.addItems(("System", "Light", "Dark", "High contrast")); self.theme.setCurrentText(store.values.theme)
+        playback_form.addRow("Default camera name", self.default_camera_name)
+        playback_form.addRow("Default viewpoint", self.default_viewpoint)
+        playback_form.addRow("Default playback speed", self.default_playback_speed)
+        playback_form.addRow(self.playback_loop)
+        playback_form.addRow("Autosave interval", self.autosave_interval_s)
+        playback_form.addRow("Interface scale", self.interface_scale)
+        playback_form.addRow("Theme", self.theme)
+
+        visualization = QWidget(); tabs.addTab(visualization, "Visualization")
+        visualization_form = QFormLayout(visualization)
+        self.default_visualization_mode = QComboBox(); self.default_visualization_mode.addItems(("2D", "3D")); self.default_visualization_mode.setCurrentText(store.values.default_visualization_mode)
+        self.show_skeleton_by_default = QCheckBox("Show skeleton by default"); self.show_skeleton_by_default.setChecked(store.values.show_skeleton_by_default)
+        self.show_midpoint_overlay = QCheckBox("Show midpoint overlay by default"); self.show_midpoint_overlay.setChecked(store.values.show_midpoint_overlay)
+        self.show_angle_overlay = QCheckBox("Show angle overlay by default"); self.show_angle_overlay.setChecked(store.values.show_angle_overlay)
+        self.raw_curves_by_default = QCheckBox("Show raw curves by default"); self.raw_curves_by_default.setChecked(store.values.raw_curves_by_default)
+        self.graph_time_window_s = QDoubleSpinBox(); self.graph_time_window_s.setRange(0.05, 86400.0); self.graph_time_window_s.setDecimals(2); self.graph_time_window_s.setValue(store.values.graph_time_window_s); self.graph_time_window_s.setSuffix(" s")
+        self.zoom_to_annotation = QCheckBox("Zoom graphs to the selected annotation"); self.zoom_to_annotation.setChecked(store.values.zoom_to_annotation)
+        self.arrow_keys_navigate = QCheckBox("Arrow keys always navigate frames"); self.arrow_keys_navigate.setChecked(store.values.arrow_keys_navigate)
+        self.loop_selected_interval = QCheckBox("Loop the selected interval"); self.loop_selected_interval.setChecked(store.values.loop_selected_interval)
+        self.pause_at_annotation_boundary = QCheckBox("Pause at annotation boundaries"); self.pause_at_annotation_boundary.setChecked(store.values.pause_at_annotation_boundary)
+        visualization_form.addRow("Default viewer", self.default_visualization_mode)
+        for control in (self.show_skeleton_by_default, self.show_midpoint_overlay, self.show_angle_overlay,
+                        self.raw_curves_by_default, self.zoom_to_annotation, self.arrow_keys_navigate,
+                        self.loop_selected_interval, self.pause_at_annotation_boundary):
+            visualization_form.addRow(control)
+        visualization_form.addRow("Default graph window", self.graph_time_window_s)
+
+        data_page = QWidget(); tabs.addTab(data_page, "Data & processing")
+        data_form = QFormLayout(data_page)
+        self.smoothing_method = QComboBox(); self.smoothing_method.addItems(("None", "Moving average", "Exponential moving average", "Savitzky-Golay")); self.smoothing_method.setCurrentText(store.values.smoothing_method)
+        self.smoothing_window = QSpinBox(); self.smoothing_window.setRange(3, 101); self.smoothing_window.setSingleStep(2); self.smoothing_window.setValue(store.values.smoothing_window)
+        self.confidence_threshold = QDoubleSpinBox(); self.confidence_threshold.setRange(0.0, 1.0); self.confidence_threshold.setSingleStep(0.05); self.confidence_threshold.setValue(store.values.confidence_threshold)
+        self.missing_landmark_policy = QComboBox(); self.missing_landmark_policy.addItems(("Show gaps", "Interpolate for display", "Hide invalid frames")); self.missing_landmark_policy.setCurrentText(store.values.missing_landmark_policy)
+        self.derivative_gap_policy = QComboBox(); self.derivative_gap_policy.addItems(("Do not cross gaps", "Allow documented interpolation")); self.derivative_gap_policy.setCurrentText(store.values.derivative_gap_policy)
+        self.generate_graph_previews = QCheckBox("Generate graph previews after Mode 0"); self.generate_graph_previews.setChecked(store.values.generate_graph_previews)
+        self.export_graph_images = QCheckBox("Export PNG/SVG graph images"); self.export_graph_images.setChecked(store.values.export_graph_images)
+        self.output_versioning = QComboBox(); self.output_versioning.addItems(("Create new version", "Require confirmation", "Reuse only explicitly selected version")); self.output_versioning.setCurrentText(store.values.output_versioning)
+        data_form.addRow("Smoothing", self.smoothing_method)
+        data_form.addRow("Smoothing window", self.smoothing_window)
+        data_form.addRow("Confidence threshold", self.confidence_threshold)
+        data_form.addRow("Missing landmark policy", self.missing_landmark_policy)
+        data_form.addRow("Derivative gap policy", self.derivative_gap_policy)
+        data_form.addRow(self.generate_graph_previews)
+        data_form.addRow(self.export_graph_images)
+        data_form.addRow("Output versioning", self.output_versioning)
+
+        annotation_page = QWidget(); tabs.addTab(annotation_page, "Annotation")
+        annotation_form = QFormLayout(annotation_page)
+        self.default_annotation_layer = QComboBox(); self.default_annotation_layer.addItems(("activity_state", "set", "rep", "phase", "form_interval", "other")); self.default_annotation_layer.setCurrentText(store.values.default_annotation_layer)
+        self.default_activity_state = QComboBox(); self.default_activity_state.addItems(("active", "idle", "transition")); self.default_activity_state.setCurrentText(store.values.default_activity_state)
+        self.default_phase_schema = QLineEdit(store.values.default_phase_schema)
+        self.auto_update_context = QCheckBox("Update context automatically over saved frames"); self.auto_update_context.setChecked(store.values.auto_update_context)
+        self.inherit_annotation_context = QCheckBox("Inherit parent set/rep context"); self.inherit_annotation_context.setChecked(store.values.inherit_annotation_context)
+        self.default_form_label = QComboBox(); self.default_form_label.addItems(("unlabeled", "good", "acceptable", "poor")); self.default_form_label.setCurrentText(store.values.default_form_label)
+        annotation_form.addRow("Default annotation layer", self.default_annotation_layer)
+        annotation_form.addRow("Default activity state", self.default_activity_state)
+        annotation_form.addRow("Default phases", self.default_phase_schema)
+        annotation_form.addRow(self.auto_update_context)
+        annotation_form.addRow(self.inherit_annotation_context)
+        annotation_form.addRow("Default form label", self.default_form_label)
+
         buttons = QDialogButtonBox(QDialogButtonBox.StandardButton.Save | QDialogButtonBox.StandardButton.Cancel)
         buttons.accepted.connect(self._save)
         buttons.rejected.connect(self.reject)
@@ -313,7 +464,40 @@ class PreferencesDialog(QDialog):
         values = DesktopPreferences(
             **{name: button.text() for name, button in self.color_buttons.items()},
             participants=self._ids(), default_participant=self.default_participant.currentData(),
+            starter_video=self.store.values.starter_video,
+            setup_completed=self.store.values.setup_completed,
             default_frame_jump=self.default_frame_jump.value(),
+            default_camera_name=self.default_camera_name.text().strip(),
+            default_viewpoint=self.default_viewpoint.text().strip(),
+            default_playback_speed=self.default_playback_speed.value(),
+            playback_loop=self.playback_loop.isChecked(),
+            autosave_interval_s=self.autosave_interval_s.value(),
+            interface_scale=self.interface_scale.value(),
+            theme=self.theme.currentText(),
+            arrow_keys_navigate=self.arrow_keys_navigate.isChecked(),
+            loop_selected_interval=self.loop_selected_interval.isChecked(),
+            pause_at_annotation_boundary=self.pause_at_annotation_boundary.isChecked(),
+            default_visualization_mode=self.default_visualization_mode.currentText(),
+            show_skeleton_by_default=self.show_skeleton_by_default.isChecked(),
+            show_midpoint_overlay=self.show_midpoint_overlay.isChecked(),
+            show_angle_overlay=self.show_angle_overlay.isChecked(),
+            raw_curves_by_default=self.raw_curves_by_default.isChecked(),
+            graph_time_window_s=self.graph_time_window_s.value(),
+            zoom_to_annotation=self.zoom_to_annotation.isChecked(),
+            smoothing_method=self.smoothing_method.currentText(),
+            smoothing_window=self.smoothing_window.value(),
+            confidence_threshold=self.confidence_threshold.value(),
+            missing_landmark_policy=self.missing_landmark_policy.currentText(),
+            derivative_gap_policy=self.derivative_gap_policy.currentText(),
+            generate_graph_previews=self.generate_graph_previews.isChecked(),
+            export_graph_images=self.export_graph_images.isChecked(),
+            output_versioning=self.output_versioning.currentText(),
+            default_annotation_layer=self.default_annotation_layer.currentText(),
+            default_activity_state=self.default_activity_state.currentText(),
+            default_phase_schema=self.default_phase_schema.text().strip(),
+            auto_update_context=self.auto_update_context.isChecked(),
+            inherit_annotation_context=self.inherit_annotation_context.isChecked(),
+            default_form_label=self.default_form_label.currentText(),
             timeline=timeline,
         )
         try:

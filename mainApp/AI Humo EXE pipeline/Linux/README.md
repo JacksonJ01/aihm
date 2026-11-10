@@ -19,7 +19,7 @@ Use Python 3.11 on Linux x64. From this directory:
 
 ```bash
 chmod +x build_portable.sh
-./build_portable.sh 0.1.4
+./build_portable.sh 0.1.5
 ```
 
 GitHub Actions builds and smoke-tests the package on Ubuntu 22.04 x64.

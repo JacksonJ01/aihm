@@ -29,6 +29,7 @@ from .graph_viewer import open_graph_viewer
 from .common import suspend_other_reviews
 from .pose_viewer import PoseGraphViewer
 from .preferences import PreferencesDialog, PreferenceStore, StartupSetupDialog
+from .quality_review import QualityReviewDialog
 from .processing_resume import processing_fields
 from aihumo.recent_work import RecentWorkStore
 
@@ -189,6 +190,10 @@ class HomeWindow(QMainWindow):
         self.prepare_button.setToolTip("Save review measurements from existing landmarks without rerunning pose detection.")
         self.prepare_button.clicked.connect(self.prepare_existing_recording)
         buttons.addWidget(self.prepare_button, 2, 0)
+        self.quality_button = QPushButton("Quality Review")
+        self.quality_button.setToolTip("Inspect a saved feature Parquet without modifying it.")
+        self.quality_button.clicked.connect(self.open_quality_review)
+        buttons.addWidget(self.quality_button, 2, 1)
         self._prepare_process = None
         layout.addLayout(buttons)
         layout.addSpacing(20)
@@ -494,6 +499,11 @@ class HomeWindow(QMainWindow):
                 name=viewer.video_path.stem.removesuffix("_skeleton"),
                 files={"processedVideo": video, "featuresParquet": parquet},
                 last_frame=viewer.current_frame,
+                state={
+                    "mode": mode,
+                    "currentFrame": viewer.current_frame,
+                    "graphSource": getattr(getattr(viewer, "graph", None), "source_mode", ""),
+                },
             )
             self._refresh_resume()
         except OSError as exc:
@@ -588,6 +598,10 @@ class HomeWindow(QMainWindow):
             "This button is a navigation placeholder for the future Mode 5 Model Suite.",
         )
 
+    def open_quality_review(self):
+        dialog = QualityReviewDialog(self)
+        dialog.exec()
+
     def remember_window(self, window, result=None):
         window.closed.connect(self._clear_annotation_window)
         video_path = Path(result.processed_video_path) if result is not None else Path(window.video_path)
@@ -603,6 +617,12 @@ class HomeWindow(QMainWindow):
                 "annotationJson": str(annotation_json),
             },
             identifiers={key: window.metadata.get(key) for key in ("participant_id", "session_id", "video_id", "camera_id")},
+            last_frame=int(getattr(window, "current_frame", 0)),
+            state={
+                "mode": 1,
+                "currentFrame": int(getattr(window, "current_frame", 0)),
+                "unsavedChanges": bool(getattr(window, "_annotation_save_failed", False)),
+            },
         )
         self._select_mode(1)
 

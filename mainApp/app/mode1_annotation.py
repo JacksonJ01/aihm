@@ -725,6 +725,10 @@ class AnnotationStudio(ReviewWindow):
 
     def __init__(self, video_path: str | Path, parquet_path: str | Path, annotation_json_path: str | Path | None = None, metadata_path: str | Path | None = None, parent=None, *, frame_jump: int = DEFAULT_FRAME_JUMP, embedded: bool = False):
         super().__init__(parent)
+        owner = parent
+        while owner is not None and not hasattr(owner, "preferences"):
+            owner = owner.parentWidget()
+        self._preference_store = getattr(owner, "preferences", None)
         if embedded:
             self.setWindowFlags(Qt.WindowType.Widget)
         self._embedded = embedded
@@ -979,18 +983,22 @@ class AnnotationStudio(ReviewWindow):
         self.overlay_controls = overlay_controls = QHBoxLayout()
         self.overlay_button = QPushButton("Display Overlay")
         self.overlay_button.setCheckable(True)
+        prefs = getattr(getattr(self, "_preference_store", None), "values", None)
+        self.overlay_button.setChecked(bool(prefs and prefs.show_angle_overlay))
         self.overlay_button.setToolTip("Show left and right elbow, shoulder, hip, and knee angles by default.")
         self.overlay_button.toggled.connect(lambda: self._render_video_pixmap())
         overlay_controls.addWidget(self.overlay_button)
         self.skeleton_button = QPushButton("Show Skeleton")
         self.skeleton_button.setCheckable(True)
-        self.skeleton_button.setChecked(True)
+        self.skeleton_button.setChecked(True if prefs is None else prefs.show_skeleton_by_default)
         self.skeleton_button.setEnabled(not self._baked)
         self.skeleton_button.setToolTip("The matching clean video is unavailable or could not be verified." if self._baked
                                         else "Show the skeleton from saved image landmarks.")
         self.skeleton_button.toggled.connect(lambda: self._render_video_pixmap())
         overlay_controls.addWidget(self.skeleton_button)
         self.midpoint_button = midpoint_overlay_button(self.dataframe.columns, baked=self._midpoints_baked)
+        if prefs is not None:
+            self.midpoint_button.setChecked(prefs.show_midpoint_overlay)
         self.midpoint_button.toggled.connect(lambda: self._render_video_pixmap())
         overlay_controls.addWidget(self.midpoint_button)
         self.mirror_angles_button = QPushButton("Mirror selected graph angles")

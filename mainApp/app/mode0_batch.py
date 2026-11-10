@@ -244,8 +244,8 @@ class BatchSessionDialog(QDialog):
         self.preferences = preferences or PreferenceStore(PROJECT_ROOT / ".aihumo" / "settings.json")
         self.participant_picker = ParticipantPicker(self.preferences)
         self.participant_edit = self.participant_picker.edit
-        self.camera_id_edit = QLineEdit("camera_01")
-        self.camera_name_edit = QLineEdit()
+        self.camera_id_edit = QLineEdit(self.preferences.values.default_camera_name or "camera_01")
+        self.camera_name_edit = QLineEdit(self.preferences.values.default_camera_name)
         self.camera_angle_combo = QComboBox()
         for label, value in CAMERA_ANGLE_OPTIONS:
             self.camera_angle_combo.addItem(label, value)

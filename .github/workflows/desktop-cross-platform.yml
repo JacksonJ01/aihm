@@ -6,11 +6,11 @@ on:
       version:
         description: Package version without the leading v
         required: true
-        default: 0.1.4
+        default: 0.1.5
       release_tag:
         description: GitHub release tag to create or update
         required: true
-        default: desktop-v0.1.4
+        default: desktop-v0.1.5
   push:
     tags:
       - desktop-v*
@@ -122,10 +122,10 @@ jobs:
           from urllib.request import urlopen
 
           url = ("https://storage.googleapis.com/mediapipe-models/pose_landmarker/"
-                 "pose_landmarker_full/float16/1/pose_landmarker_full.task")
+                 "pose_landmarker_full/float16/latest/pose_landmarker_full.task")
           with urlopen(url, timeout=60) as response:
               model = response.read()
-          assert sha256(model).hexdigest() == "5134a3aad27a58b93da0088d431f366da362b44e3ccfbe3462b3827a839011b1"
+          assert sha256(model).hexdigest() == "4eaa5eb7a98365221087693fcc286334cf0858e2eb6e15b506aa4a7ecdcec4ad"
           path = Path("mainApp/full_model/pose_landmarker_full.task")
           path.parent.mkdir(parents=True, exist_ok=True)
           path.write_bytes(model)
@@ -204,9 +204,9 @@ jobs:
         run: |
           $model = "mainApp/full_model/pose_landmarker_full.task"
           New-Item -ItemType Directory -Force -Path (Split-Path $model) | Out-Null
-          Invoke-WebRequest -Uri "https://storage.googleapis.com/mediapipe-models/pose_landmarker/pose_landmarker_full/float16/1/pose_landmarker_full.task" -OutFile $model
+          Invoke-WebRequest -Uri "https://storage.googleapis.com/mediapipe-models/pose_landmarker/pose_landmarker_full/float16/latest/pose_landmarker_full.task" -OutFile $model
           $actual = (Get-FileHash -LiteralPath $model -Algorithm SHA256).Hash.ToLowerInvariant()
-          if ($actual -ne "5134a3aad27a58b93da0088d431f366da362b44e3ccfbe3462b3827a839011b1") { throw "Pose model checksum mismatch: $actual" }
+          if ($actual -ne "4eaa5eb7a98365221087693fcc286334cf0858e2eb6e15b506aa4a7ecdcec4ad") { throw "Pose model checksum mismatch: $actual" }
 
       - name: Smoke-test source imports
         shell: pwsh

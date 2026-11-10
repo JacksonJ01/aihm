@@ -23,9 +23,9 @@ class PlaybackSpeed(QObject):
     MAX_RATE = 5.0
     OPTIONS = tuple(i / 10 for i in range(1, 10)) + tuple(range(1, int(MAX_RATE) + 1))
 
-    def __init__(self, parent):
+    def __init__(self, parent, *, default=1.0):
         super().__init__(parent)
-        self.value = 1.0
+        self.value = min(self.MAX_RATE, max(0.1, float(default)))
 
     def control(self):
         combo = QComboBox()
@@ -437,7 +437,9 @@ class FramePlayback(QObject):
         self.playing = False
         self.holding = False
         self.direction = 1
-        self.speed = PlaybackSpeed(self)
+        preference_store = getattr(parent, "_preference_store", None)
+        default_speed = getattr(getattr(preference_store, "values", None), "default_playback_speed", 1.0)
+        self.speed = PlaybackSpeed(self, default=default_speed)
         self.speed.changed.connect(self._change_speed)
         self._rate = 1.0
         self._fixed_speed = None
