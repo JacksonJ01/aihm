@@ -4,16 +4,16 @@ This repository contains two separate applications.
 
 ## Main Web App
 
-The existing Next.js/TypeScript web application is in `Main Web App/`.
+The existing Next.js/TypeScript web application is in `MainWebApp/`.
 Run web-app commands from that directory:
 
 ```powershell
-cd "Main Web App"
+cd MainWebApp
 npm install
 npm run dev
 ```
 
-For Vercel, set the project **Root Directory** to `Main Web App`.
+For Vercel, set the project **Root Directory** to `MainWebApp`.
 
 ## Python Annotation App
 
