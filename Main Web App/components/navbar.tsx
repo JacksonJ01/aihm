@@ -53,33 +53,50 @@ export default function NavBar() {
   const [isProfileModalSubmitting, setIsProfileModalSubmitting] = useState(false);
   const [profileModalMessage, setProfileModalMessage] = useState<string | null>(null);
   const [profileValues, setProfileValues] = useState<ProfileModalValues>(EMPTY_PROFILE_MODAL_VALUES);
+  const [workoutOpen, setWorkoutOpen] = useState(false);
   const [programsOpen, setProgramsOpen] = useState(false);
   const [communityOpen, setCommunityOpen] = useState(false);
   const [profileOpen, setProfileOpen] = useState(false);
   const authRetryCooldownUntilRef = useRef(0);
   const lastAuthErrorLoggedAtRef = useRef(0);
+  const workoutCloseTimerRef = useRef<number | null>(null);
   const programsCloseTimerRef = useRef<number | null>(null);
   const communityCloseTimerRef = useRef<number | null>(null);
   const profileCloseTimerRef = useRef<number | null>(null);
+  const workoutRef = useRef<HTMLDivElement | null>(null);
   const programsRef = useRef<HTMLDivElement | null>(null);
   const communityRef = useRef<HTMLDivElement | null>(null);
   const profileRef = useRef<HTMLDivElement | null>(null);
   const mobileMenuRef = useRef<HTMLDivElement | null>(null);
   const mobileMenuButtonRef = useRef<HTMLButtonElement | null>(null);
+  const workoutBtnRef = useRef<HTMLButtonElement | null>(null);
   const programsBtnRef = useRef<HTMLButtonElement | null>(null);
   const communityBtnRef = useRef<HTMLButtonElement | null>(null);
   const profileBtnRef = useRef<HTMLButtonElement | null>(null);
   const [isMobile, setIsMobile] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [workoutMobileOpen, setWorkoutMobileOpen] = useState(false);
   const [programsMobileOpen, setProgramsMobileOpen] = useState(false);
   const [communityMobileOpen, setCommunityMobileOpen] = useState(false);
   const [profileMobileOpen, setProfileMobileOpen] = useState(false);
   const [activeMobileTop, setActiveMobileTop] = useState<string | null>(null);
   // Mobile toggles that close other dropdowns when opening
+  const toggleWorkoutMobile = () => {
+    setWorkoutMobileOpen(prev => {
+      const next = !prev;
+      if (next) {
+        setProgramsMobileOpen(false);
+        setCommunityMobileOpen(false);
+        setProfileMobileOpen(false);
+      }
+      return next;
+    });
+  };
   const toggleProgramsMobile = () => {
     setProgramsMobileOpen(prev => {
       const next = !prev;
       if (next) {
+        setWorkoutMobileOpen(false);
         setCommunityMobileOpen(false);
         setProfileMobileOpen(false);
       }
@@ -90,6 +107,7 @@ export default function NavBar() {
     setCommunityMobileOpen(prev => {
       const next = !prev;
       if (next) {
+        setWorkoutMobileOpen(false);
         setProgramsMobileOpen(false);
         setProfileMobileOpen(false);
       }
@@ -100,6 +118,7 @@ export default function NavBar() {
     setProfileMobileOpen(prev => {
       const next = !prev;
       if (next) {
+        setWorkoutMobileOpen(false);
         setProgramsMobileOpen(false);
         setCommunityMobileOpen(false);
       }
@@ -158,13 +177,23 @@ export default function NavBar() {
 
   const openProgramsMenu = () => {
     clearCloseTimer(programsCloseTimerRef);
+    setWorkoutOpen(false);
     setProgramsOpen(true);
+    setCommunityOpen(false);
+    setProfileOpen(false);
+  };
+
+  const openWorkoutMenu = () => {
+    clearCloseTimer(workoutCloseTimerRef);
+    setWorkoutOpen(true);
+    setProgramsOpen(false);
     setCommunityOpen(false);
     setProfileOpen(false);
   };
 
   const openCommunityMenu = () => {
     clearCloseTimer(communityCloseTimerRef);
+    setWorkoutOpen(false);
     setCommunityOpen(true);
     setProgramsOpen(false);
     setProfileOpen(false);
@@ -172,6 +201,7 @@ export default function NavBar() {
 
   const openProfileMenu = () => {
     clearCloseTimer(profileCloseTimerRef);
+    setWorkoutOpen(false);
     setProfileOpen(true);
     setProgramsOpen(false);
     setCommunityOpen(false);
@@ -438,6 +468,9 @@ export default function NavBar() {
     function onDoc(e: MouseEvent) {
       const target = e.target as Node;
 
+      if (workoutRef.current && !workoutRef.current.contains(target)) {
+        setWorkoutOpen(false);
+      }
       if (programsRef.current && !programsRef.current.contains(target)) {
         setProgramsOpen(false);
       }
@@ -455,6 +488,7 @@ export default function NavBar() {
         !mobileMenuButtonRef.current.contains(target)
       ) {
         setMobileMenuOpen(false);
+        setWorkoutMobileOpen(false);
         setProgramsMobileOpen(false);
         setCommunityMobileOpen(false);
         setProfileMobileOpen(false);
@@ -467,6 +501,7 @@ export default function NavBar() {
 
   useEffect(() => {
     return () => {
+      clearCloseTimer(workoutCloseTimerRef);
       clearCloseTimer(programsCloseTimerRef);
       clearCloseTimer(communityCloseTimerRef);
       clearCloseTimer(profileCloseTimerRef);
@@ -480,6 +515,7 @@ export default function NavBar() {
       setIsMobile(!!mq.matches);
       if (!mq.matches) {
         setMobileMenuOpen(false);
+        setWorkoutMobileOpen(false);
         setProgramsMobileOpen(false);
         setCommunityMobileOpen(false);
       }
@@ -538,20 +574,44 @@ export default function NavBar() {
         <div style={{ flex: '1 1 auto', display: 'flex', justifyContent: 'center' }}>
           {!isMobile ? (
             <nav style={{ display: 'flex', gap: 28, alignItems: 'center', flexWrap: 'nowrap' }}>
-              <Link
-                href="/workouts"
-                style={{
-                  ...navItemBase,
-                  boxShadow: startActive ? '0 18px 60px rgba(0,0,0,0.30)' : undefined,
-                  backgroundColor: startActive ? 'rgba(255,255,255,0.05)' : undefined,
-                  borderRadius: startActive ? 10 : undefined,
-                  color: startActive ? 'white' : undefined,
-                }}
-                onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.transform = 'translateY(-2px)'; }}
-                onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.transform = ''; }}
+              <div
+                ref={workoutRef}
+                style={{ position: 'relative' }}
+                onMouseEnter={openWorkoutMenu}
+                onMouseLeave={() => scheduleClose(workoutCloseTimerRef, setWorkoutOpen)}
               >
-                Start Workout
-              </Link>
+                <button
+                  ref={workoutBtnRef}
+                  onClick={(event) => {
+                    event.stopPropagation();
+                    openWorkoutMenu();
+                  }}
+                  aria-haspopup="menu"
+                  aria-expanded={workoutOpen}
+                  style={{
+                    ...navItemBase,
+                    boxShadow: startActive ? '0 18px 60px rgba(0,0,0,0.30)' : undefined,
+                    backgroundColor: startActive ? 'rgba(255,255,255,0.05)' : undefined,
+                    borderRadius: startActive ? 10 : undefined,
+                    color: startActive ? 'white' : undefined,
+                  }}
+                  onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.transform = 'translateY(-2px)'; }}
+                  onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.transform = ''; }}
+                >
+                  Workout ▾
+                </button>
+                <PortalMenu
+                  anchorRef={workoutBtnRef}
+                  isOpen={workoutOpen}
+                  onMouseEnter={openWorkoutMenu}
+                  onMouseLeave={() => scheduleClose(workoutCloseTimerRef, setWorkoutOpen)}
+                >
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                    <Link href="/workouts" onClick={() => setWorkoutOpen(false)} style={{ whiteSpace: 'nowrap', color: 'inherit' }}>Start Workout</Link>
+                    <Link href="/workouts/annotation" target="_blank" rel="noopener" onClick={() => setWorkoutOpen(false)} style={{ whiteSpace: 'nowrap', color: 'inherit' }}>Annotation Studio ↗</Link>
+                  </div>
+                </PortalMenu>
+              </div>
 
               <div
                 ref={programsRef}
@@ -794,13 +854,20 @@ export default function NavBar() {
         <div ref={mobileMenuRef} style={{ position: 'absolute', top: '100%', left: 0, right: 0, backgroundColor: '#000', color: 'white', padding: 12, boxShadow: '0 6px 18px rgba(0,0,0,0.12)', zIndex: 9999, colorScheme: 'dark' }}>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
             <>
-              <Link
-                href="/workouts"
-                onClick={() => { setMobileMenuOpen(false); setActiveFor('workout'); }}
-                style={{ whiteSpace: 'nowrap', color: activeMobileTop && activeMobileTop !== 'workout' ? 'rgba(255,255,255,0.6)' : 'white', transition: 'color 150ms ease' }}
-              >
-                Start Workout
-              </Link>
+              <div>
+                <button
+                  onClick={() => { toggleWorkoutMobile(); setActiveFor(workoutMobileOpen ? null : 'workout'); }}
+                  style={{ width: '100%', textAlign: 'left', color: activeMobileTop === 'workout' ? 'white' : 'rgba(255,255,255,0.6)', backgroundColor: 'transparent', border: 'none', transition: 'color 180ms ease', colorScheme: 'dark' }}
+                >
+                  Workout ▾
+                </button>
+                <div style={{ overflow: 'hidden', maxHeight: workoutMobileOpen ? 180 : 0, opacity: workoutMobileOpen ? 1 : 0, transition: 'max-height 220ms ease, opacity 180ms ease' }}>
+                  <div style={{ paddingLeft: 12, display: 'flex', flexDirection: 'column', gap: 8 }}>
+                    <Link href="/workouts" onClick={() => { setMobileMenuOpen(false); setWorkoutMobileOpen(false); setActiveFor(null); }} style={{ color: 'white' }}>Start Workout</Link>
+                    <Link href="/workouts/annotation" target="_blank" rel="noopener" onClick={() => { setMobileMenuOpen(false); setWorkoutMobileOpen(false); setActiveFor(null); }} style={{ color: 'white' }}>Annotation Studio ↗</Link>
+                  </div>
+                </div>
+              </div>
 
               <div>
                 <button
